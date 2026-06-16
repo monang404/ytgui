@@ -60,8 +60,21 @@ class LyricsFetcher:
             # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
             if not lrc:
                 logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
+                
+                # Bersihkan judul dari embel-embel (Official Video), [Lyrics], dll.
+                clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
+                for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video']:
+                    clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
+                clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
+                
+                # Jika judul aslinya sudah memiliki format "Artis - Judul", jangan tambahkan nama channel (seperti NAGASWARA)
+                if "-" in title:
+                    query = clean_title
+                else:
+                    query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
+                
+                logger.info(f"syncedlyrics query: {query}")
                 loop = asyncio.get_running_loop()
-                query = f"{title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else title
                 lrc = await loop.run_in_executor(None, syncedlyrics.search, query)
             
             if lrc:
