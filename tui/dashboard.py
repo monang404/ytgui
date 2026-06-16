@@ -29,7 +29,7 @@ class Dashboard(App):
         layout: grid;
         grid-size: 2;
         grid-columns: 1fr 1fr;
-        grid-rows: auto 1fr 5;
+        grid-rows: auto 1fr auto;
     }
     #search_input {
         column-span: 2;
@@ -64,16 +64,21 @@ class Dashboard(App):
         margin-bottom: 1;
     }
     #controls_row {
+        layout: grid;
+        grid-size: 3;
+        grid-rows: auto;
         height: auto;
         align: center middle;
     }
     Button {
-        margin: 0 1;
+        margin: 0;
+        min-width: 5;
     }
     """
 
     BINDINGS = [
         Binding("/", "focus_search", "Search"),
+        Binding("escape", "unfocus", "Unfocus"),
         Binding("p", "toggle_pause", "Play/Pause"),
         Binding("n", "next", "Next"),
         Binding("b", "prev", "Prev"),
@@ -94,7 +99,7 @@ class Dashboard(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield Input(placeholder="Search song... (Press '/' to focus)", id="search_input")
+        yield Input(placeholder="Search song... ('/' to focus, 'ESC' to unfocus)", id="search_input")
         self.now_playing = NowPlayingPanel(id="left_col")
         self.queue_panel = QueuePanel(id="queue_panel")
         self.lyrics_panel = LyricsPanel(id="lyrics_panel")
@@ -105,6 +110,7 @@ class Dashboard(App):
             yield self.queue_panel
             yield self.lyrics_panel
         yield self.controls
+        yield Footer()
 
     async def on_mount(self) -> None:
         self.title = "YT TERMUX PLAYER PRO"
@@ -160,6 +166,10 @@ class Dashboard(App):
     async def action_focus_search(self) -> None:
         input_widget = self.query_one("#search_input", Input)
         input_widget.focus()
+
+    async def action_unfocus(self) -> None:
+        if self._is_input_focused():
+            self.set_focus(None)
 
     async def action_toggle_pause(self) -> None:
         if self._is_input_focused(): return

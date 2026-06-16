@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, Grid
 from textual.widgets import Button, Static
 from textual.reactive import reactive
 
@@ -18,7 +18,7 @@ class ControlsPanel(Static):
         with Vertical():
             self.status_label = Static("", id="status_msg", classes="status-label")
             yield self.status_label
-            with Horizontal(id="controls_row"):
+            with Grid(id="controls_row"):
                 yield Button("⏮  Prev", id="btn_prev")
                 yield Button("⏯  Play/Pause", id="btn_pause")
                 yield Button("⏭  Next", id="btn_next")
