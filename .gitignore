@@ -25,6 +25,9 @@ audit.md
 design.md
 implementasi_plan.md
 AUDIT_PROMPT.md
+refactor.MD
+refactor.md
+refactor.txt
 
 # Test suite — tidak dibutuhkan user Termux
 tests/

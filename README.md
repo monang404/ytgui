@@ -10,7 +10,7 @@
 
 ## ✨ Fitur Unggulan
 
-- **🚀 TUI Modern & Responsif**: Antarmuka berbasis teks dengan animasi equalizer dan dukungan resize otomatis (Portrait/Landscape).
+- **🚀 TUI Interaktif & Clickable**: Antarmuka responsif berbasis framework Textual. Mendukung navigasi sentuh/mouse (klik panel kontrol, klik *progress bar* untuk *seek*, dan klik *queue* untuk melompat ke lagu secara instan).
 - **🎵 Sinkronisasi Lirik Real-Time**: Lirik berjalan otomatis (karaoke style) mengambil data dari LRCLIB.
 - **⏭️ SponsorBlock Integration**: Otomatis melompati iklan/sponsor yang disematkan di dalam video YouTube.
 - **📻 Smart Radio Autoplay**: Antrean kosong? Aplikasi akan otomatis mencari dan memutar lagu yang relevan tanpa henti.
@@ -74,7 +74,7 @@ python main.py
 
 ## 🎮 Panduan Penggunaan (Controls)
 
-Setelah aplikasi berjalan, Anda dapat mengontrol pemutaran langsung melalui tombol keyboard tanpa perlu menekan `Enter`.
+Setelah aplikasi berjalan, Anda dapat mengontrol pemutaran melalui sentuhan jari/mouse secara langsung pada elemen layar (klik tombol, *progress bar*, antrean) atau menggunakan tombol pintasan *keyboard* berikut:
 
 ### 🔍 Mencari Lagu
 - Tekan **`/`** untuk masuk ke **Mode Pencarian**. 
