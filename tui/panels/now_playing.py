@@ -67,12 +67,20 @@ class ClickableProgressBar(Static):
 class NowPlayingPanel(Widget):
     """The Now Playing panel with EQ and Progress Bar."""
 
+    status_msg = reactive("")
+
     def compose(self) -> ComposeResult:
         with Vertical():
             self.info_label = Static("", id="np_info")
             self.progress_bar = ClickableProgressBar("", id="np_progress")
+            self.status_label = Static("", id="np_status", classes="status-label")
             yield self.info_label
             yield self.progress_bar
+            yield self.status_label
+
+    def watch_status_msg(self, msg: str) -> None:
+        if hasattr(self, 'status_label'):
+            self.status_label.update(msg)
 
     def update_state(self, state: AppState) -> None:
         is_playing = state.status == PlayerStatus.PLAYING

@@ -11,10 +11,8 @@ class QueuePanel(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            self.header = Static("[bold]QUEUE[/]", id="queue_header")
             self.option_list = OptionList(id="queue_list")
             self.footer = Static("Radio: [dim]OFF[/]", id="queue_footer")
-            yield self.header
             yield self.option_list
             yield self.footer
 
@@ -22,8 +20,7 @@ class QueuePanel(Widget):
         self.option_list.clear_options()
         
         terminal_width = self.size.width if self.size.width > 0 else 80
-        is_portrait = terminal_width < 90
-        inner_width = (terminal_width - 6) if is_portrait else (terminal_width // 2 - 6)
+        inner_width = terminal_width - 6
         max_title = max(10, inner_width - 12)
         
         if not state.queue and not state.current_track:

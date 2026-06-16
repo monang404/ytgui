@@ -9,9 +9,7 @@ class LyricsPanel(Widget):
 
     def compose(self) -> list[Widget]:
         with Vertical():
-            self.header = Static("[bold]LYRICS[/]", id="lyrics_header")
             self.content = Static("", id="lyrics_content")
-            yield self.header
             yield self.content
 
     def update_state(self, state: AppState) -> None:

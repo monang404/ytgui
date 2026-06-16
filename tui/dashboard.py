@@ -4,9 +4,10 @@ import datetime
 import logging
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Vertical, Horizontal
-from textual.widgets import Header, Footer, Static, Input
+from textual.widgets import Header, Footer, Static, Input, TabbedContent, TabPane
 from textual.binding import Binding
 from textual import on
+from textual.events import Resize
 
 from core.event_bus import (
     bus, LOG_MESSAGE, CMD_QUIT, CMD_SEARCH, CMD_FOCUS_SEARCH, CMD_UNFOCUS,
@@ -28,42 +29,52 @@ class Dashboard(App):
     Screen {
         background: #0D0D0D;
         color: #E8E8FF;
+    }
+    
+    /* PORTRAIT MODE (Default Stacked) */
+    Screen.-portrait {
         layout: vertical;
     }
+    Screen.-portrait #search_input { width: 100%; height: 3; margin-bottom: 1; }
+    Screen.-portrait #now_playing { width: 100%; height: auto; }
+    Screen.-portrait #tabs_container { width: 100%; height: 1fr; }
+    Screen.-portrait #controls { width: 100%; height: auto; }
+
+    /* LANDSCAPE MODE (Grid) */
+    Screen.-landscape {
+        layout: grid;
+        grid-size: 3 3;
+        grid-columns: 1fr 1fr 1fr;
+        grid-rows: auto 1fr auto;
+    }
+    Screen.-landscape #search_input { column-span: 3; row-span: 1; height: 3; }
+    Screen.-landscape #now_playing { column-span: 1; row-span: 1; height: 100%; margin-right: 1; }
+    Screen.-landscape #tabs_container { column-span: 2; row-span: 1; height: 100%; }
+    Screen.-landscape #controls { column-span: 3; row-span: 1; height: auto; }
+
+    /* SHARED COMPONENT STYLES */
     #search_input {
-        width: 100%;
-        height: 3;
         border: tall #2a2a45;
         background: #1E1E30;
         color: #E8E8FF;
     }
-    #search_input:focus {
-        border: tall #FFC107;
-    }
+    #search_input:focus { border: tall #FFC107; }
+    
     #now_playing {
-        width: 100%;
-        height: auto;
         border: tall #1E1E30;
         background: #141420;
     }
-    #lyrics_panel {
-        width: 100%;
-        height: 1fr;
-        min-height: 5;
+    
+    TabbedContent {
+        height: 100%;
+    }
+    TabPane {
+        padding: 0;
         border: tall #1E1E30;
         background: #141420;
     }
-    #queue_panel {
-        width: 100%;
-        height: 1fr;
-        min-height: 5;
-        border: tall #1E1E30;
-        background: #141420;
-    }
+    
     #controls {
-        width: 100%;
-        height: auto;
-        min-height: 10;
         padding: 1;
         border-top: solid #1E1E30;
         background: #0D0D0D;
@@ -74,14 +85,16 @@ class Dashboard(App):
         text-style: bold;
         margin-bottom: 1;
     }
-    #controls_row {
-        layout: grid;
-        grid-size: 4;
-        grid-gutter: 1 1;
-        grid-rows: auto;
-        height: auto;
-        align: center middle;
+    .controls-row {
+        height: 3;
+        margin-bottom: 1;
     }
+    .primary-actions Button { width: 1fr; }
+    .primary-actions .double-width { width: 2fr; }
+    .secondary-actions Button { width: 1fr; min-width: 3; }
+    .destructive-actions { height: 3; }
+    .destructive-actions .spacer { width: 1fr; }
+    .destructive-actions Button { width: 20; }
     Button {
         width: 100%;
         min-width: 5;
@@ -148,13 +161,17 @@ class Dashboard(App):
         yield Input(placeholder="Search... ('/' to focus, 'ESC' unfocus)", id="search_input")
         
         self.now_playing = NowPlayingPanel(id="now_playing")
-        self.queue_panel = QueuePanel(id="queue_panel")
-        self.lyrics_panel = LyricsPanel(id="lyrics_panel")
-        self.controls = ControlsPanel(id="controls")
-        
         yield self.now_playing
-        yield self.queue_panel
-        yield self.lyrics_panel
+        
+        with TabbedContent(initial="queue-tab", id="tabs_container"):
+            with TabPane("Antrean", id="queue-tab"):
+                self.queue_panel = QueuePanel(id="queue_panel")
+                yield self.queue_panel
+            with TabPane("Lirik", id="lyrics-tab"):
+                self.lyrics_panel = LyricsPanel(id="lyrics_panel")
+                yield self.lyrics_panel
+                
+        self.controls = ControlsPanel(id="controls")
         yield self.controls
         yield Footer()
 
@@ -163,8 +180,18 @@ class Dashboard(App):
         bus.subscribe(LOG_MESSAGE, self._on_log_message)
         bus.subscribe(CMD_QUIT, self._on_cmd_quit)
         
+        self.screen.add_class("-portrait")
+        
         # 3 fps refresh
         self.set_interval(0.3, self.refresh_ui)
+
+    def on_resize(self, event: Resize) -> None:
+        if event.size.width >= 80:
+            self.screen.add_class("-landscape")
+            self.screen.remove_class("-portrait")
+        else:
+            self.screen.add_class("-portrait")
+            self.screen.remove_class("-landscape")
 
     def refresh_ui(self) -> None:
         # Check if status msg expired
@@ -178,17 +205,12 @@ class Dashboard(App):
             online_str = "[OFFLINE]"
         
         status_text = f"{online_str} {self._status_msg}"
-        self.controls.status_msg = status_text
+        self.now_playing.status_msg = status_text
 
         # Update panels
         self.now_playing.update_state(self.state)
         self.queue_panel.update_state(self.state)
-        
-        if self.state.show_lyrics:
-            self.lyrics_panel.display = True
-            self.lyrics_panel.update_state(self.state)
-        else:
-            self.lyrics_panel.display = False
+        self.lyrics_panel.update_state(self.state)
 
     async def _on_log_message(self, msg: str) -> None:
         self._status_msg = str(msg)
@@ -251,7 +273,11 @@ class Dashboard(App):
 
     async def action_toggle_lyrics(self) -> None:
         if self._is_input_focused(): return
-        await bus.publish(CMD_TOGGLE_LYRICS)
+        tabs = self.query_one(TabbedContent)
+        if tabs.active == "lyrics-tab":
+            tabs.active = "queue-tab"
+        else:
+            tabs.active = "lyrics-tab"
 
     async def action_quit(self) -> None:
         if self._is_input_focused(): return

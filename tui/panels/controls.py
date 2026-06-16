@@ -1,7 +1,6 @@
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical, Grid
+from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Static
-from textual.reactive import reactive
 
 from core.event_bus import (
     bus, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP,
@@ -12,27 +11,22 @@ from core.event_bus import (
 class ControlsPanel(Static):
     """The bottom controls panel with clickable buttons."""
 
-    status_msg = reactive("")
-
     def compose(self) -> ComposeResult:
-        with Vertical():
-            self.status_label = Static("", id="status_msg", classes="status-label")
-            yield self.status_label
-            with Grid(id="controls_row"):
-                yield Button("⏮  Prev", id="btn_prev")
-                yield Button("⏯  Play/Pause", id="btn_pause")
-                yield Button("⏭  Next", id="btn_next")
-                yield Button("⏹  Stop", id="btn_stop")
-                yield Button("🔉 Vol-", id="btn_voldown")
-                yield Button("🔊 Vol+", id="btn_volup")
-                yield Button("⬇  DL", id="btn_dl")
-                yield Button("📻 Radio", id="btn_radio")
-                yield Button("📝 Lyrics", id="btn_lyrics")
-                yield Button("🚪 Quit", id="btn_quit", variant="error")
-
-    def watch_status_msg(self, msg: str) -> None:
-        if hasattr(self, 'status_label'):
-            self.status_label.update(msg)
+        with Vertical(id="controls_container"):
+            with Horizontal(classes="controls-row primary-actions"):
+                yield Button("⏮ Prev", id="btn_prev")
+                yield Button("⏯ Play/Pause", id="btn_pause", classes="double-width")
+                yield Button("⏭ Next", id="btn_next")
+            with Horizontal(classes="controls-row secondary-actions"):
+                yield Button("⏹", id="btn_stop")
+                yield Button("🔉-", id="btn_voldown")
+                yield Button("🔊+", id="btn_volup")
+                yield Button("📻", id="btn_radio")
+                yield Button("📝", id="btn_lyrics")
+                yield Button("⬇", id="btn_dl")
+            with Horizontal(classes="controls-row destructive-actions"):
+                yield Static(classes="spacer")
+                yield Button("Quit", id="btn_quit")
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id
