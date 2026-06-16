@@ -31,6 +31,7 @@ class Dashboard(App):
         layout: vertical;
         background: {BG_VOID};
         color: {TEXT_PRIMARY};
+        height: 100%;
     }}
     
     #top_bar {{
@@ -51,36 +52,43 @@ class Dashboard(App):
         margin-left: 1;
     }}
 
-    #main_grid { height: 1fr; }
-    .-portrait #main_grid { layout: vertical; }
-    .-landscape #main_grid { layout: horizontal; }
+    #main_grid {{
+        height: 1fr;
+        width: 100%;
+    }}
+    .-portrait #main_grid {{ layout: vertical; }}
+    .-landscape #main_grid {{ layout: horizontal; }}
 
-    #now_playing { 
-        height: 12; 
+    #now_playing {{ 
+        height: 13; 
         width: 100%; 
         border: tall {BORDER}; 
         background: {BG_PANEL}; 
-    }
-    .-landscape #now_playing { 
+        padding: 1 2;
+    }}
+    Screen.-compact #now_playing {{
+        height: 8;
+    }}
+    .-landscape #now_playing {{ 
         width: 38%; 
         height: 1fr; 
         margin-right: 1; 
-    }
+    }}
 
-    #side_panel { 
+    #side_panel {{ 
         height: 1fr; 
         width: 100%; 
-    }
-    .-landscape #side_panel { 
+    }}
+    .-landscape #side_panel {{ 
         width: 62%; 
-    }
+    }}
 
     #controls_primary {{
         height: 3;
         align: center middle;
     }}
     #btn_pause {{
-        width: 60%;
+        width: 1fr;
         background: {ACCENT_FIRE};
         color: #FFFFFF;
         text-style: bold;
@@ -105,6 +113,7 @@ class Dashboard(App):
     }}
     #btn_quit {{
         width: 16;
+        border: tall #3a1a1a;
         background: {BG_ELEVATED};
         color: {STATUS_ERR};
     }}
@@ -115,9 +124,7 @@ class Dashboard(App):
     
     Button {{
         width: 100%;
-        OptionList:focus {{
-        border: tall {BORDER_FOCUS};
-    }}    background: {BG_ELEVATED};
+        background: {BG_ELEVATED};
         color: {TEXT_MUTED};
     }}
     Button:hover {{
@@ -140,10 +147,12 @@ class Dashboard(App):
     /* MANUAL TABS */
     #tab_bar {{
         height: 3;
+        width: 100%;
         margin-bottom: 1;
     }}
     .tab-btn {{
         width: 1fr;
+        min-width: 10;
         height: 3;
         border: none;
         background: {BG_ELEVATED};
@@ -151,9 +160,8 @@ class Dashboard(App):
     }}
     .tab-btn.-active {{
         background: {BG_PANEL};
-        color: {TEXT_PRIMARY};
-        text-style: bold;
-        border-bottom: heavy {ACCENT_FIRE};
+        color: {ACCENT_GOLD};
+        border: tall {ACCENT_GOLD};
     }}
 
     #lyrics_panel, #queue_panel {{
@@ -163,9 +171,7 @@ class Dashboard(App):
     }}
     
     #controls {{
-        height: auto;
-        padding: 1;
-        border-top: solid {BG_ELEVATED};
+        height: 11;
         background: {BG_VOID};
     }}
     """
@@ -224,8 +230,10 @@ class Dashboard(App):
         
         # Initial layout mode sync
         is_landscape = self.size.width >= BREAKPOINT_LANDSCAPE
+        is_short = self.size.height < 35
         self.screen.set_class(is_landscape, "-landscape")
         self.screen.set_class(not is_landscape, "-portrait")
+        self.screen.set_class(is_short, "-compact")
         
         # Initial tab sync
         self._active_tab = "queue"
@@ -236,8 +244,10 @@ class Dashboard(App):
 
     def on_resize(self, event: Resize) -> None:
         is_landscape = event.size.width >= BREAKPOINT_LANDSCAPE
+        is_short = event.size.height < 35
         self.screen.set_class(is_landscape, "-landscape")
         self.screen.set_class(not is_landscape, "-portrait")
+        self.screen.set_class(is_short, "-compact")
 
     @on(Button.Pressed, "#tab_btn_queue")
     def _show_queue_tab(self, event=None) -> None:

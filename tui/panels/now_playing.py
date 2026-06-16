@@ -89,11 +89,13 @@ class NowPlayingPanel(Widget):
         n_bars = max(6, min(16, inner_width // 2))
         
         eq_text = _equalizer_frame(time.time(), n_bars, is_playing)
+        is_compact = self.size.height <= 8
         
         if not state.current_track:
             self.info_label.update(f"\n[{TEXT_DIM}]  No track selected.[/]\n\n[{TEXT_DIM}]{eq_text}[/]")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
+            self.status_line.display = not is_compact
         else:
             track = state.current_track
             views = ""
@@ -112,16 +114,24 @@ class NowPlayingPanel(Widget):
             dur_str = f"{track.duration // 60}:{track.duration % 60:02d}"
             via_str = "Cache" if track.local_path else "Stream"
             
-            lines = [
-                f"[bold {TEXT_PRIMARY}]  {escape(title_display)}[/]",
-                f"[{TEXT_DIM}]   {escape(artist_display)}[/]",
-                f"[{TEXT_DIM}]   {views}  |  {dur_str}[/]" if views else f"[{TEXT_DIM}]   {dur_str}[/]",
-                f"[{TEXT_DIM}]   Via: {via_str}[/]",
-                "",
-                f"[{ACCENT_FIRE}]{eq_text}[/]",
-                "",
-                f"Vol: {state.volume}%   Gapless: {'ON' if state.next_uri_ready else 'OFF'}"
-            ]
+            if is_compact:
+                lines = [
+                    f"[bold {TEXT_PRIMARY}]  {escape(title_display)}[/]",
+                    f"[{TEXT_DIM}]   {escape(artist_display)}[/]",
+                    f"[{ACCENT_FIRE}]{eq_text}[/]"
+                ]
+                self.status_line.display = False
+            else:
+                lines = [
+                    f"[bold {TEXT_PRIMARY}]  {escape(title_display)}[/]",
+                    f"[{TEXT_DIM}]   {escape(artist_display)}[/]",
+                    f"[{TEXT_DIM}]   {views}  |  Via: {via_str}  |  Vol: {state.volume}%[/]",
+                    "",
+                    f"[{ACCENT_FIRE}]{eq_text}[/]",
+                    ""
+                ]
+                self.status_line.display = True
+                
             self.info_label.update("\n".join(lines))
             self.progress_bar.position = state.position
             self.progress_bar.duration = track.duration
