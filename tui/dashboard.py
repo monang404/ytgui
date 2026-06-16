@@ -45,12 +45,16 @@ class Dashboard(App):
     #left_col {
         column-span: 1;
         row-span: 1;
+        height: 100%;
+        min-height: 10;
         padding: 0 1;
     }
     #right_col {
         column-span: 1;
         row-span: 1;
         layout: vertical;
+        height: 100%;
+        min-height: 10;
         padding: 0 1;
     }
     #lyrics_panel, #queue_panel {
