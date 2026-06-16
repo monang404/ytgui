@@ -30,12 +30,8 @@ class YtDlpClient:
         return [self._to_track(e) for e in results.get("entries", []) if e]
 
     async def get_stream_url(self, video_id: str) -> str:
-        """Get direct audio URL (expires in ~6 hours)."""
-        url = f"https://www.youtube.com/watch?v={video_id}"
-        opts = {**self._YDL_OPTS_INFO}
-        loop = asyncio.get_running_loop()  # HIGH-03 fix
-        info = await loop.run_in_executor(None, self._extract_sync, url, opts)
-        return self._pick_audio_url(info)
+        """Get direct audio URL. We now delegate this to mpv internally to avoid HTTP 403 Forbidden."""
+        return f"https://www.youtube.com/watch?v={video_id}"
 
     async def download_mp3(self, video_id: str, on_progress=None) -> str:
         """Download to CACHE_DIR/video_id.mp3. Returns the local path."""

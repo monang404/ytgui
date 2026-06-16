@@ -32,10 +32,12 @@ class CacheResolver:
 
         # Rule 2: Cached Stream URL
         if row and row.get("stream_url") and row.get("stream_url_ts"):
+            stream_url = row["stream_url"]
             age = time.time() - row["stream_url_ts"]
-            if age < STREAM_URL_TTL:
-                track.stream_url = row["stream_url"]
-                return row["stream_url"]
+            # Ignore old .googlevideo.com URLs to prevent 403 Forbidden
+            if age < STREAM_URL_TTL and stream_url.startswith("https://www.youtube.com/"):
+                track.stream_url = stream_url
+                return stream_url
 
         # Rule 3: Fetch fresh URL
         url = await self.ytdlp.get_stream_url(track.video_id)

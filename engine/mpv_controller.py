@@ -34,7 +34,7 @@ class MpvController:
         if os.name == 'nt':
             tcp_port = os.environ.get("YT_PLAYER_MPV_PORT", "12345")
             os.environ["YT_PLAYER_MPV_PORT"] = tcp_port
-            cmd = ["mpv", "--no-video", "--idle", f"--input-ipc-server=tcp://127.0.0.1:{tcp_port}"]
+            cmd = ["mpv", "--no-video", "--idle", "--ytdl-format=bestaudio/best", f"--input-ipc-server=tcp://127.0.0.1:{tcp_port}"]
         else:
             os.makedirs(os.path.dirname(MPV_SOCKET), exist_ok=True)
             if os.path.exists(MPV_SOCKET):
@@ -42,7 +42,7 @@ class MpvController:
                     os.remove(MPV_SOCKET)
                 except OSError:
                     pass
-            cmd = ["mpv", "--no-video", "--idle", f"--input-ipc-server={MPV_SOCKET}"]
+            cmd = ["mpv", "--no-video", "--idle", "--ytdl-format=bestaudio/best", f"--input-ipc-server={MPV_SOCKET}"]
             
         try:
             self._mpv_process = subprocess.Popen(
