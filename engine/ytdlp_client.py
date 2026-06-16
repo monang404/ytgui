@@ -53,7 +53,7 @@ class YtDlpClient:
             title = str(title_raw).lower() if title_raw else ""
             
             # Filter kompilasi dan album:
-            if duration > 600:
+            if duration > 900:  # 15 menit
                 continue
             if any(kw in title for kw in ["compilation", "full album", "mix", "playlist"]):
                 continue
