@@ -26,8 +26,35 @@ class MpvController:
         self._pending: dict[int, asyncio.Future] = {}
         self._observer_task = None
         self.is_connected = False
+        self._mpv_process = None
 
     async def connect(self):
+        import subprocess
+        # Auto-spawn mpv in background
+        if os.name == 'nt':
+            tcp_port = os.environ.get("YT_PLAYER_MPV_PORT", "12345")
+            os.environ["YT_PLAYER_MPV_PORT"] = tcp_port
+            cmd = ["mpv", "--no-video", "--idle", f"--input-ipc-server=tcp://127.0.0.1:{tcp_port}"]
+        else:
+            os.makedirs(os.path.dirname(MPV_SOCKET), exist_ok=True)
+            if os.path.exists(MPV_SOCKET):
+                try:
+                    os.remove(MPV_SOCKET)
+                except OSError:
+                    pass
+            cmd = ["mpv", "--no-video", "--idle", f"--input-ipc-server={MPV_SOCKET}"]
+            
+        try:
+            self._mpv_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL
+            )
+            await asyncio.sleep(1.0)  # Wait for mpv to bind socket
+        except Exception as e:
+            logger.error(f"Failed to spawn mpv process: {e}")
+
         for attempt in range(10):
             try:
                 if os.name == 'nt':
@@ -114,6 +141,12 @@ class MpvController:
             try:
                 self._writer.close()
                 await self._writer.wait_closed()
+            except Exception:
+                pass
+        
+        if self._mpv_process:
+            try:
+                self._mpv_process.terminate()
             except Exception:
                 pass
 
