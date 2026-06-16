@@ -28,6 +28,7 @@ class Dashboard(App):
 
     CSS = f"""
     Screen {{
+        layout: vertical;
         background: {BG_VOID};
         color: {TEXT_PRIMARY};
     }}
@@ -50,15 +51,29 @@ class Dashboard(App):
         margin-left: 1;
     }}
 
-    /* PORTRAIT MODE */
-    Screen.-portrait #main_grid {{ layout: vertical; height: 1fr; }}
-    Screen.-portrait #now_playing {{ height: 12; width: 100%; border: tall {BORDER}; background: {BG_PANEL}; }}
-    Screen.-portrait #side_panel {{ height: 1fr; width: 100%; }}
+    #main_grid { height: 1fr; }
+    .-portrait #main_grid { layout: vertical; }
+    .-landscape #main_grid { layout: horizontal; }
 
-    /* LANDSCAPE MODE */
-    Screen.-landscape #main_grid {{ layout: horizontal; height: 1fr; }}
-    Screen.-landscape #now_playing {{ width: 38%; height: 1fr; margin-right: 1; border: tall {BORDER}; background: {BG_PANEL}; }}
-    Screen.-landscape #side_panel {{ width: 62%; height: 1fr; }}
+    #now_playing { 
+        height: 12; 
+        width: 100%; 
+        border: tall {BORDER}; 
+        background: {BG_PANEL}; 
+    }
+    .-landscape #now_playing { 
+        width: 38%; 
+        height: 1fr; 
+        margin-right: 1; 
+    }
+
+    #side_panel { 
+        height: 1fr; 
+        width: 100%; 
+    }
+    .-landscape #side_panel { 
+        width: 62%; 
+    }
 
     #controls_primary {{
         height: 3;
@@ -148,6 +163,7 @@ class Dashboard(App):
     }}
     
     #controls {{
+        height: auto;
         padding: 1;
         border-top: solid {BG_ELEVATED};
         background: {BG_VOID};
