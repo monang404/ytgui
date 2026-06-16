@@ -107,6 +107,13 @@ class QueueManager:
             uri = await self.resolver.resolve(track)
             
             # 2. Play on mpv
+            if not self.mpv.is_connected:
+                await bus.publish(LOG_MESSAGE, "Audio player reconnecting...")
+                try:
+                    await self.mpv.connect()
+                except Exception as e:
+                    await bus.publish(LOG_MESSAGE, f"Player error: {e}")
+            
             await self.mpv.play(uri)
             self.state.status = PlayerStatus.PLAYING
             await bus.publish(TRACK_STARTED, track)
