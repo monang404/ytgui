@@ -26,53 +26,50 @@ class Dashboard(App):
 
     CSS = """
     Screen {
-        layout: grid;
-        grid-size: 2;
-        grid-columns: 1fr 1fr;
-        grid-rows: auto 1fr auto;
-        background: #11111b;
+        background: #0D0D0D;
+        color: #E8E8FF;
+        layout: vertical;
     }
-    #search_input {
-        column-span: 2;
-        row-span: 1;
-        margin: 1 2;
-        border: tall #89b4fa;
-        background: #1e1e2e;
-    }
-    #search_input:focus {
-        border: double #cba6f7;
+    #main_body {
+        height: 1fr;
+        layout: horizontal;
+        padding: 0 1;
     }
     #left_col {
-        column-span: 1;
-        row-span: 1;
+        width: 40%;
         height: 100%;
-        min-height: 10;
-        padding: 0 1;
+        margin-right: 1;
+        border: tall #1E1E30;
+        background: #141420;
     }
     #right_col {
-        column-span: 1;
-        row-span: 1;
-        layout: vertical;
+        width: 60%;
         height: 100%;
-        min-height: 10;
-        padding: 0 1;
+        layout: vertical;
+    }
+    #search_input {
+        height: 3;
+        margin-bottom: 1;
+        border: tall #2a2a45;
+        background: #1E1E30;
+        color: #E8E8FF;
+    }
+    #search_input:focus {
+        border: tall #FFC107;
     }
     #lyrics_panel, #queue_panel {
         height: 1fr;
-        border: tall #313244;
-        background: #1e1e2e;
-        margin-bottom: 1;
+        border: tall #1E1E30;
+        background: #141420;
     }
     #controls {
-        column-span: 2;
-        row-span: 1;
         height: auto;
         padding: 1;
-        border-top: heavy #45475a;
-        background: #181825;
+        border-top: solid #1E1E30;
+        background: #0D0D0D;
     }
     .status-label {
-        color: #a6e3a1;
+        color: #4ade80;
         text-align: center;
         text-style: bold;
         margin-bottom: 1;
@@ -89,26 +86,35 @@ class Dashboard(App):
         width: 100%;
         min-width: 5;
         border: none;
-        background: #313244;
-        color: #cdd6f4;
+        background: #1E1E30;
+        color: #A0A0C0;
     }
     Button:hover {
-        background: #45475a;
-        text-style: bold;
+        background: #2a2a45;
+        color: #E8E8FF;
     }
     Button.-active {
-        background: #89b4fa;
-        color: #11111b;
+        background: #FFC107;
+        color: #1E1E30;
+    }
+    #btn_pause {
+        background: #FF6B35;
+        color: #FFFFFF;
+        text-style: bold;
+    }
+    #btn_pause:hover {
+        background: #ff7d4a;
     }
     #btn_quit {
-        background: #f38ba8;
-        color: #11111b;
+        background: #1E1E30;
+        color: #ef4444;
     }
     #btn_quit:hover {
-        background: #eba0ac;
+        background: #ef4444;
+        color: #FFFFFF;
     }
     OptionList {
-        background: #1e1e2e;
+        background: #141420;
         border: none;
     }
     OptionList:focus {
@@ -139,16 +145,20 @@ class Dashboard(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield Input(placeholder="Search song... ('/' to focus, 'ESC' to unfocus)", id="search_input")
+        
         self.now_playing = NowPlayingPanel(id="left_col")
         self.queue_panel = QueuePanel(id="queue_panel")
         self.lyrics_panel = LyricsPanel(id="lyrics_panel")
         self.controls = ControlsPanel(id="controls")
         
-        yield self.now_playing
-        with Vertical(id="right_col"):
-            yield self.queue_panel
-            yield self.lyrics_panel
+        with Horizontal(id="main_body"):
+            yield self.now_playing
+            
+            with Vertical(id="right_col"):
+                yield Input(placeholder="Cari lagu atau artis... ('/' to focus, 'ESC' to unfocus)", id="search_input")
+                yield self.queue_panel
+                yield self.lyrics_panel
+                
         yield self.controls
         yield Footer()
 
