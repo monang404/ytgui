@@ -30,29 +30,6 @@ from tui.panels.controls import ControlsPanel
 
 logger = logging.getLogger(__name__)
 
-class TermuxInput(Input):
-    def watch_has_focus(self, value: bool) -> None:
-        if value:
-            self._summon_keyboard()
-
-    async def on_click(self, event: Click) -> None:
-        if hasattr(super(), "on_click"):
-            # Ensure base Input handles the cursor positioning
-            base_on_click = getattr(super(), "on_click")
-            if asyncio.iscoroutinefunction(base_on_click):
-                await base_on_click(event)
-            else:
-                base_on_click(event)
-        self._summon_keyboard()
-
-    def _summon_keyboard(self) -> None:
-        import os, subprocess
-        if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
-            try:
-                subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except Exception:
-                pass
-
 class Dashboard(App):
     """The main Textual application for YTCLI."""
 
@@ -67,6 +44,16 @@ class Dashboard(App):
     #top_bar {{
         height: 3;
         margin-bottom: 1;
+    }}
+    #btn_kbd {{
+        width: 12;
+        background: {BG_ELEVATED};
+        color: {ACCENT_GOLD};
+        border: tall {BORDER};
+    }}
+    #btn_kbd:hover {{
+        background: {BORDER};
+        color: {TEXT_PRIMARY};
     }}
     #search_input {{
         width: 1fr;
@@ -231,7 +218,8 @@ class Dashboard(App):
         yield Header(show_clock=True)
         
         with Horizontal(id="top_bar"):
-            yield TermuxInput(placeholder="Search... ('/' focus, 'ESC' unfocus)", id="search_input")
+            yield Button("⌨️ KBD", id="btn_kbd")
+            yield Input(placeholder="Search... ('/' focus, 'ESC' unfocus)", id="search_input")
             self.online_dot = Static("●", id="online_indicator")
             yield self.online_dot
 
@@ -412,11 +400,16 @@ class Dashboard(App):
         return isinstance(self.focused, Input)
 
     async def action_focus_search(self) -> None:
-        input_widget = self.query_one("#search_input", TermuxInput)
+        input_widget = self.query_one("#search_input", Input)
         input_widget.focus()
         
-        import os
-        import subprocess
+    @on(Button.Pressed, "#btn_kbd")
+    def _summon_keyboard_btn(self, event) -> None:
+        # Focus the search input first
+        self.query_one("#search_input", Input).focus()
+        
+        # Trigger soft keyboard
+        import os, subprocess
         if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
             try:
                 subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
