@@ -4,8 +4,7 @@ import signal
 import aiohttp
 from core.state import AppState
 from tui.dashboard import Dashboard
-from tui.input_handler import InputHandler
-from core.event_bus import bus, CMD_SEARCH, SEARCH_RESULTS, LOG_MESSAGE
+from core.event_bus import bus, CMD_SEARCH, SEARCH_RESULTS, LOG_MESSAGE, CMD_QUIT
 from engine.ytdlp_client import YtDlpClient
 from engine.mpv_controller import MpvController
 from cache.db import Database
@@ -70,8 +69,7 @@ async def main():
     bus.subscribe(CMD_SEARCH, handle_search)
 
     # 7. Start TUI
-    input_handler = InputHandler(state)
-    dashboard = Dashboard(state, input_handler)
+    dashboard = Dashboard(state)
 
     async def check_connectivity():
         while True:
@@ -85,15 +83,12 @@ async def main():
                 state.is_online = False
             await asyncio.sleep(30)
 
-    tasks = [
-        asyncio.create_task(dashboard.run()),
-        asyncio.create_task(input_handler.run()),
-        asyncio.create_task(check_connectivity())
-    ]
+    connectivity_task = asyncio.create_task(check_connectivity())
+    tasks = [connectivity_task]
     
     # CRITICAL-05 fix: Graceful shutdown with proper cleanup
     try:
-        await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        await dashboard.run_async()
     finally:
         import traceback
         for t in tasks:

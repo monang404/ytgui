@@ -1,45 +1,55 @@
-from rich.panel import Panel
-from rich.text import Text
+from textual.app import ComposeResult
+from textual.widget import Widget
+from textual.widgets import OptionList, Static
+from textual.containers import Vertical
 from core.state import AppState
+from core.event_bus import bus, CMD_QUEUE_SELECT
 
-def render_queue(state: AppState, terminal_width: int = 80) -> Panel:
-    """Renders the Queue & Autoplay panel.
-    Portrait-optimized: truncates titles, shows fewer items on narrow screens."""
-    lines = []
-    is_portrait = terminal_width < 90
-    inner_width = (terminal_width - 6) if is_portrait else (terminal_width // 2 - 6)
-    max_title = max(10, inner_width - 12)  # room for "  1. " prefix + " 3:20" suffix
-    max_items = 3 if is_portrait else 5
-    
-    if not state.queue and not state.current_track:
-        lines.append("[dim]Queue is empty.[/]")
-    else:
-        if state.current_track:
-            title = state.current_track.title
-            if len(title) > max_title:
-                title = title[:max_title - 2] + ".."
-            lines.append(f"[#FF6B35]> {title}[/]")
-            
-        for i, track in enumerate(state.queue[:max_items], 1):
-            dur = f"{track.duration // 60}:{track.duration % 60:02d}"
-            title = track.title
-            if len(title) > max_title:
-                title = title[:max_title - 2] + ".."
-            lines.append(f"[white]  {i}. {title}[/] [dim]{dur}[/]")
-            
-        remaining = len(state.queue) - max_items
-        if remaining > 0:
-            lines.append(f"[dim]  +{remaining} more[/]")
+class QueuePanel(Widget):
+    """The Queue & Autoplay panel using OptionList for selection."""
 
-    lines.append("")
-    radio = "[green]ON[/]" if state.is_radio_mode else "[dim]OFF[/]"
-    lines.append(f"Radio: {radio}")
-    
-    content = Text.from_markup("\n".join(lines))
-    
-    return Panel(
-        content,
-        title="[bold]QUEUE[/]",
-        border_style="white",
-        padding=(0, 1) if is_portrait else (1, 2),
-    )
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            self.header = Static("[bold]QUEUE[/]", id="queue_header")
+            self.option_list = OptionList(id="queue_list")
+            self.footer = Static("Radio: [dim]OFF[/]", id="queue_footer")
+            yield self.header
+            yield self.option_list
+            yield self.footer
+
+    def update_state(self, state: AppState) -> None:
+        self.option_list.clear_options()
+        
+        terminal_width = self.size.width if self.size.width > 0 else 80
+        is_portrait = terminal_width < 90
+        inner_width = (terminal_width - 6) if is_portrait else (terminal_width // 2 - 6)
+        max_title = max(10, inner_width - 12)
+        
+        if not state.queue and not state.current_track:
+            self.option_list.add_option("[dim]Queue is empty.[/]")
+            self.option_list.disabled = True
+        else:
+            self.option_list.disabled = False
+            if state.current_track:
+                title = state.current_track.title
+                if len(title) > max_title:
+                    title = title[:max_title - 2] + ".."
+                self.option_list.add_option(f"[#FF6B35]> {title}[/]")
+                
+            for i, track in enumerate(state.queue, 1):
+                dur = f"{track.duration // 60}:{track.duration % 60:02d}"
+                title = track.title
+                if len(title) > max_title:
+                    title = title[:max_title - 2] + ".."
+                self.option_list.add_option(f"  {i}. {title} [dim]{dur}[/]")
+
+        radio = "[green]ON[/]" if state.is_radio_mode else "[dim]OFF[/]"
+        self.footer.update(f"Radio: {radio}")
+
+    async def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        if event.option_index == 0:
+            return # Current track or empty queue clicked
+        
+        queue_index = event.option_index - 1
+        if queue_index >= 0:
+            await bus.publish(CMD_QUEUE_SELECT, queue_index)

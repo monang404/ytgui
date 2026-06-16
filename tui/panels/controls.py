@@ -1,47 +1,58 @@
-from rich.panel import Panel
-from rich.text import Text
+from textual.app import ComposeResult
+from textual.containers import Horizontal, Vertical
+from textual.widgets import Button, Static
+from textual.reactive import reactive
 
-def render_controls(search_query: str = "", is_searching: bool = False,
-                    msg: str = "", width: int = 80, compact: bool = False) -> Panel:
-    """Renders the footer panel with controls and search input.
-    Portrait-optimized: compact mode uses abbreviated shortcuts."""
-    
-    if is_searching:
-        search_prompt = f"[bold #FFC107]SEARCH> {search_query}_[/]"
-    else:
-        search_prompt = "[bold #FFC107]Press '/' to Search[/]"
+from core.event_bus import (
+    bus, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP,
+    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_TOGGLE_RADIO,
+    CMD_TOGGLE_LYRICS, CMD_QUIT
+)
 
-    if compact:
-        # Ultra-compact for very narrow screens (2 lines total)
-        lines = [
-            f"{search_prompt} [dim]| P:Play N:Next S:Stop Q:Quit[/]",
-            "[dim]U/D:Vol M:DL R:Radio L:Lyrics B:Prev[/]"
-        ]
-    elif width < 70:
-        # Medium-compact (2 lines total)
-        lines = [
-            f"{search_prompt}  [dim]| \\[P] Play  \\[N] Next  \\[S] Stop  \\[Q] Quit[/]",
-            "[dim]\\[U/D] Vol  \\[M] DL  \\[R] Radio  \\[L] Lyrics  \\[B] Prev[/]"
-        ]
-    else:
-        # Full width (3 lines total)
-        lines = [
-            search_prompt,
-            "[dim]\\[P] Pause/Play  \\[N] Next  \\[B] Prev  \\[S] Stop  \\[U/D] Vol+/-[/]",
-            "[dim]\\[M] Download & Cache  \\[R] Radio Mode  \\[L] Toggle Lyrics  \\[Q] Quit[/]"
-        ]
-    
-    if msg:
-        # Override the last line with status message if exists
-        max_msg = max(10, width - 8)
-        display_msg = msg[:max_msg] + ".." if len(msg) > max_msg else msg
-        lines[-1] = f"[#FFC107]{display_msg}[/]"
-        
-    content = Text.from_markup("\n".join(lines))
-    
-    return Panel(
-        content,
-        title="[bold]CONTROLS[/]",
-        border_style="#FFC107" if is_searching else "dim",
-        padding=(0, 1),
-    )
+class ControlsPanel(Static):
+    """The bottom controls panel with clickable buttons."""
+
+    status_msg = reactive("")
+
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            self.status_label = Static("", id="status_msg", classes="status-label")
+            yield self.status_label
+            with Horizontal(id="controls_row"):
+                yield Button("⏮  Prev", id="btn_prev")
+                yield Button("⏯  Play/Pause", id="btn_pause")
+                yield Button("⏭  Next", id="btn_next")
+                yield Button("⏹  Stop", id="btn_stop")
+                yield Button("🔉 Vol-", id="btn_voldown")
+                yield Button("🔊 Vol+", id="btn_volup")
+                yield Button("⬇  DL", id="btn_dl")
+                yield Button("📻 Radio", id="btn_radio")
+                yield Button("📝 Lyrics", id="btn_lyrics")
+                yield Button("🚪 Quit", id="btn_quit", variant="error")
+
+    def watch_status_msg(self, msg: str) -> None:
+        if hasattr(self, 'status_label'):
+            self.status_label.update(msg)
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        button_id = event.button.id
+        if button_id == "btn_pause":
+            await bus.publish(CMD_TOGGLE_PAUSE)
+        elif button_id == "btn_next":
+            await bus.publish(CMD_NEXT)
+        elif button_id == "btn_prev":
+            await bus.publish(CMD_PREV)
+        elif button_id == "btn_stop":
+            await bus.publish(CMD_STOP)
+        elif button_id == "btn_voldown":
+            await bus.publish(CMD_VOLUME_DOWN)
+        elif button_id == "btn_volup":
+            await bus.publish(CMD_VOLUME_UP)
+        elif button_id == "btn_dl":
+            await bus.publish(CMD_DOWNLOAD)
+        elif button_id == "btn_radio":
+            await bus.publish(CMD_TOGGLE_RADIO)
+        elif button_id == "btn_lyrics":
+            await bus.publish(CMD_TOGGLE_LYRICS)
+        elif button_id == "btn_quit":
+            await bus.publish(CMD_QUIT)
