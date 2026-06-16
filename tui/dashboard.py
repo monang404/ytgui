@@ -7,7 +7,7 @@ from textual.containers import Grid, Vertical, Horizontal
 from textual.widgets import Header, Footer, Static, Input, Button
 from textual.binding import Binding
 from textual import on
-from textual.events import Resize
+from textual.events import Resize, Focus
 from tui.theme import (
     BG_VOID, BG_PANEL, BG_ELEVATED, BORDER, BORDER_FOCUS,
     ACCENT_FIRE, ACCENT_GOLD, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM,
@@ -391,6 +391,16 @@ class Dashboard(App):
     async def action_focus_search(self) -> None:
         input_widget = self.query_one("#search_input", Input)
         input_widget.focus()
+
+    @on(Focus, "#search_input")
+    def _on_search_focus(self, event: Focus) -> None:
+        import os
+        import subprocess
+        if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
+            try:
+                subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
 
     async def action_unfocus(self) -> None:
         if self._is_input_focused():
