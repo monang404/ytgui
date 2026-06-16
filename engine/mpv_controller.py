@@ -211,7 +211,7 @@ class MpvController:
                 await bus.publish("track.pause.changed", bool(data))
         elif event == "end-file":
             reason = msg.get("reason", "")
-            if reason in ("eof", "stop"):
+            if reason in ("eof", "stop", "error"):
                 await bus.publish(TRACK_ENDED, {"reason": reason})
 
     async def _command(self, cmd: list) -> int:

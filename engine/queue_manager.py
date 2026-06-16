@@ -138,7 +138,10 @@ class QueueManager:
         await bus.publish(LOG_MESSAGE, "Stopped.")
 
     async def _on_track_ended(self, data: dict):
-        if data.get("reason") == "eof":
+        reason = data.get("reason")
+        if reason in ("eof", "error"):
+            if reason == "error":
+                await bus.publish(LOG_MESSAGE, "Gagal memutar lagu (mungkin dibatasi/koneksi). Melewati...")
             await self.play_next()
 
     async def _on_progress(self, position: float):
