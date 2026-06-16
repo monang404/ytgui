@@ -79,7 +79,10 @@ async def main():
                     timeout=aiohttp.ClientTimeout(total=3)
                 ) as r:
                     state.is_online = (r.status == 204)
-            except Exception:
+            except (aiohttp.ClientError, asyncio.TimeoutError):
+                state.is_online = False
+            except Exception as e:
+                logging.getLogger(__name__).warning(f"Connectivity check unexpected error: {e}")
                 state.is_online = False
             await asyncio.sleep(30)
 

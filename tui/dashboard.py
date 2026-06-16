@@ -4,8 +4,9 @@ import datetime
 import logging
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Vertical, Horizontal
-from textual.widgets import Header, Footer, Static
+from textual.widgets import Header, Footer, Static, Input
 from textual.binding import Binding
+from textual import on
 
 from core.event_bus import (
     bus, LOG_MESSAGE, CMD_QUIT, CMD_SEARCH, CMD_FOCUS_SEARCH, CMD_UNFOCUS,
@@ -28,7 +29,12 @@ class Dashboard(App):
         layout: grid;
         grid-size: 2;
         grid-columns: 1fr 1fr;
-        grid-rows: 1fr 5;
+        grid-rows: auto 1fr 5;
+    }
+    #search_input {
+        column-span: 2;
+        row-span: 1;
+        margin: 0 1;
     }
     #left_col {
         column-span: 1;
@@ -67,6 +73,7 @@ class Dashboard(App):
     """
 
     BINDINGS = [
+        Binding("/", "focus_search", "Search"),
         Binding("p", "toggle_pause", "Play/Pause"),
         Binding("n", "next", "Next"),
         Binding("b", "prev", "Prev"),
@@ -87,6 +94,7 @@ class Dashboard(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield Input(placeholder="Search song... (Press '/' to focus)", id="search_input")
         self.now_playing = NowPlayingPanel(id="left_col")
         self.queue_panel = QueuePanel(id="queue_panel")
         self.lyrics_panel = LyricsPanel(id="lyrics_panel")
@@ -138,32 +146,57 @@ class Dashboard(App):
     async def _on_cmd_quit(self, _) -> None:
         self.exit()
 
+    @on(Input.Submitted, "#search_input")
+    async def on_search_submitted(self, event: Input.Submitted) -> None:
+        query = event.value.strip()
+        if query:
+            await bus.publish(CMD_SEARCH, query)
+            event.input.value = ""
+            self.set_focus(None)
+
+    def _is_input_focused(self) -> bool:
+        return isinstance(self.focused, Input)
+
+    async def action_focus_search(self) -> None:
+        input_widget = self.query_one("#search_input", Input)
+        input_widget.focus()
+
     async def action_toggle_pause(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_TOGGLE_PAUSE)
 
     async def action_next(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_NEXT)
 
     async def action_prev(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_PREV)
 
     async def action_stop(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_STOP)
 
     async def action_vol_up(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_VOLUME_UP)
 
     async def action_vol_down(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_VOLUME_DOWN)
 
     async def action_download(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_DOWNLOAD)
 
     async def action_toggle_radio(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_TOGGLE_RADIO)
 
     async def action_toggle_lyrics(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_TOGGLE_LYRICS)
 
     async def action_quit(self) -> None:
+        if self._is_input_focused(): return
         await bus.publish(CMD_QUIT)

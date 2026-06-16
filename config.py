@@ -15,9 +15,9 @@ if os.name == 'nt':
     # Defaulting to a named pipe for Windows testing.
     MPV_SOCKET = os.environ.get("YT_PLAYER_SOCKET", r"\\.\pipe\mpv-yt-player")
 else:
-    import tempfile
-    tmp_dir = os.environ.get("TMPDIR", "/data/data/com.termux/files/usr/tmp")
-    MPV_SOCKET = os.environ.get("YT_PLAYER_SOCKET", f"{tmp_dir}/mpv-yt-player.sock")
+    socket_dir = BASE_DIR / "cache" / "sockets"
+    socket_dir.mkdir(parents=True, exist_ok=True)
+    MPV_SOCKET = os.environ.get("YT_PLAYER_SOCKET", str(socket_dir / "mpv-yt-player.sock"))
 
 DEFAULT_VOLUME = int(os.environ.get("YT_PLAYER_VOLUME", 80))
 GAPLESS_PREBUFFER_SEC = 15

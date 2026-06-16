@@ -29,7 +29,6 @@ class MpvController:
         self._mpv_process = None
 
     async def connect(self):
-        import subprocess
         import shutil
         
         ytdl_path = shutil.which("yt-dlp")
@@ -52,14 +51,14 @@ class MpvController:
             if ytdl_arg: cmd.insert(3, ytdl_arg)
             
         try:
-            self._mpv_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL
+            self._mpv_process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+                stdin=asyncio.subprocess.DEVNULL
             )
             await asyncio.sleep(1.0)  # Wait for mpv to bind socket
-        except Exception as e:
+        except OSError as e:
             logger.error(f"Failed to spawn mpv process: {e}")
 
         for attempt in range(10):
@@ -91,7 +90,7 @@ class MpvController:
                 await asyncio.sleep(0.5)
             except MpvConnectionError:
                 raise
-            except Exception as e:
+            except (ConnectionError, OSError) as e:
                 raise MpvConnectionError(f"Failed to connect to mpv: {e}")
         raise MpvConnectionError(f"Cannot connect to mpv socket after 10 attempts: {MPV_SOCKET}")
 
@@ -148,13 +147,17 @@ class MpvController:
             try:
                 self._writer.close()
                 await self._writer.wait_closed()
-            except Exception:
+            except OSError:
                 pass
         
         if self._mpv_process:
             try:
                 self._mpv_process.terminate()
-            except Exception:
+                try:
+                    await asyncio.wait_for(self._mpv_process.wait(), timeout=1.0)
+                except asyncio.TimeoutError:
+                    self._mpv_process.kill()
+            except OSError:
                 pass
 
     async def _observe_events(self):
@@ -173,7 +176,7 @@ class MpvController:
                     await self._handle_event(msg)
                 except (json.JSONDecodeError, UnicodeDecodeError):
                     continue
-                except Exception:
+                except (ConnectionError, OSError, asyncio.IncompleteReadError):
                     break
         finally:
             self.is_connected = False
@@ -208,7 +211,7 @@ class MpvController:
         try:
             self._writer.write(payload.encode())
             await self._writer.drain()
-        except Exception:
+        except OSError:
             self.is_connected = False
         return req_id
 
@@ -225,7 +228,7 @@ class MpvController:
             self._writer.write(payload.encode())
             await self._writer.drain()
             return await asyncio.wait_for(fut, timeout=2.0)
-        except Exception:
+        except (OSError, asyncio.TimeoutError):
             self._pending.pop(req_id, None)
             return None
 
