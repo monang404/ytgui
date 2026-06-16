@@ -7,7 +7,7 @@ from textual.containers import Grid, Vertical, Horizontal
 from textual.widgets import Header, Footer, Static, Input, Button
 from textual.binding import Binding
 from textual import on
-from textual.events import Resize, Focus
+from textual.events import Resize, Focus, Click
 from tui.theme import (
     BG_VOID, BG_PANEL, BG_ELEVATED, BORDER, BORDER_FOCUS,
     ACCENT_FIRE, ACCENT_GOLD, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM,
@@ -33,12 +33,25 @@ logger = logging.getLogger(__name__)
 class TermuxInput(Input):
     def watch_has_focus(self, value: bool) -> None:
         if value:
-            import os, subprocess
-            if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
-                try:
-                    subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                except Exception:
-                    pass
+            self._summon_keyboard()
+
+    async def on_click(self, event: Click) -> None:
+        if hasattr(super(), "on_click"):
+            # Ensure base Input handles the cursor positioning
+            base_on_click = getattr(super(), "on_click")
+            if asyncio.iscoroutinefunction(base_on_click):
+                await base_on_click(event)
+            else:
+                base_on_click(event)
+        self._summon_keyboard()
+
+    def _summon_keyboard(self) -> None:
+        import os, subprocess
+        if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
+            try:
+                subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
 
 class Dashboard(App):
     """The main Textual application for YTCLI."""
