@@ -84,6 +84,12 @@ class MpvController:
                 
                 self.is_connected = True
                 self._observer_task = asyncio.create_task(self._observe_events())
+                if os.name != 'nt':
+                    try:
+                        import stat
+                        os.chmod(MPV_SOCKET, stat.S_IRUSR | stat.S_IWUSR)
+                    except OSError:
+                        pass  # Bukan fatal jika chmod gagal
                 logger.info(f"Connected to mpv (attempt {attempt + 1})")
                 return
             except (FileNotFoundError, ConnectionRefusedError):
@@ -164,8 +170,7 @@ class MpvController:
         """Event loop listener for mpv events (end-file, time-pos, etc)."""
         try:
             await self._command(["observe_property", 1, "time-pos"])
-            await self._command(["observe_property", 2, "playback-time"])
-            await self._command(["observe_property", 3, "pause"])
+            await self._command(["observe_property", 2, "pause"])
 
             while self.is_connected:
                 try:

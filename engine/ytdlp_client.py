@@ -1,5 +1,6 @@
 import asyncio
 import yt_dlp
+import re
 from core.state import TrackInfo
 from config import CACHE_DIR
 
@@ -20,6 +21,16 @@ class YtDlpClient:
         "format": "bestaudio/best",
     }
 
+    def __init__(self):
+        self.is_cancelled = False
+
+    def cancel_download(self):
+        self.is_cancelled = True
+
+    def _check_cancel_hook(self, d):
+        if self.is_cancelled:
+            raise Exception("DownloadCancelled")
+
     async def search(self, query: str, max_results: int = 10) -> list[TrackInfo]:
         opts = {**self._YDL_OPTS_INFO,
                 "extract_flat": True,
@@ -36,7 +47,13 @@ class YtDlpClient:
     async def download_mp3(self, video_id: str, on_progress=None) -> str:
         """Download to CACHE_DIR/video_id.mp3. Returns the local path."""
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        out_path = CACHE_DIR / f"{video_id}.%(ext)s"
+        safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', video_id)
+        out_path = CACHE_DIR / f"{safe_id}.%(ext)s"
+        
+        hooks = [self._check_cancel_hook]
+        if on_progress:
+            hooks.append(on_progress)
+            
         opts = {
             **self._YDL_OPTS_INFO,
             "format": "bestaudio/best",
@@ -46,11 +63,11 @@ class YtDlpClient:
                 "preferredcodec": "mp3",
                 "preferredquality": "192",
             }],
-            "progress_hooks": [on_progress] if on_progress else [],
+            "progress_hooks": hooks,
         }
         loop = asyncio.get_running_loop()  # HIGH-03 fix
         await loop.run_in_executor(None, self._download_sync, video_id, opts)
-        return str(CACHE_DIR / f"{video_id}.mp3")
+        return str(CACHE_DIR / f"{safe_id}.mp3")
 
     def _extract_sync(self, url, opts):
         with yt_dlp.YoutubeDL(opts) as ydl:

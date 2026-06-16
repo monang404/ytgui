@@ -304,6 +304,18 @@ class Dashboard(App):
         except Exception:
             pass  # Widget belum mount saat pertama kali
 
+        # Sync tombol Download
+        try:
+            btn_dl = self.query_one("#btn_dl", Button)
+            if self.state.current_track and self.state.current_track.local_path:
+                btn_dl.label = "✅ CACHED"
+                btn_dl.set_class(True, "-active")
+            else:
+                btn_dl.label = "⬇ DL"
+                btn_dl.set_class(False, "-active")
+        except Exception:
+            pass
+
     async def _on_log_message(self, msg: str) -> None:
         self._status_msg = str(msg)
         self._status_msg_time = time.time()
@@ -336,6 +348,17 @@ class Dashboard(App):
     @on(Input.Submitted, "#search_input")
     async def on_search_submitted(self, event: Input.Submitted) -> None:
         query = event.value.strip()
+        
+        now = time.time()
+        if hasattr(self, '_last_search_time'):
+            if now - self._last_search_time < 1.5:
+                self._status_msg = "⏳ Tunggu sebentar sebelum mencari lagi..."
+                self._status_msg_time = now
+                if hasattr(self.now_playing, 'status_line'):
+                    self.now_playing.status_line.update(f"[{STATUS_ERR}]{self._status_msg}[/]")
+                return
+        self._last_search_time = now
+
         if query:
             await bus.publish(CMD_SEARCH, query)
             event.input.value = ""

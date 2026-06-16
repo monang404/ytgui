@@ -51,6 +51,19 @@ class QueueManager:
         bus.subscribe(CMD_QUEUE_SELECT, self._on_queue_select)
         bus.subscribe("track.pause.changed", self._on_pause_changed)
 
+    @staticmethod
+    def _user_friendly_error(e: Exception) -> str:
+        err_str = str(e).lower()
+        if "network is unreachable" in err_str or "name or service not known" in err_str or "socket" in err_str:
+            return "Koneksi internet terputus atau tidak stabil."
+        if "video unavailable" in err_str or "private video" in err_str:
+            return "Video tidak tersedia atau di-private."
+        if "sign in" in err_str:
+            return "Video dibatasi usia (butuh login)."
+        if "downloadcancelled" in err_str:
+            return "Unduhan dibatalkan."
+        return "Terjadi kesalahan internal. Coba lagi."
+
     async def play_next(self, _=None):
         """Plays the next track in the queue."""
         # Push current track to history before advancing
@@ -108,7 +121,8 @@ class QueueManager:
 
         except Exception as e:
             self.state.status = PlayerStatus.ERROR
-            await bus.publish(LOG_MESSAGE, f"Error playing: {e}")
+            user_msg = self._user_friendly_error(e)
+            await bus.publish(LOG_MESSAGE, f"Error playing: {user_msg}")
             await asyncio.sleep(2)
             await self.play_next()
 
@@ -189,7 +203,8 @@ class QueueManager:
             await bus.publish(LOG_MESSAGE, f"Downloaded: {track.title}")
             await bus.publish(DOWNLOAD_COMPLETE, track)
         except Exception as e:
-            await bus.publish(LOG_MESSAGE, f"Download failed: {e}")
+            user_msg = self._user_friendly_error(e)
+            await bus.publish(LOG_MESSAGE, f"Download failed: {user_msg}")
 
     async def _on_toggle_lyrics(self, _=None):
         """LOW-05 fix: Toggle lyrics display."""

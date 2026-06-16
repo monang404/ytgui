@@ -1,5 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
-SOCK="/tmp/mpv-yt-player.sock"
+BASE_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SOCK="$BASE_DIR/cache/sockets/ytplayer_mpv.sock"
 
 if [ -S "$SOCK" ]; then
     echo '{"command":["add","volume", 5]}' | \

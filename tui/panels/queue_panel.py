@@ -17,7 +17,23 @@ class QueuePanel(Widget):
             yield self.option_list
             yield self.footer
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_state_hash = None
+
     def update_state(self, state: AppState) -> None:
+        current_hash = hash((
+            state.current_track.video_id if state.current_track else None,
+            len(state.queue),
+            state.queue[0].video_id if state.queue else None,
+            self.size.width,
+            state.is_radio_mode
+        ))
+        
+        if self._last_state_hash == current_hash:
+            return
+            
+        self._last_state_hash = current_hash
         self.option_list.clear_options()
         
         terminal_width = self.size.width if self.size.width > 0 else 80

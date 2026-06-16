@@ -82,8 +82,10 @@ async def main():
                 await bus.publish(LOG_MESSAGE, "No results found.")
         except Exception as e:
             state.is_online = False
-            state.error_msg = str(e)
-            await bus.publish(LOG_MESSAGE, f"Search failed: {e}")
+            from engine.queue_manager import QueueManager
+            user_msg = QueueManager._user_friendly_error(e)
+            state.error_msg = user_msg
+            await bus.publish(LOG_MESSAGE, f"Search failed: {user_msg}")
 
     bus.subscribe(CMD_SEARCH, handle_search)
 
@@ -126,6 +128,7 @@ async def main():
             t.cancel()
         
         # Cleanup resources
+        ytdlp.cancel_download()
         await http_session.close()
         await mpv.close()
         await db.close()
