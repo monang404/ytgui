@@ -2,6 +2,8 @@ import re
 import logging
 import aiohttp
 import bisect
+import asyncio
+import syncedlyrics
 from config import LYRICS_API_BASE
 from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
 
@@ -55,6 +57,13 @@ class LyricsFetcher:
                                 if lrc:
                                     break
             
+            # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
+            if not lrc:
+                logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
+                loop = asyncio.get_running_loop()
+                query = f"{title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else title
+                lrc = await loop.run_in_executor(None, syncedlyrics.search, query)
+            
             if lrc:
                 self.lyrics_data = self._parse_lrc(lrc)
                 # LOW-07 fix: Store CLEAN lines (no timestamps) for display
@@ -62,7 +71,7 @@ class LyricsFetcher:
                 await bus.publish(LYRICS_UPDATED)
                 logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
             else:
-                logger.info("Lyrics: No lyrics found after fallback search")
+                logger.info("Lyrics: No lyrics found anywhere")
                 
         except Exception as e:
             logger.debug(f"Lyrics fetch failed: {e}")
