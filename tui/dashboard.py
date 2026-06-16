@@ -30,49 +30,85 @@ class Dashboard(App):
         grid-size: 2;
         grid-columns: 1fr 1fr;
         grid-rows: auto 1fr auto;
+        background: #11111b;
     }
     #search_input {
         column-span: 2;
         row-span: 1;
-        margin: 0 1;
+        margin: 1 2;
+        border: tall #89b4fa;
+        background: #1e1e2e;
+    }
+    #search_input:focus {
+        border: double #cba6f7;
     }
     #left_col {
         column-span: 1;
         row-span: 1;
+        padding: 0 1;
     }
     #right_col {
         column-span: 1;
         row-span: 1;
         layout: vertical;
+        padding: 0 1;
     }
-    #lyrics_panel {
+    #lyrics_panel, #queue_panel {
         height: 1fr;
-    }
-    #queue_panel {
-        height: 1fr;
+        border: tall #313244;
+        background: #1e1e2e;
+        margin-bottom: 1;
     }
     #controls {
         column-span: 2;
         row-span: 1;
         height: auto;
         padding: 1;
-        border: solid #FFC107;
+        border-top: heavy #45475a;
+        background: #181825;
     }
     .status-label {
-        color: #FFC107;
+        color: #a6e3a1;
         text-align: center;
+        text-style: bold;
         margin-bottom: 1;
     }
     #controls_row {
         layout: grid;
-        grid-size: 3;
+        grid-size: 4;
+        grid-gutter: 1 2;
         grid-rows: auto;
         height: auto;
         align: center middle;
     }
     Button {
-        margin: 0;
+        width: 100%;
         min-width: 5;
+        border: none;
+        background: #313244;
+        color: #cdd6f4;
+    }
+    Button:hover {
+        background: #45475a;
+        text-style: bold;
+    }
+    Button.-active {
+        background: #89b4fa;
+        color: #11111b;
+    }
+    #btn_quit {
+        background: #f38ba8;
+        color: #11111b;
+    }
+    #btn_quit:hover {
+        background: #eba0ac;
+    }
+    OptionList {
+        background: #1e1e2e;
+        border: none;
+    }
+    OptionList:focus {
+        border: blank;
     }
     """
 
