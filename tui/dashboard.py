@@ -30,6 +30,16 @@ from tui.panels.controls import ControlsPanel
 
 logger = logging.getLogger(__name__)
 
+class TermuxInput(Input):
+    def watch_has_focus(self, value: bool) -> None:
+        if value:
+            import os, subprocess
+            if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
+                try:
+                    subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except Exception:
+                    pass
+
 class Dashboard(App):
     """The main Textual application for YTCLI."""
 
@@ -208,7 +218,7 @@ class Dashboard(App):
         yield Header(show_clock=True)
         
         with Horizontal(id="top_bar"):
-            yield Input(placeholder="Search... ('/' focus, 'ESC' unfocus)", id="search_input")
+            yield TermuxInput(placeholder="Search... ('/' focus, 'ESC' unfocus)", id="search_input")
             self.online_dot = Static("●", id="online_indicator")
             yield self.online_dot
 
@@ -389,7 +399,7 @@ class Dashboard(App):
         return isinstance(self.focused, Input)
 
     async def action_focus_search(self) -> None:
-        input_widget = self.query_one("#search_input", Input)
+        input_widget = self.query_one("#search_input", TermuxInput)
         input_widget.focus()
         
         import os
