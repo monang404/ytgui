@@ -1,0 +1,81 @@
+import aiosqlite
+import time
+import logging
+from pathlib import Path
+from core.state import TrackInfo
+from config import DB_PATH
+
+logger = logging.getLogger(__name__)
+
+class Database:
+    """
+    CRITICAL-04 fix: Uses a single persistent connection instead of
+    opening a new connection for every operation.
+    MED-10 fix: Added separate increment_play_count method.
+    """
+    def __init__(self, db_path: Path = DB_PATH):
+        self.db_path = db_path
+        self._schema_path = Path(__file__).parent / "schema.sql"
+        self._conn = None
+
+    async def init(self):
+        """Initializes the database using the schema.sql file."""
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._conn = await aiosqlite.connect(self.db_path)
+        await self._conn.execute("PRAGMA journal_mode=WAL")
+        
+        with open(self._schema_path, "r", encoding="utf-8") as f:
+            schema_sql = f.read()
+        await self._conn.executescript(schema_sql)
+        await self._conn.commit()
+        logger.info(f"Database initialized at {self.db_path}")
+
+    async def close(self):
+        """Close the persistent connection gracefully."""
+        if self._conn:
+            await self._conn.close()
+            self._conn = None
+
+    async def get_track(self, video_id: str) -> dict | None:
+        """Retrieves track metadata from the database as a dictionary."""
+        self._conn.row_factory = aiosqlite.Row
+        async with self._conn.execute(
+            "SELECT * FROM tracks WHERE video_id = ?", (video_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def upsert_track(self, track: TrackInfo, stream_url: str = None, local_path: str = None):
+        """Inserts or updates a track record (metadata + cache URLs only)."""
+        ts = int(time.time())
+        query = """
+            INSERT INTO tracks (
+                video_id, title, artist, duration, view_count, thumbnail, 
+                stream_url, stream_url_ts, local_path, last_played, play_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ON CONFLICT(video_id) DO UPDATE SET
+                title=excluded.title,
+                artist=excluded.artist,
+                duration=excluded.duration,
+                view_count=excluded.view_count,
+                thumbnail=excluded.thumbnail,
+                stream_url=COALESCE(excluded.stream_url, tracks.stream_url),
+                stream_url_ts=COALESCE(excluded.stream_url_ts, tracks.stream_url_ts),
+                local_path=COALESCE(excluded.local_path, tracks.local_path),
+                last_played=excluded.last_played
+        """
+        await self._conn.execute(query, (
+            track.video_id, track.title, track.artist, track.duration,
+            track.view_count, track.thumbnail, stream_url, ts if stream_url else None,
+            local_path, ts
+        ))
+        await self._conn.commit()
+
+    async def increment_play_count(self, video_id: str):
+        """MED-10 fix: Only called when a track actually starts playing."""
+        ts = int(time.time())
+        await self._conn.execute(
+            "UPDATE tracks SET play_count = play_count + 1, last_played = ? WHERE video_id = ?",
+            (ts, video_id)
+        )
+        await self._conn.commit()

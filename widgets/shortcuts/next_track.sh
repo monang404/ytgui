@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-SOCK="/tmp/mpv-yt-player.sock"
+SOCK="${TMPDIR:-/data/data/com.termux/files/usr/tmp}/mpv-yt-player.sock"
 
 if [ -S "$SOCK" ]; then
     echo '{"command":["playlist-next","force"]}' | \

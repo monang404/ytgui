@@ -38,6 +38,7 @@ Aplikasi ini membutuhkan beberapa program eksternal untuk berjalan:
    ```
 3. Clone repository ini (atau salin file project ke dalam Termux):
    ```bash
+   pkg install socat termux-api -y
    git clone https://github.com/username/ytcli.git
    cd ytcli
    ```
@@ -104,7 +105,7 @@ Setelah aplikasi berjalan, Anda dapat mengontrol pemutaran langsung melalui tomb
 ## 📁 Struktur Direktori Cache
 
 Aplikasi ini menggunakan sistem *smart caching*. Semua data akan disimpan di folder `cache/` pada root direktori:
-- `cache/ytplayer.db` : Database SQLite penyimpan metadata, path file lokal, dan *play count*.
+- `cache/library.db` : Database SQLite penyimpan metadata, path file lokal, dan *play count*.
 - `cache/<video_id>.mp3` : File audio hasil unduhan manual (`[M]`).
 
 Anda bisa menghapus isi folder `cache` kapanpun jika ingin menghemat ruang penyimpanan.

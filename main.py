@@ -14,11 +14,12 @@ from integrations.sponsorblock import SponsorBlockHandler
 from integrations.lyrics import LyricsFetcher
 from engine.autoplay import AutoplayEngine
 from engine.queue_manager import QueueManager
+from config import BASE_DIR
 
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-    filename="ytplayer.log",
+    filename=BASE_DIR / "ytplayer.log",
     filemode="a"
 )
 
@@ -56,11 +57,14 @@ async def main():
         await bus.publish(LOG_MESSAGE, f"Searching: {query}...")
         try:
             results = await ytdlp.search(query, max_results=10)
+            state.is_online = True
             if results:
                 await bus.publish(SEARCH_RESULTS, results)
             else:
                 await bus.publish(LOG_MESSAGE, "No results found.")
         except Exception as e:
+            state.is_online = False
+            state.error_msg = str(e)
             await bus.publish(LOG_MESSAGE, f"Search failed: {e}")
 
     bus.subscribe(CMD_SEARCH, handle_search)
@@ -69,9 +73,22 @@ async def main():
     input_handler = InputHandler(state)
     dashboard = Dashboard(state, input_handler)
 
+    async def check_connectivity():
+        while True:
+            try:
+                async with http_session.get(
+                    "https://connectivitycheck.gstatic.com/generate_204",
+                    timeout=aiohttp.ClientTimeout(total=3)
+                ) as r:
+                    state.is_online = (r.status == 204)
+            except Exception:
+                state.is_online = False
+            await asyncio.sleep(30)
+
     tasks = [
         asyncio.create_task(dashboard.run()),
-        asyncio.create_task(input_handler.run())
+        asyncio.create_task(input_handler.run()),
+        asyncio.create_task(check_connectivity())
     ]
     
     # CRITICAL-05 fix: Graceful shutdown with proper cleanup

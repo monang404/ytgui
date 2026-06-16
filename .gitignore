@@ -4,23 +4,39 @@ __pycache__/
 *$py.class
 *.so
 
-# Environments
+# Virtual environments
 .env
 .venv
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# App specific cache and logs
-cache/
+# App runtime — dibuat otomatis saat pertama run, jangan didistribusikan
+cache/mp3/
+cache/*.db
+cache/*.db-shm
+cache/*.db-wal
 *.log
-ytplayer.log
-tests/cache/
+
+# Dokumen internal developer — bukan untuk user
+agen_konteks.md
+arsitektur.md
+audit.md
+design.md
+implementasi_plan.md
+AUDIT_PROMPT.md
+
+# Test suite — tidak dibutuhkan user Termux
+tests/
+
+# File init kosong di widgets (tidak berguna)
+widgets/__init__.py
 
 # IDE / OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Windows artifacts
+desktop.ini

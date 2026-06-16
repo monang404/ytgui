@@ -1,6 +1,7 @@
 import re
 import logging
 import aiohttp
+import bisect
 from config import LYRICS_API_BASE
 from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
 
@@ -74,12 +75,9 @@ class LyricsFetcher:
         if not self.lyrics_data or not isinstance(position, (int, float)):
             return
 
-        active_idx = 0
-        for i, (timestamp, _) in enumerate(self.lyrics_data):
-            if timestamp <= position:
-                active_idx = i
-            else:
-                break
+        timestamps = [t for t, _ in self.lyrics_data]
+        active_idx = bisect.bisect_right(timestamps, position) - 1
+        active_idx = max(0, active_idx)
                 
         if self.state.lyrics_index != active_idx:
             self.state.lyrics_index = active_idx

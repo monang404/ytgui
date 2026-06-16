@@ -46,6 +46,7 @@ class QueueManager:
         bus.subscribe(CMD_VOLUME_DOWN, self._on_volume_down)
         bus.subscribe(CMD_DOWNLOAD, self._on_download)
         bus.subscribe(CMD_TOGGLE_LYRICS, self._on_toggle_lyrics)
+        bus.subscribe("track.pause.changed", self._on_pause_changed)
 
     async def play_next(self, _=None):
         """Plays the next track in the queue."""
@@ -139,6 +140,12 @@ class QueueManager:
         elif self.state.status == PlayerStatus.PAUSED:
             self.state.status = PlayerStatus.PLAYING
 
+    async def _on_pause_changed(self, is_paused: bool):
+        if is_paused and self.state.status == PlayerStatus.PLAYING:
+            self.state.status = PlayerStatus.PAUSED
+        elif not is_paused and self.state.status == PlayerStatus.PAUSED:
+            self.state.status = PlayerStatus.PLAYING
+
     async def _on_volume_up(self, _=None):
         """HIGH-07 fix: Volume control."""
         self.state.volume = min(150, self.state.volume + 5)
@@ -164,7 +171,16 @@ class QueueManager:
 
         await bus.publish(LOG_MESSAGE, f"Downloading: {track.title}...")
         try:
-            local_path = await self.ytdlp.download_mp3(track.video_id)
+            loop = asyncio.get_running_loop()
+            def _progress_hook(d):
+                if d.get("status") == "downloading":
+                    pct = d.get("_percent_str", "??").strip()
+                    asyncio.run_coroutine_threadsafe(
+                        bus.publish(LOG_MESSAGE, f"Downloading: {pct}"),
+                        loop
+                    )
+            
+            local_path = await self.ytdlp.download_mp3(track.video_id, on_progress=_progress_hook)
             track.local_path = local_path
             await self.db.upsert_track(track, local_path=local_path)
             await bus.publish(LOG_MESSAGE, f"Downloaded: {track.title}")

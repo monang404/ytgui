@@ -122,6 +122,7 @@ class MpvController:
         try:
             await self._command(["observe_property", 1, "time-pos"])
             await self._command(["observe_property", 2, "playback-time"])
+            await self._command(["observe_property", 3, "pause"])
 
             while self.is_connected:
                 try:
@@ -146,10 +147,13 @@ class MpvController:
             return
 
         event = msg.get("event")
-        if event == "property-change" and msg.get("name") == "time-pos":
+        if event == "property-change":
+            name = msg.get("name")
             data = msg.get("data")
-            if isinstance(data, (int, float)):
+            if name == "time-pos" and isinstance(data, (int, float)):
                 await bus.publish(TRACK_PROGRESS, float(data))
+            elif name == "pause":
+                await bus.publish("track.pause.changed", bool(data))
         elif event == "end-file":
             reason = msg.get("reason", "")
             if reason in ("eof", "stop"):

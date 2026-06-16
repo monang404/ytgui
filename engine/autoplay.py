@@ -1,5 +1,5 @@
 from engine.ytdlp_client import YtDlpClient
-from core.event_bus import bus, QUEUE_EMPTY, CMD_TOGGLE_RADIO, QUEUE_UPDATED, LOG_MESSAGE
+from core.event_bus import bus, QUEUE_EMPTY, CMD_TOGGLE_RADIO, QUEUE_UPDATED, LOG_MESSAGE, CMD_NEXT
 from config import AUTOPLAY_THRESHOLD
 
 class AutoplayEngine:
@@ -48,6 +48,8 @@ class AutoplayEngine:
                 self.state.queue.extend(new_tracks[:3])
                 await bus.publish(QUEUE_UPDATED)
                 await bus.publish(LOG_MESSAGE, f"Radio: Added {len(new_tracks[:3])} tracks.")
+                if not self.state.current_track:
+                    await bus.publish(CMD_NEXT)
             else:
                 await bus.publish(LOG_MESSAGE, "Radio: No new tracks found.")
         except Exception as e:

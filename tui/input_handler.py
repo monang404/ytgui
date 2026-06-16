@@ -24,14 +24,26 @@ class InputHandler:
     async def run(self):
         """Async loop to continuously read keystrokes without blocking."""
         loop = asyncio.get_running_loop()  # HIGH-03: use get_running_loop
-        while True:
-            # Run the blocking read in executor
-            char = await loop.run_in_executor(None, self._read_char)
-            if not char:
-                await asyncio.sleep(0.05)
-                continue
+        
+        fd = None
+        old_settings = None
+        if sys.platform != 'win32':
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            tty.setcbreak(fd)
             
-            await self._handle_char(char)
+        try:
+            while True:
+                # Run the blocking read in executor
+                char = await loop.run_in_executor(None, self._read_char)
+                if not char:
+                    await asyncio.sleep(0.05)
+                    continue
+                
+                await self._handle_char(char)
+        finally:
+            if sys.platform != 'win32' and fd is not None and old_settings is not None:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
     def _read_char(self):
         """Reads a single character from stdin. Cross-platform.
@@ -42,17 +54,12 @@ class InputHandler:
                 return msvcrt.getch().decode('utf-8', errors='ignore')
             return None
         else:
-            fd = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
             try:
-                tty.setcbreak(fd)  # cbreak instead of raw, preserves Ctrl+C
                 if select.select([sys.stdin], [], [], 0.05)[0]:
                     return sys.stdin.read(1)
                 return None
             except Exception:
                 return None
-            finally:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
     async def _handle_char(self, char: str):
         if self.is_searching:
