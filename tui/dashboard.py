@@ -31,6 +31,7 @@ class Dashboard:
         self._status_msg = ""
         self._status_msg_time = 0.0
         self._last_width = 0
+        self._last_height = 0
 
     def _make_layout(self) -> Layout:
         """Build a fresh layout based on current terminal size."""
@@ -131,6 +132,7 @@ class Dashboard:
         layout = self._make_layout()
         self._fill_layout(layout)
         self._last_width = self.console.size.width
+        self._last_height = self.console.size.height
 
         # screen=True for proper full-screen rendering.
         # refresh_per_second=1 — low auto-refresh to reduce flicker.
@@ -145,10 +147,12 @@ class Dashboard:
 
         with live:
             while not self._quit:
-                # Rebuild layout only if terminal width actually changed
+                # Rebuild layout only if terminal width or height changed
                 new_width = self.console.size.width
-                if new_width != self._last_width:
+                new_height = self.console.size.height
+                if new_width != self._last_width or new_height != self._last_height:
                     self._last_width = new_width
+                    self._last_height = new_height
                     layout = self._make_layout()
                     live.update(layout)
 
