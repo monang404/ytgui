@@ -92,8 +92,10 @@ class YtDlpClient:
         
         # MED-07 fix: Guard against missing/empty video ID
         video_id = entry.get("id", "") or entry.get("url", "")
-        if not video_id:
-            video_id = f"unknown_{hash(entry.get('title', ''))}"
+        if video_id and not re.match(r'^[a-zA-Z0-9_\-]{1,64}$', video_id):
+            video_id = f"vid_{abs(hash(entry.get('title', ''))) % 10**10}"
+        elif not video_id:
+            video_id = f"vid_{abs(hash(entry.get('title', ''))) % 10**10}"
         
         return TrackInfo(
             video_id=video_id,

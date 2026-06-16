@@ -17,7 +17,14 @@ if os.name == 'nt':
 else:
     socket_dir = BASE_DIR / "cache" / "sockets"
     socket_dir.mkdir(parents=True, exist_ok=True)
-    MPV_SOCKET = os.environ.get("YT_PLAYER_SOCKET", str(socket_dir / "mpv-yt-player.sock"))
+    _raw_socket = os.environ.get("YT_PLAYER_SOCKET", str(socket_dir / "mpv-yt-player.sock"))
+    _socket_path = Path(_raw_socket).resolve()
+    _allowed_prefix = BASE_DIR.resolve()
+    if not str(_socket_path).startswith(str(_allowed_prefix)):
+        import warnings
+        warnings.warn(f"YT_PLAYER_SOCKET '{_raw_socket}' di luar BASE_DIR — menggunakan default")
+        _socket_path = socket_dir / "mpv-yt-player.sock"
+    MPV_SOCKET = str(_socket_path)
 
 DEFAULT_VOLUME = int(os.environ.get("YT_PLAYER_VOLUME", 80))
 GAPLESS_PREBUFFER_SEC = 15

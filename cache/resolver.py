@@ -1,11 +1,7 @@
 import os
-import time
 from cache.db import Database
 from engine.ytdlp_client import YtDlpClient
 from core.state import TrackInfo
-
-# URL expires after 6 hours, we cache for 4 hours
-STREAM_URL_TTL = 4 * 3600
 
 class CacheResolver:
     """
@@ -20,27 +16,19 @@ class CacheResolver:
         self.ytdlp = ytdlp
 
     async def resolve(self, track: TrackInfo) -> str:
-        """Returns the playback URI (either local path or streaming URL)."""
+        """Returns the playback URI (local path atau YouTube URL untuk MPV)."""
         row = await self.db.get_track(track.video_id)
         
-        # Rule 1: Local file
+        # Rule 1: Local file — ini yang benar-benar berguna
         if row and row.get("local_path"):
             path = row["local_path"]
             if os.path.isfile(path):
                 track.local_path = path
                 return path
 
-        # Rule 2: Cached Stream URL
-        if row and row.get("stream_url") and row.get("stream_url_ts"):
-            stream_url = row["stream_url"]
-            age = time.time() - row["stream_url_ts"]
-            # Ignore old .googlevideo.com URLs to prevent 403 Forbidden
-            if age < STREAM_URL_TTL and stream_url.startswith("https://www.youtube.com/"):
-                track.stream_url = stream_url
-                return stream_url
-
-        # Rule 3: Fetch fresh URL
-        url = await self.ytdlp.get_stream_url(track.video_id)
+        # Rule 2: Selalu pakai YouTube URL (MPV + yt-dlp hook akan handle)
+        url = f"https://www.youtube.com/watch?v={track.video_id}"
         track.stream_url = url
-        await self.db.upsert_track(track, stream_url=url)
+        # Simpan metadata track ke DB (tanpa stream_url)
+        await self.db.upsert_track(track)
         return url

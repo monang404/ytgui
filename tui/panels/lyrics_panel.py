@@ -3,7 +3,7 @@ from textual.widgets import Static
 from textual.containers import Vertical
 from rich.markup import escape
 from core.state import AppState
-from tui.theme import *
+from tui.theme import TEXT_DIM, ACCENT_FIRE
 
 class LyricsPanel(Widget):
     """The Synchronized Lyrics panel."""
@@ -21,7 +21,9 @@ class LyricsPanel(Widget):
         else:
             active_idx = state.lyrics_index
             total = len(state.lyrics_lines)
-            window_size = min(4, max(2, total // 6))
+            panel_h = self.size.height if self.size.height > 0 else 12
+            available = max(4, panel_h - 2)
+            window_size = min(available // 2, 8)
             
             for i in range(active_idx - window_size, active_idx + window_size + 1):
                 if i < 0 or i >= total:

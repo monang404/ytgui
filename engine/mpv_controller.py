@@ -57,7 +57,14 @@ class MpvController:
                 stderr=asyncio.subprocess.DEVNULL,
                 stdin=asyncio.subprocess.DEVNULL
             )
-            await asyncio.sleep(1.0)  # Wait for mpv to bind socket
+            if os.name != 'nt':
+                # Poll sampai socket tersedia, max 5 detik
+                for _ in range(50):
+                    await asyncio.sleep(0.1)
+                    if os.path.exists(MPV_SOCKET):
+                        break
+            else:
+                await asyncio.sleep(1.0)  # Windows pipe tidak bisa di-poll dengan cara sama
         except OSError as e:
             logger.error(f"Failed to spawn mpv process: {e}")
 

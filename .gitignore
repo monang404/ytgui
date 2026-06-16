@@ -35,8 +35,10 @@ FINAL_RELEASE_REPORT.md
 verifikasi.MD
 ui_*.md
 
-# Test suite — tidak dibutuhkan user Termux
-tests/
+# Test artifacts (bukan test code)
+.pytest_cache/
+htmlcov/
+.coverage
 verify_*.py
 debug_*.py
 test_*.py

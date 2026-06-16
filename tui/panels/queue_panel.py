@@ -5,7 +5,7 @@ from textual.containers import Vertical
 from rich.markup import escape
 from core.state import AppState
 from core.event_bus import bus, CMD_QUEUE_SELECT
-from tui.theme import *
+from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK
 
 class QueuePanel(Widget):
     """The Queue & Autoplay panel using OptionList for selection."""
@@ -48,14 +48,14 @@ class QueuePanel(Widget):
             if state.current_track:
                 title = state.current_track.title
                 if len(title) > max_title:
-                    title = title[:max_title - 2] + ".."
+                    title = title[:max_title - 1] + "…"
                 self.option_list.add_option(f"[{ACCENT_FIRE}]> {escape(title)}[/]")
                 
             for i, track in enumerate(state.queue, 1):
                 dur = f"{track.duration // 60}:{track.duration % 60:02d}"
                 title = track.title
                 if len(title) > max_title:
-                    title = title[:max_title - 2] + ".."
+                    title = title[:max_title - 1] + "…"
                 self.option_list.add_option(f"  {i}. {escape(title)} [{TEXT_DIM}]{dur}[/]")
 
         radio = f"[{STATUS_OK}]ON[/]" if state.is_radio_mode else f"[{TEXT_DIM}]OFF[/]"

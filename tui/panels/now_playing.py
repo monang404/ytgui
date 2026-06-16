@@ -10,7 +10,7 @@ from textual import events
 
 from core.event_bus import bus, CMD_SEEK
 from core.state import AppState, PlayerStatus
-from tui.theme import *
+from tui.theme import TEXT_DIM, ACCENT_GOLD, STATUS_ERR, TEXT_PRIMARY, ACCENT_FIRE
 
 _BAR_CHARS = "▁▂▃▄▅▆▇█"
 
@@ -147,8 +147,8 @@ class NowPlayingPanel(Widget):
                     views = f"{track.view_count} views"
 
             max_title_len = max(10, inner_width - 2)
-            title_display = track.title[:max_title_len] + ".." if len(track.title) > max_title_len else track.title
-            artist_display = track.artist[:max_title_len] + ".." if len(track.artist) > max_title_len else track.artist
+            title_display = track.title[:max_title_len - 1] + "…" if len(track.title) > max_title_len else track.title
+            artist_display = track.artist[:max_title_len - 1] + "…" if len(track.artist) > max_title_len else track.artist
 
             dur_str = f"{track.duration // 60}:{track.duration % 60:02d}"
             via_str = "Cache" if track.local_path else "Stream"

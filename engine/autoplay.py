@@ -38,8 +38,8 @@ class AutoplayEngine:
             # Filter out tracks already in queue or currently playing
             existing_ids = {t.video_id for t in self.state.queue}
             existing_ids.add(self.state.current_track.video_id)
-            # Also filter from history to avoid repeats
-            for t in self.state.history:
+            # Hanya cek 20 track terakhir dari history untuk avoid repeat:
+            for t in self.state.history[-20:]:
                 existing_ids.add(t.video_id)
             
             new_tracks = [t for t in results if t.video_id not in existing_ids]

@@ -44,7 +44,11 @@ Aplikasi ini membutuhkan beberapa program eksternal untuk berjalan:
    ```
 4. Instal dependensi Python:
    ```bash
+   # User install:
    pip install -r requirements.txt
+
+   # Developer install (untuk menjalankan tests):
+   pip install -r requirements.txt -r requirements-dev.txt
    ```
 
 ### 💻 Instalasi di Windows

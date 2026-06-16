@@ -8,7 +8,13 @@ from textual.widgets import Header, Footer, Static, Input, Button
 from textual.binding import Binding
 from textual import on
 from textual.events import Resize
-from tui.theme import *
+from tui.theme import (
+    BG_VOID, BG_PANEL, BG_ELEVATED, BORDER, BORDER_FOCUS,
+    ACCENT_FIRE, ACCENT_GOLD, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM,
+    STATUS_OK, STATUS_ERR, BREAKPOINT_LANDSCAPE,
+    HEIGHT_TOP_BAR, HEIGHT_NOW_PLAYING, HEIGHT_TAB_BAR,
+    HEIGHT_CONTROLS_TOTAL
+)
 
 from core.event_bus import (
     bus, LOG_MESSAGE, CMD_QUIT, CMD_SEARCH, CMD_FOCUS_SEARCH, CMD_UNFOCUS,
@@ -236,7 +242,7 @@ class Dashboard(App):
         
         # Initial layout mode sync
         is_landscape = self.size.width >= BREAKPOINT_LANDSCAPE
-        is_short = self.size.height < 35
+        is_short = self.size.height < 24
         self.screen.set_class(is_landscape, "-landscape")
         self.screen.set_class(not is_landscape, "-portrait")
         self.screen.set_class(is_short, "-compact")
@@ -250,7 +256,7 @@ class Dashboard(App):
 
     def on_resize(self, event: Resize) -> None:
         is_landscape = event.size.width >= BREAKPOINT_LANDSCAPE
-        is_short = event.size.height < 35
+        is_short = event.size.height < 24
         self.screen.set_class(is_landscape, "-landscape")
         self.screen.set_class(not is_landscape, "-portrait")
         self.screen.set_class(is_short, "-compact")
@@ -273,7 +279,8 @@ class Dashboard(App):
 
     def refresh_ui(self) -> None:
         # Check if status msg expired
-        if self._status_msg and (time.time() - self._status_msg_time > 5.0):
+        ttl = getattr(self, '_status_msg_ttl', 5.0)
+        if self._status_msg and (time.time() - self._status_msg_time > ttl):
             self._status_msg = ""
             self.now_playing.status_line.update("")
 
@@ -283,8 +290,14 @@ class Dashboard(App):
 
         # Update panels (always update both so background data is fresh)
         self.now_playing.update_state(self.state)
-        self.queue_panel.update_state(self.state)
-        self.lyrics_panel.update_state(self.state)
+        
+        if self.queue_panel.display:
+            self.queue_panel.update_state(self.state)
+            
+        if self.lyrics_panel.display and self.state.status == PlayerStatus.PLAYING:
+            self.lyrics_panel.update_state(self.state)
+        elif self.lyrics_panel.display:
+            pass
 
         # Sync tombol pause/resume berdasarkan state
         try:
@@ -319,6 +332,14 @@ class Dashboard(App):
     async def _on_log_message(self, msg: str) -> None:
         self._status_msg = str(msg)
         self._status_msg_time = time.time()
+        
+        if "Downloading:" in str(msg) or "⬇" in str(msg):
+            self._status_msg_ttl = 120.0
+        elif "Downloaded:" in str(msg) or "gagal" in str(msg).lower():
+            self._status_msg_ttl = 8.0
+        else:
+            self._status_msg_ttl = 5.0
+            
         if hasattr(self.now_playing, 'status_line'):
             self.now_playing.status_line.update(f"[{ACCENT_GOLD}]{msg}[/]")
         self.refresh_ui()
