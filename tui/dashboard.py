@@ -45,16 +45,6 @@ class Dashboard(App):
         height: 3;
         margin-bottom: 1;
     }}
-    #btn_kbd {{
-        width: 12;
-        background: {BG_ELEVATED};
-        color: {ACCENT_GOLD};
-        border: tall {BORDER};
-    }}
-    #btn_kbd:hover {{
-        background: {BORDER};
-        color: {TEXT_PRIMARY};
-    }}
     #search_input {{
         width: 1fr;
         border: tall {BORDER};
@@ -218,7 +208,6 @@ class Dashboard(App):
         yield Header(show_clock=True)
         
         with Horizontal(id="top_bar"):
-            yield Button("⌨️ KBD", id="btn_kbd")
             yield Input(placeholder="Search... ('/' focus, 'ESC' unfocus)", id="search_input")
             self.online_dot = Static("●", id="online_indicator")
             yield self.online_dot
@@ -403,19 +392,6 @@ class Dashboard(App):
         input_widget = self.query_one("#search_input", Input)
         input_widget.focus()
         
-    @on(Button.Pressed, "#btn_kbd")
-    def _summon_keyboard_btn(self, event) -> None:
-        # Focus the search input first
-        self.query_one("#search_input", Input).focus()
-        
-        # Trigger soft keyboard
-        import os, subprocess
-        if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
-            try:
-                subprocess.Popen(["termux-show-keyboard"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except Exception:
-                pass
-
     async def action_unfocus(self) -> None:
         if self._is_input_focused():
             self.set_focus(None)
