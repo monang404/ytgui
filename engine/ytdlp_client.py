@@ -33,12 +33,36 @@ class YtDlpClient:
 
     async def search(self, query: str, max_results: int = 10) -> list[TrackInfo]:
         opts = {**self._YDL_OPTS_INFO,
-                "extract_flat": True,
-                "playlist_items": f"1:{max_results}"}
-        url = f"ytsearch{max_results}:{query}"
+                "extract_flat": True}
+        url = f"ytsearch30:{query}"
         loop = asyncio.get_running_loop()  # HIGH-03 fix
         results = await loop.run_in_executor(None, self._extract_sync, url, opts)
-        return [self._to_track(e) for e in results.get("entries", []) if e]
+        
+        tracks = []
+        for e in results.get("entries", []):
+            if not e:
+                continue
+                
+            duration_raw = e.get("duration")
+            try:
+                duration = int(duration_raw) if duration_raw else 0
+            except (ValueError, TypeError):
+                duration = 0
+                
+            title_raw = e.get("title")
+            title = str(title_raw).lower() if title_raw else ""
+            
+            # Filter kompilasi dan album:
+            if duration > 600:
+                continue
+            if any(kw in title for kw in ["compilation", "full album", "mix", "playlist"]):
+                continue
+                
+            tracks.append(self._to_track(e))
+            if len(tracks) >= max_results:
+                break
+                
+        return tracks
 
     async def get_stream_url(self, video_id: str) -> str:
         """Get direct audio URL. We now delegate this to mpv internally to avoid HTTP 403 Forbidden."""
