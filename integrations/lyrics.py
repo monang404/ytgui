@@ -25,29 +25,50 @@ class LyricsFetcher:
         self.state.lyrics_index = 0
         await bus.publish(LYRICS_UPDATED)
 
-        url = f"{LYRICS_API_BASE}/get"
-        params = {"track_name": title, "artist_name": artist, "duration": duration}
+        session = self._session or aiohttp.ClientSession()
+        close_after = self._session is None
+        
         try:
-            session = self._session or aiohttp.ClientSession()
-            close_after = self._session is None
-            try:
-                async with session.get(
-                    url, params=params,
-                    timeout=aiohttp.ClientTimeout(total=5)
-                ) as resp:
+            # 1. Coba pencarian spesifik (exact match) dengan durasi
+            url_get = f"{LYRICS_API_BASE}/get"
+            params_get = {"track_name": title, "artist_name": artist, "duration": duration}
+            lrc = None
+            
+            async with session.get(url_get, params=params_get, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
+                    
+            # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
+            if not lrc:
+                url_search = f"{LYRICS_API_BASE}/search"
+                # Format query: Gabungkan title dan artist jika artist bukan 'Unknown'
+                query = f"{title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else title
+                params_search = {"q": query}
+                
+                async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                     if resp.status == 200:
-                        data = await resp.json()
-                        lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
-                        self.lyrics_data = self._parse_lrc(lrc)
-                        # LOW-07 fix: Store CLEAN lines (no timestamps) for display
-                        self.state.lyrics_lines = [text for _, text in self.lyrics_data]
-                        await bus.publish(LYRICS_UPDATED)
-                        logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
-            finally:
-                if close_after:
-                    await session.close()
+                        results = await resp.json()
+                        if isinstance(results, list):
+                            for res in results:
+                                lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
+                                if lrc:
+                                    break
+            
+            if lrc:
+                self.lyrics_data = self._parse_lrc(lrc)
+                # LOW-07 fix: Store CLEAN lines (no timestamps) for display
+                self.state.lyrics_lines = [text for _, text in self.lyrics_data]
+                await bus.publish(LYRICS_UPDATED)
+                logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
+            else:
+                logger.info("Lyrics: No lyrics found after fallback search")
+                
         except Exception as e:
             logger.debug(f"Lyrics fetch failed: {e}")
+        finally:
+            if close_after:
+                await session.close()
 
     def _parse_lrc(self, lrc_text: str) -> list[tuple[float, str]]:
         """Parse LRC format. Strips timestamp tags from text content."""
