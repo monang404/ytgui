@@ -19,6 +19,7 @@ class YtDlpClient:
         "no_warnings": True,
         "extract_flat": False,
         "format": "bestaudio/best",
+        "format_sort": ["abr", "asr"],
     }
 
     def __init__(self):
@@ -81,6 +82,7 @@ class YtDlpClient:
         opts = {
             **self._YDL_OPTS_INFO,
             "format": "bestaudio/best",
+            "format_sort": ["abr", "asr"],
             "outtmpl": str(out_path),
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",

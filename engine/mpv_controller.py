@@ -35,11 +35,18 @@ class MpvController:
         ytdl_arg = f"--script-opts=ytdl_hook-ytdl_path={ytdl_path}" if ytdl_path else ""
         
         # Auto-spawn mpv in background
+        common_args = [
+            "--no-video", "--idle",
+            "--ytdl-format=bestaudio/best",
+            "--ytdl-raw-options=format-sort=abr,format-sort=asr",
+            "--audio-pitch-correction=yes"
+        ]
+        
         if os.name == 'nt':
             tcp_port = os.environ.get("YT_PLAYER_MPV_PORT", "12345")
             os.environ["YT_PLAYER_MPV_PORT"] = tcp_port
-            cmd = ["mpv", "--no-video", "--idle", "--ytdl-format=bestaudio/best", f"--input-ipc-server=tcp://127.0.0.1:{tcp_port}"]
-            if ytdl_arg: cmd.insert(3, ytdl_arg)
+            cmd = ["mpv"] + common_args + [f"--input-ipc-server=tcp://127.0.0.1:{tcp_port}"]
+            if ytdl_arg: cmd.insert(1, ytdl_arg)
         else:
             os.makedirs(os.path.dirname(MPV_SOCKET), exist_ok=True)
             if os.path.exists(MPV_SOCKET):
@@ -47,8 +54,8 @@ class MpvController:
                     os.remove(MPV_SOCKET)
                 except OSError:
                     pass
-            cmd = ["mpv", "--no-video", "--idle", "--ytdl-format=bestaudio/best", f"--input-ipc-server={MPV_SOCKET}"]
-            if ytdl_arg: cmd.insert(3, ytdl_arg)
+            cmd = ["mpv"] + common_args + [f"--input-ipc-server={MPV_SOCKET}"]
+            if ytdl_arg: cmd.insert(1, ytdl_arg)
             
         try:
             self._mpv_process = await asyncio.create_subprocess_exec(
