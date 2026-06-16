@@ -4,6 +4,7 @@ from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import Static
 from textual.containers import Vertical
+from rich.markup import escape
 from textual.reactive import reactive
 from textual import events
 
@@ -103,8 +104,8 @@ class NowPlayingPanel(Widget):
             via_str = "Cache" if track.local_path else "Stream"
             
             lines = [
-                f"[bold white]  {title_display}[/]",
-                f"[dim]   {artist_display}[/]",
+                f"[bold white]  {escape(title_display)}[/]",
+                f"[dim]   {escape(artist_display)}[/]",
                 f"[dim]   {views}  |  {dur_str}[/]" if views else f"[dim]   {dur_str}[/]",
                 f"[dim]   Via: {via_str}[/]",
                 "",

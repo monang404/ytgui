@@ -1,6 +1,7 @@
 from textual.widget import Widget
 from textual.widgets import Static
 from textual.containers import Vertical
+from rich.markup import escape
 from core.state import AppState
 
 class LyricsPanel(Widget):
@@ -32,14 +33,14 @@ class LyricsPanel(Widget):
                     continue
                     
                 if i == active_idx:
-                    lines.append(f"[bold #FF6B35]> {text}[/]")
+                    lines.append(f"[bold #FF6B35]> {escape(text)}[/]")
                 elif i < active_idx:
                     dist = active_idx - i
                     style = "dim" if dist > 2 else ("#666666" if dist > 1 else "#888888")
-                    lines.append(f"[{style}]  {text}[/]")
+                    lines.append(f"[{style}]  {escape(text)}[/]")
                 else:
                     dist = i - active_idx
                     style = "dim" if dist > 2 else ("#AAAAAA" if dist > 1 else "#CCCCCC")
-                    lines.append(f"[{style}]  {text}[/]")
+                    lines.append(f"[{style}]  {escape(text)}[/]")
 
         self.content.update("\n".join(lines))

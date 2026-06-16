@@ -2,6 +2,7 @@ from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import OptionList, Static
 from textual.containers import Vertical
+from rich.markup import escape
 from core.state import AppState
 from core.event_bus import bus, CMD_QUEUE_SELECT
 
@@ -34,14 +35,14 @@ class QueuePanel(Widget):
                 title = state.current_track.title
                 if len(title) > max_title:
                     title = title[:max_title - 2] + ".."
-                self.option_list.add_option(f"[#FF6B35]> {title}[/]")
+                self.option_list.add_option(f"[#FF6B35]> {escape(title)}[/]")
                 
             for i, track in enumerate(state.queue, 1):
                 dur = f"{track.duration // 60}:{track.duration % 60:02d}"
                 title = track.title
                 if len(title) > max_title:
                     title = title[:max_title - 2] + ".."
-                self.option_list.add_option(f"  {i}. {title} [dim]{dur}[/]")
+                self.option_list.add_option(f"  {i}. {escape(title)} [dim]{dur}[/]")
 
         radio = "[green]ON[/]" if state.is_radio_mode else "[dim]OFF[/]"
         self.footer.update(f"Radio: {radio}")
