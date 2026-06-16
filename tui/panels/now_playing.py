@@ -91,8 +91,47 @@ class NowPlayingPanel(Widget):
         eq_text = _equalizer_frame(time.time(), n_bars, is_playing)
         is_compact = self.size.height <= 8
         
+        if state.status == PlayerStatus.ERROR and getattr(state, 'error_msg', ''):
+            self.info_label.update(
+                f"\n[bold {STATUS_ERR}]  ⚠ Error Sistem[/]\n\n"
+                f"[{TEXT_DIM}]  {escape(state.error_msg)}[/]\n\n"
+                f"[{TEXT_DIM}]  Restart aplikasi setelah masalah teratasi.[/]"
+            )
+            self.progress_bar.position = 0
+            self.progress_bar.duration = 0
+            self.status_line.display = not is_compact
+            return
+
+        if state.status == PlayerStatus.LOADING:
+            dots = "." * (int(time.time() * 2) % 4)
+            track_name = state.current_track.title if state.current_track else "..."
+            self.info_label.update(
+                f"\n[{ACCENT_GOLD}]  ⏳ Memuat{dots}[/]\n\n"
+                f"[{TEXT_DIM}]  {escape(track_name[:40])}[/]\n\n"
+                f"[{TEXT_DIM}]{eq_text}[/]"
+            )
+            self.progress_bar.position = 0
+            self.progress_bar.duration = 0
+            self.status_line.display = not is_compact
+            return
+
         if not state.current_track:
-            self.info_label.update(f"\n[{TEXT_DIM}]  No track selected.[/]\n\n[{TEXT_DIM}]{eq_text}[/]")
+            hint_lines = [
+                "",
+                f"[bold {TEXT_PRIMARY}]  YT Termux Player Pro[/]",
+                "",
+                f"[{TEXT_DIM}]  Tekan [bold {ACCENT_GOLD}]/[/] untuk mencari lagu[/]",
+                f"[{TEXT_DIM}]  Ketik nama lagu atau artis, lalu Enter[/]",
+                "",
+            ]
+            if not is_compact:
+                hint_lines += [
+                    f"[{TEXT_DIM}]  Shortcut: [bold]P[/]=Pause  [bold]N[/]=Next  [bold]B[/]=Prev[/]",
+                    f"[{TEXT_DIM}]            [bold]U[/]/[bold]D[/]=Vol  [bold]R[/]=Radio  [bold]Q[/]=Quit[/]",
+                    "",
+                ]
+            hint_lines.append(f"[{TEXT_DIM}]{eq_text}[/]")
+            self.info_label.update("\n".join(hint_lines))
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
             self.status_line.display = not is_compact

@@ -48,6 +48,6 @@ class ControlsPanel(Static):
         elif button_id == "btn_radio":
             await bus.publish(CMD_TOGGLE_RADIO)
         elif button_id == "btn_lyrics":
-            await bus.publish(CMD_TOGGLE_LYRICS)
+            await bus.publish("cmd.switch.lyrics.tab")
         elif button_id == "btn_quit":
             await bus.publish(CMD_QUIT)

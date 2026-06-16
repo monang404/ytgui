@@ -13,9 +13,10 @@ from tui.theme import *
 from core.event_bus import (
     bus, LOG_MESSAGE, CMD_QUIT, CMD_SEARCH, CMD_FOCUS_SEARCH, CMD_UNFOCUS,
     CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP, CMD_VOLUME_UP, CMD_VOLUME_DOWN,
-    CMD_DOWNLOAD, CMD_TOGGLE_RADIO, CMD_TOGGLE_LYRICS
+    CMD_DOWNLOAD, CMD_TOGGLE_RADIO, CMD_TOGGLE_LYRICS,
+    QUEUE_UPDATED, TRACK_STARTED, LYRICS_UPDATED, DOWNLOAD_COMPLETE
 )
-from core.state import AppState
+from core.state import AppState, PlayerStatus
 from tui.panels.now_playing import NowPlayingPanel
 from tui.panels.queue_panel import QueuePanel
 from tui.panels.lyrics_panel import LyricsPanel
@@ -227,6 +228,11 @@ class Dashboard(App):
         self.title = "YT TERMUX PLAYER PRO"
         bus.subscribe(LOG_MESSAGE, self._on_log_message)
         bus.subscribe(CMD_QUIT, self._on_cmd_quit)
+        bus.subscribe("cmd.switch.lyrics.tab", self._on_switch_lyrics_tab)
+        bus.subscribe(QUEUE_UPDATED, self._on_queue_updated)
+        bus.subscribe(TRACK_STARTED, self._on_track_started)
+        bus.subscribe(LYRICS_UPDATED, self._on_lyrics_updated)
+        bus.subscribe(DOWNLOAD_COMPLETE, self._on_download_complete)
         
         # Initial layout mode sync
         is_landscape = self.size.width >= BREAKPOINT_LANDSCAPE
@@ -280,6 +286,24 @@ class Dashboard(App):
         self.queue_panel.update_state(self.state)
         self.lyrics_panel.update_state(self.state)
 
+        # Sync tombol pause/resume berdasarkan state
+        try:
+            btn = self.query_one("#btn_pause", Button)
+            if self.state.status == PlayerStatus.PAUSED:
+                btn.label = "▶  RESUME"
+            elif self.state.status == PlayerStatus.LOADING:
+                btn.label = "⏳  LOADING..."
+            elif self.state.status == PlayerStatus.PLAYING:
+                btn.label = "⏸  PAUSE"
+            else:
+                btn.label = "⏯  PLAY / PAUSE"
+            
+            # Sync tombol Radio active state
+            btn_radio = self.query_one("#btn_radio", Button)
+            btn_radio.set_class(self.state.is_radio_mode, "-active")
+        except Exception:
+            pass  # Widget belum mount saat pertama kali
+
     async def _on_log_message(self, msg: str) -> None:
         self._status_msg = str(msg)
         self._status_msg_time = time.time()
@@ -289,6 +313,25 @@ class Dashboard(App):
 
     async def _on_cmd_quit(self, _) -> None:
         self.exit()
+
+    async def _on_switch_lyrics_tab(self, _=None):
+        if self._active_tab == "queue":
+            self._show_lyrics_tab()
+        else:
+            self._show_queue_tab()
+
+    async def _on_queue_updated(self, _=None):
+        self.queue_panel.update_state(self.state)
+
+    async def _on_track_started(self, track=None):
+        self.now_playing.update_state(self.state)
+        self.queue_panel.update_state(self.state)
+
+    async def _on_lyrics_updated(self, _=None):
+        self.lyrics_panel.update_state(self.state)
+
+    async def _on_download_complete(self, track=None):
+        self.now_playing.update_state(self.state)
 
     @on(Input.Submitted, "#search_input")
     async def on_search_submitted(self, event: Input.Submitted) -> None:

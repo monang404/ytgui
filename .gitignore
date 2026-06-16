@@ -13,6 +13,8 @@ ENV/
 
 # App runtime — dibuat otomatis saat pertama run, jangan didistribusikan
 cache/mp3/
+cache/sockets/
+*.sock
 cache/*.db
 cache/*.db-shm
 cache/*.db-wal

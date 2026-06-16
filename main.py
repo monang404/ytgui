@@ -2,7 +2,9 @@ import asyncio
 import logging
 import signal
 import aiohttp
-from core.state import AppState
+import stat
+from logging.handlers import RotatingFileHandler
+from core.state import AppState, PlayerStatus
 from tui.dashboard import Dashboard
 from core.event_bus import bus, CMD_SEARCH, SEARCH_RESULTS, LOG_MESSAGE, CMD_QUIT
 from engine.ytdlp_client import YtDlpClient
@@ -15,12 +17,24 @@ from engine.autoplay import AutoplayEngine
 from engine.queue_manager import QueueManager
 from config import BASE_DIR
 
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-    filename=BASE_DIR / "ytplayer.log",
-    filemode="a"
+log_path = BASE_DIR / "ytplayer.log"
+_log_handler = RotatingFileHandler(
+    log_path,
+    maxBytes=1 * 1024 * 1024,  # 1 MB per file
+    backupCount=2,              # simpan maksimal 2 backup
+    encoding="utf-8"
 )
+_log_handler.setFormatter(logging.Formatter(
+    "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
+))
+logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().addHandler(_log_handler)
+
+try:
+    log_path.touch(exist_ok=True)
+    log_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+except OSError:
+    pass
 
 async def main():
     state = AppState()
@@ -37,7 +51,12 @@ async def main():
         await mpv.connect()
         mpv_connected = True
     except Exception as e:
-        logging.getLogger(__name__).warning(f"mpv not available: {e}")
+        logging.getLogger(__name__).error(f"mpv not available: {e}")
+        state.error_msg = (
+            "MPV tidak ditemukan. Jalankan: pkg install mpv (Termux) "
+            "atau install MPV dan tambahkan ke PATH (Windows/Linux)."
+        )
+        state.status = PlayerStatus.ERROR
     
     # 3. Shared HTTP session (MED-01 fix)
     http_session = aiohttp.ClientSession()

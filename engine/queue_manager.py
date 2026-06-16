@@ -4,6 +4,7 @@ from core.event_bus import (
     bus, TRACK_ENDED, TRACK_STARTED, QUEUE_UPDATED, QUEUE_EMPTY,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_TOGGLE_PAUSE, SEARCH_RESULTS,
     CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_TOGGLE_LYRICS,
+    CMD_SEEK, CMD_QUEUE_SELECT,
     LOG_MESSAGE, TRACK_PROGRESS, DOWNLOAD_PROGRESS, DOWNLOAD_COMPLETE
 )
 from engine.mpv_controller import MpvController
@@ -46,6 +47,8 @@ class QueueManager:
         bus.subscribe(CMD_VOLUME_DOWN, self._on_volume_down)
         bus.subscribe(CMD_DOWNLOAD, self._on_download)
         bus.subscribe(CMD_TOGGLE_LYRICS, self._on_toggle_lyrics)
+        bus.subscribe(CMD_SEEK, self._on_seek)
+        bus.subscribe(CMD_QUEUE_SELECT, self._on_queue_select)
         bus.subscribe("track.pause.changed", self._on_pause_changed)
 
     async def play_next(self, _=None):
@@ -190,6 +193,31 @@ class QueueManager:
 
     async def _on_toggle_lyrics(self, _=None):
         """LOW-05 fix: Toggle lyrics display."""
-        self.state.show_lyrics = not self.state.show_lyrics
-        status = "ON" if self.state.show_lyrics else "OFF"
-        await bus.publish(LOG_MESSAGE, f"Lyrics: {status}")
+        # Tidak perlu state, cukup notify UI untuk switch tab
+        await bus.publish(LOG_MESSAGE, "Beralih ke panel Lirik")
+
+    async def _on_seek(self, position: float):
+        """Handle klik pada progress bar — seek ke posisi tertentu."""
+        if not isinstance(position, (int, float)):
+            return
+        await self.mpv.seek(float(position))
+        self.state.position = float(position)
+        await bus.publish(LOG_MESSAGE, f"Seeking to {int(position//60):02d}:{int(position%60):02d}")
+
+    async def _on_queue_select(self, queue_index: int):
+        """Handle klik pada item antrian — loncat langsung ke lagu tersebut."""
+        if not isinstance(queue_index, int):
+            return
+        if queue_index < 0 or queue_index >= len(self.state.queue):
+            return
+        
+        # Simpan current track ke history
+        if self.state.current_track:
+            self.state.history.append(self.state.current_track)
+            if len(self.state.history) > 50:
+                self.state.history.pop(0)
+        
+        # Ambil track di index, hapus dari queue, semua sebelumnya juga dibuang
+        selected = self.state.queue[queue_index]
+        self.state.queue = self.state.queue[queue_index + 1:]
+        await self.play_track(selected)
