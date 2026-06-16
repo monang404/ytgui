@@ -10,6 +10,7 @@ from textual import events
 
 from core.event_bus import bus, CMD_SEEK
 from core.state import AppState, PlayerStatus
+from tui.theme import *
 
 _BAR_CHARS = "▁▂▃▄▅▆▇█"
 
@@ -45,7 +46,7 @@ class ClickableProgressBar(Static):
         pos_str = f"{int(self.position//60):02d}:{int(self.position%60):02d}"
         dur_str = f"{int(self.duration//60):02d}:{int(self.duration%60):02d}"
         
-        return f"[dim]{pos_str}[/] {bar} [dim]{dur_str}[/]"
+        return f"[{TEXT_DIM}]{pos_str}[/] {bar} [{TEXT_DIM}]{dur_str}[/]"
 
     async def on_click(self, event: events.Click) -> None:
         if self.duration <= 0:
@@ -73,14 +74,14 @@ class NowPlayingPanel(Widget):
         with Vertical():
             self.info_label = Static("", id="np_info")
             self.progress_bar = ClickableProgressBar("", id="np_progress")
-            self.status_label = Static("", id="np_status", classes="status-label")
+            self.status_line = Static("", id="np_status", classes="status-label")
             yield self.info_label
             yield self.progress_bar
-            yield self.status_label
+            yield self.status_line
 
     def watch_status_msg(self, msg: str) -> None:
-        if hasattr(self, 'status_label'):
-            self.status_label.update(msg)
+        if hasattr(self, 'status_line'):
+            self.status_line.update(msg)
 
     def update_state(self, state: AppState) -> None:
         is_playing = state.status == PlayerStatus.PLAYING
@@ -90,7 +91,7 @@ class NowPlayingPanel(Widget):
         eq_text = _equalizer_frame(time.time(), n_bars, is_playing)
         
         if not state.current_track:
-            self.info_label.update(f"\n[dim]  No track selected.[/]\n\n[dim]{eq_text}[/]")
+            self.info_label.update(f"\n[{TEXT_DIM}]  No track selected.[/]\n\n[{TEXT_DIM}]{eq_text}[/]")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
         else:
@@ -112,12 +113,12 @@ class NowPlayingPanel(Widget):
             via_str = "Cache" if track.local_path else "Stream"
             
             lines = [
-                f"[bold white]  {escape(title_display)}[/]",
-                f"[dim]   {escape(artist_display)}[/]",
-                f"[dim]   {views}  |  {dur_str}[/]" if views else f"[dim]   {dur_str}[/]",
-                f"[dim]   Via: {via_str}[/]",
+                f"[bold {TEXT_PRIMARY}]  {escape(title_display)}[/]",
+                f"[{TEXT_DIM}]   {escape(artist_display)}[/]",
+                f"[{TEXT_DIM}]   {views}  |  {dur_str}[/]" if views else f"[{TEXT_DIM}]   {dur_str}[/]",
+                f"[{TEXT_DIM}]   Via: {via_str}[/]",
                 "",
-                f"[#FF6B35]{eq_text}[/]",
+                f"[{ACCENT_FIRE}]{eq_text}[/]",
                 "",
                 f"Vol: {state.volume}%   Gapless: {'ON' if state.next_uri_ready else 'OFF'}"
             ]

@@ -4,10 +4,11 @@ import datetime
 import logging
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Vertical, Horizontal
-from textual.widgets import Header, Footer, Static, Input, TabbedContent, TabPane
+from textual.widgets import Header, Footer, Static, Input, Button
 from textual.binding import Binding
 from textual import on
 from textual.events import Resize
+from tui.theme import *
 
 from core.event_bus import (
     bus, LOG_MESSAGE, CMD_QUIT, CMD_SEARCH, CMD_FOCUS_SEARCH, CMD_UNFOCUS,
@@ -25,114 +26,132 @@ logger = logging.getLogger(__name__)
 class Dashboard(App):
     """The main Textual application for YTCLI."""
 
-    CSS = """
-    Screen {
-        background: #0D0D0D;
-        color: #E8E8FF;
-    }
+    CSS = f"""
+    Screen {{
+        background: {BG_VOID};
+        color: {TEXT_PRIMARY};
+    }}
     
-    /* PORTRAIT MODE (Default Stacked) */
-    Screen.-portrait {
-        layout: vertical;
-    }
-    Screen.-portrait #search_input { width: 100%; height: 3; margin-bottom: 1; }
-    Screen.-portrait #now_playing { width: 100%; height: auto; }
-    Screen.-portrait #tabs_container { width: 100%; height: 1fr; }
-    Screen.-portrait #controls { width: 100%; height: auto; }
-
-    /* LANDSCAPE MODE (Grid) */
-    Screen.-landscape {
-        layout: grid;
-        grid-size: 3 3;
-        grid-columns: 1fr 1fr 1fr;
-        grid-rows: auto 1fr auto;
-    }
-    Screen.-landscape #search_input { column-span: 3; row-span: 1; height: 3; }
-    Screen.-landscape #now_playing { column-span: 1; row-span: 1; height: 100%; margin-right: 1; }
-    Screen.-landscape #tabs_container { column-span: 2; row-span: 1; height: 100%; }
-    Screen.-landscape #controls { column-span: 3; row-span: 1; height: auto; }
-
-    /* SHARED COMPONENT STYLES */
-    #search_input {
-        border: tall #2a2a45;
-        background: #1E1E30;
-        color: #E8E8FF;
-    }
-    #search_input:focus { border: tall #FFC107; }
-    
-    #now_playing {
-        border: tall #1E1E30;
-        background: #141420;
-    }
-    
-    TabbedContent {
-        height: 100%;
-    }
-    TabPane {
-        padding: 0;
-        border: tall #1E1E30;
-        background: #141420;
-    }
-    
-    #controls {
-        padding: 1;
-        border-top: solid #1E1E30;
-        background: #0D0D0D;
-    }
-    .status-label {
-        color: #4ade80;
-        text-align: center;
-        text-style: bold;
-        margin-bottom: 1;
-    }
-    .controls-row {
+    #top_bar {{
         height: 3;
         margin-bottom: 1;
-    }
-    .primary-actions Button { width: 1fr; }
-    .primary-actions .double-width { width: 2fr; }
-    .secondary-actions Button { width: 1fr; min-width: 3; }
-    .destructive-actions { height: 3; }
-    .destructive-actions .spacer { width: 1fr; }
-    .destructive-actions Button { width: 20; }
-    Button {
-        width: 100%;
-        min-width: 5;
-        border: none;
-        background: #1E1E30;
-        color: #A0A0C0;
-    }
-    Button:hover {
-        background: #2a2a45;
-        color: #E8E8FF;
-    }
-    Button.-active {
-        background: #FFC107;
-        color: #1E1E30;
-    }
-    #btn_pause {
-        background: #FF6B35;
+    }}
+    #search_input {{
+        width: 1fr;
+        border: tall {BORDER};
+        background: {BG_ELEVATED};
+        color: {TEXT_PRIMARY};
+    }}
+    #search_input:focus {{ border: tall {BORDER_FOCUS}; }}
+    
+    #online_indicator {{
+        width: 3;
+        content-align: center middle;
+        margin-left: 1;
+    }}
+
+    /* PORTRAIT MODE */
+    Screen.-portrait #main_grid {{ layout: vertical; height: 1fr; }}
+    Screen.-portrait #now_playing {{ height: 12; width: 100%; border: tall {BORDER}; background: {BG_PANEL}; }}
+    Screen.-portrait #side_panel {{ height: 1fr; width: 100%; }}
+
+    /* LANDSCAPE MODE */
+    Screen.-landscape #main_grid {{ layout: horizontal; height: 1fr; }}
+    Screen.-landscape #now_playing {{ width: 38%; height: 1fr; margin-right: 1; border: tall {BORDER}; background: {BG_PANEL}; }}
+    Screen.-landscape #side_panel {{ width: 62%; height: 1fr; }}
+
+    #controls_primary {{
+        height: 3;
+        align: center middle;
+    }}
+    #btn_pause {{
+        width: 60%;
+        background: {ACCENT_FIRE};
         color: #FFFFFF;
         text-style: bold;
-    }
-    #btn_pause:hover {
-        background: #ff7d4a;
-    }
-    #btn_quit {
-        background: #1E1E30;
-        color: #ef4444;
-    }
-    #btn_quit:hover {
-        background: #ef4444;
+    }}
+    #btn_pause:hover {{ background: #ff7d4a; }}
+    #btn_prev, #btn_next {{
+        width: 20%;
+    }}
+
+    #controls_secondary {{
+        layout: grid;
+        grid-size: 6;
+        grid-gutter: 1;
+        height: 3;
+        margin-top: 1;
+    }}
+
+    #controls_danger {{
+        align: right middle;
+        height: 3;
+        margin-top: 1;
+    }}
+    #btn_quit {{
+        width: 16;
+        background: {BG_ELEVATED};
+        color: {STATUS_ERR};
+    }}
+    #btn_quit:hover {{
+        background: {STATUS_ERR};
         color: #FFFFFF;
-    }
-    OptionList {
-        background: #141420;
+    }}
+    
+    Button {{
+        width: 100%;
+        OptionList:focus {{
+        border: tall {BORDER_FOCUS};
+    }}    background: {BG_ELEVATED};
+        color: {TEXT_MUTED};
+    }}
+    Button:hover {{
+        background: {BORDER};
+        color: {TEXT_PRIMARY};
+    }}
+    Button.-active {{
+        background: {ACCENT_GOLD};
+        color: {BG_ELEVATED};
+    }}
+
+    OptionList {{
+        background: {BG_PANEL};
         border: none;
-    }
-    OptionList:focus {
-        border: blank;
-    }
+    }}
+    OptionList:focus {{
+        border: tall {BORDER_FOCUS};
+    }}
+
+    /* MANUAL TABS */
+    #tab_bar {{
+        height: 3;
+        margin-bottom: 1;
+    }}
+    .tab-btn {{
+        width: 1fr;
+        height: 3;
+        border: none;
+        background: {BG_ELEVATED};
+        color: {TEXT_MUTED};
+    }}
+    .tab-btn.-active {{
+        background: {BG_PANEL};
+        color: {TEXT_PRIMARY};
+        text-style: bold;
+        border-bottom: heavy {ACCENT_FIRE};
+    }}
+
+    #lyrics_panel, #queue_panel {{
+        height: 1fr;
+        border: tall {BORDER};
+        background: {BG_PANEL};
+    }}
+    
+    #controls {{
+        padding: 1;
+        border-top: solid {BG_ELEVATED};
+        background: {BG_VOID};
+    }}
     """
 
     BINDINGS = [
@@ -158,17 +177,24 @@ class Dashboard(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield Input(placeholder="Search... ('/' to focus, 'ESC' unfocus)", id="search_input")
         
-        self.now_playing = NowPlayingPanel(id="now_playing")
-        yield self.now_playing
-        
-        with TabbedContent(initial="queue-tab", id="tabs_container"):
-            with TabPane("Antrean", id="queue-tab"):
+        with Horizontal(id="top_bar"):
+            yield Input(placeholder="Search... ('/' focus, 'ESC' unfocus)", id="search_input")
+            self.online_dot = Static("●", id="online_indicator")
+            yield self.online_dot
+
+        with Vertical(id="main_grid"):
+            self.now_playing = NowPlayingPanel(id="now_playing")
+            yield self.now_playing
+            
+            with Vertical(id="side_panel"):
+                with Horizontal(id="tab_bar"):
+                    yield Button("Antrean", id="tab_btn_queue", classes="tab-btn -active")
+                    yield Button("Lirik", id="tab_btn_lyrics", classes="tab-btn")
+                
                 self.queue_panel = QueuePanel(id="queue_panel")
-                yield self.queue_panel
-            with TabPane("Lirik", id="lyrics-tab"):
                 self.lyrics_panel = LyricsPanel(id="lyrics_panel")
+                yield self.queue_panel
                 yield self.lyrics_panel
                 
         self.controls = ControlsPanel(id="controls")
@@ -180,34 +206,50 @@ class Dashboard(App):
         bus.subscribe(LOG_MESSAGE, self._on_log_message)
         bus.subscribe(CMD_QUIT, self._on_cmd_quit)
         
-        self.screen.add_class("-portrait")
+        # Initial layout mode sync
+        is_landscape = self.size.width >= BREAKPOINT_LANDSCAPE
+        self.screen.set_class(is_landscape, "-landscape")
+        self.screen.set_class(not is_landscape, "-portrait")
         
+        # Initial tab sync
+        self._active_tab = "queue"
+        self._sync_tab_visibility()
+
         # 3 fps refresh
         self.set_interval(0.3, self.refresh_ui)
 
     def on_resize(self, event: Resize) -> None:
-        if event.size.width >= 80:
-            self.screen.add_class("-landscape")
-            self.screen.remove_class("-portrait")
-        else:
-            self.screen.add_class("-portrait")
-            self.screen.remove_class("-landscape")
+        is_landscape = event.size.width >= BREAKPOINT_LANDSCAPE
+        self.screen.set_class(is_landscape, "-landscape")
+        self.screen.set_class(not is_landscape, "-portrait")
+
+    @on(Button.Pressed, "#tab_btn_queue")
+    def _show_queue_tab(self, event=None) -> None:
+        self._active_tab = "queue"
+        self._sync_tab_visibility()
+
+    @on(Button.Pressed, "#tab_btn_lyrics")
+    def _show_lyrics_tab(self, event=None) -> None:
+        self._active_tab = "lyrics"
+        self._sync_tab_visibility()
+
+    def _sync_tab_visibility(self) -> None:
+        self.queue_panel.display = (self._active_tab == "queue")
+        self.lyrics_panel.display = (self._active_tab == "lyrics")
+        self.query_one("#tab_btn_queue").set_class(self._active_tab == "queue", "-active")
+        self.query_one("#tab_btn_lyrics").set_class(self._active_tab == "lyrics", "-active")
 
     def refresh_ui(self) -> None:
         # Check if status msg expired
         if self._status_msg and (time.time() - self._status_msg_time > 5.0):
             self._status_msg = ""
+            self.now_playing.status_line.update("")
 
-        # Update controls status
-        if self.state.is_online:
-            online_str = "[ONLINE]"
-        else:
-            online_str = "[OFFLINE]"
-        
-        status_text = f"{online_str} {self._status_msg}"
-        self.now_playing.status_msg = status_text
+        # Update online indicator
+        color = STATUS_OK if self.state.is_online else STATUS_ERR
+        self.online_dot.update(f"[{color}]●[/]")
 
-        # Update panels
+        # Update panels (always update both so background data is fresh)
         self.now_playing.update_state(self.state)
         self.queue_panel.update_state(self.state)
         self.lyrics_panel.update_state(self.state)
@@ -215,6 +257,8 @@ class Dashboard(App):
     async def _on_log_message(self, msg: str) -> None:
         self._status_msg = str(msg)
         self._status_msg_time = time.time()
+        if hasattr(self.now_playing, 'status_line'):
+            self.now_playing.status_line.update(f"[{ACCENT_GOLD}]{msg}[/]")
         self.refresh_ui()
 
     async def _on_cmd_quit(self, _) -> None:
@@ -273,11 +317,10 @@ class Dashboard(App):
 
     async def action_toggle_lyrics(self) -> None:
         if self._is_input_focused(): return
-        tabs = self.query_one(TabbedContent)
-        if tabs.active == "lyrics-tab":
-            tabs.active = "queue-tab"
+        if self._active_tab == "queue":
+            self._show_lyrics_tab()
         else:
-            tabs.active = "lyrics-tab"
+            self._show_queue_tab()
 
     async def action_quit(self) -> None:
         if self._is_input_focused(): return

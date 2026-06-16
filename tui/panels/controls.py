@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, Grid
 from textual.widgets import Button, Static
 
 from core.event_bus import (
@@ -12,21 +12,22 @@ class ControlsPanel(Static):
     """The bottom controls panel with clickable buttons."""
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="controls_container"):
-            with Horizontal(classes="controls-row primary-actions"):
-                yield Button("⏮ Prev", id="btn_prev")
-                yield Button("⏯ Play/Pause", id="btn_pause", classes="double-width")
-                yield Button("⏭ Next", id="btn_next")
-            with Horizontal(classes="controls-row secondary-actions"):
-                yield Button("⏹", id="btn_stop")
-                yield Button("🔉-", id="btn_voldown")
-                yield Button("🔊+", id="btn_volup")
-                yield Button("📻", id="btn_radio")
-                yield Button("📝", id="btn_lyrics")
-                yield Button("⬇", id="btn_dl")
-            with Horizontal(classes="controls-row destructive-actions"):
-                yield Static(classes="spacer")
-                yield Button("Quit", id="btn_quit")
+        with Vertical():
+            with Horizontal(id="controls_primary"):
+                yield Button("⏮", id="btn_prev", classes="ctrl-sm")
+                yield Button("⏯  PLAY / PAUSE", id="btn_pause", classes="ctrl-primary")
+                yield Button("⏭", id="btn_next", classes="ctrl-sm")
+
+            with Grid(id="controls_secondary"):
+                yield Button("⏹ Stop", id="btn_stop")
+                yield Button("🔉", id="btn_voldown")
+                yield Button("🔊", id="btn_volup")
+                yield Button("📻 Radio", id="btn_radio")
+                yield Button("📝 Lirik", id="btn_lyrics")
+                yield Button("⬇ DL", id="btn_dl")
+
+            with Horizontal(id="controls_danger"):
+                yield Button("🚪 Keluar", id="btn_quit", variant="error")
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id

@@ -3,6 +3,7 @@ from textual.widgets import Static
 from textual.containers import Vertical
 from rich.markup import escape
 from core.state import AppState
+from tui.theme import *
 
 class LyricsPanel(Widget):
     """The Synchronized Lyrics panel."""
@@ -16,7 +17,7 @@ class LyricsPanel(Widget):
         lines = []
         
         if not state.lyrics_lines:
-            lines.append("[dim]No lyrics available.[/]")
+            lines.append(f"[{TEXT_DIM}]No lyrics available.[/]")
         else:
             active_idx = state.lyrics_index
             total = len(state.lyrics_lines)
@@ -31,14 +32,14 @@ class LyricsPanel(Widget):
                     continue
                     
                 if i == active_idx:
-                    lines.append(f"[bold #FF6B35]> {escape(text)}[/]")
+                    lines.append(f"[bold {ACCENT_FIRE}]> {escape(text)}[/]")
                 elif i < active_idx:
                     dist = active_idx - i
-                    style = "dim" if dist > 2 else ("#666666" if dist > 1 else "#888888")
+                    style = TEXT_DIM if dist > 2 else ("#666666" if dist > 1 else "#888888")
                     lines.append(f"[{style}]  {escape(text)}[/]")
                 else:
                     dist = i - active_idx
-                    style = "dim" if dist > 2 else ("#AAAAAA" if dist > 1 else "#CCCCCC")
+                    style = TEXT_DIM if dist > 2 else ("#AAAAAA" if dist > 1 else "#CCCCCC")
                     lines.append(f"[{style}]  {escape(text)}[/]")
 
         self.content.update("\n".join(lines))

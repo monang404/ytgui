@@ -5,6 +5,7 @@ from textual.containers import Vertical
 from rich.markup import escape
 from core.state import AppState
 from core.event_bus import bus, CMD_QUEUE_SELECT
+from tui.theme import *
 
 class QueuePanel(Widget):
     """The Queue & Autoplay panel using OptionList for selection."""
@@ -12,7 +13,7 @@ class QueuePanel(Widget):
     def compose(self) -> ComposeResult:
         with Vertical():
             self.option_list = OptionList(id="queue_list")
-            self.footer = Static("Radio: [dim]OFF[/]", id="queue_footer")
+            self.footer = Static(f"Radio: [{TEXT_DIM}]OFF[/]", id="queue_footer")
             yield self.option_list
             yield self.footer
 
@@ -24,7 +25,7 @@ class QueuePanel(Widget):
         max_title = max(10, inner_width - 12)
         
         if not state.queue and not state.current_track:
-            self.option_list.add_option("[dim]Queue is empty.[/]")
+            self.option_list.add_option(f"[{TEXT_DIM}]Queue is empty.[/]")
             self.option_list.disabled = True
         else:
             self.option_list.disabled = False
@@ -32,16 +33,16 @@ class QueuePanel(Widget):
                 title = state.current_track.title
                 if len(title) > max_title:
                     title = title[:max_title - 2] + ".."
-                self.option_list.add_option(f"[#FF6B35]> {escape(title)}[/]")
+                self.option_list.add_option(f"[{ACCENT_FIRE}]> {escape(title)}[/]")
                 
             for i, track in enumerate(state.queue, 1):
                 dur = f"{track.duration // 60}:{track.duration % 60:02d}"
                 title = track.title
                 if len(title) > max_title:
                     title = title[:max_title - 2] + ".."
-                self.option_list.add_option(f"  {i}. {escape(title)} [dim]{dur}[/]")
+                self.option_list.add_option(f"  {i}. {escape(title)} [{TEXT_DIM}]{dur}[/]")
 
-        radio = "[green]ON[/]" if state.is_radio_mode else "[dim]OFF[/]"
+        radio = f"[{STATUS_OK}]ON[/]" if state.is_radio_mode else f"[{TEXT_DIM}]OFF[/]"
         self.footer.update(f"Radio: {radio}")
 
     async def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
