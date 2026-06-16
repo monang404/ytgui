@@ -95,6 +95,15 @@ async def main():
     try:
         await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
     finally:
+        import traceback
+        for t in tasks:
+            if t.done() and not t.cancelled():
+                e = t.exception()
+                if e:
+                    logging.getLogger(__name__).error(f"Task {t.get_coro().__name__} crashed: {e}")
+                    print(f"\n[FATAL ERROR] App crashed due to task failure: {e}")
+                    traceback.print_exception(type(e), e, e.__traceback__)
+
         # Cancel remaining tasks
         for t in tasks:
             t.cancel()
