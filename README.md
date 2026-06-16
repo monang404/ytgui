@@ -106,6 +106,12 @@ Setelah aplikasi berjalan, Anda dapat mengontrol pemutaran melalui sentuhan jari
 
 ---
 
+## 📖 Buku Panduan Lengkap & Pro Tips
+
+Untuk panduan yang lebih dalam mengenai rahasia kualitas audio, trik pencarian spesifik, dan fitur lirik 3-lapis, silakan baca **[Buku Panduan & Pro Tips (MANUAL_BOOK.md)](MANUAL_BOOK.md)**.
+
+---
+
 ## 📁 Struktur Direktori Cache
 
 Aplikasi ini menggunakan sistem *smart caching*. Semua data akan disimpan di folder `cache/` pada root direktori:
