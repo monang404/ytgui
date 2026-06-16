@@ -31,10 +31,13 @@ refactor.txt
 HASIL_*.md
 FINAL_RELEASE_REPORT.md
 verifikasi.MD
+ui_*.md
 
 # Test suite — tidak dibutuhkan user Termux
 tests/
 verify_*.py
+debug_*.py
+test_*.py
 
 # File init kosong di widgets (tidak berguna)
 widgets/__init__.py
