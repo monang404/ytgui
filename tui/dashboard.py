@@ -391,9 +391,7 @@ class Dashboard(App):
     async def action_focus_search(self) -> None:
         input_widget = self.query_one("#search_input", Input)
         input_widget.focus()
-
-    @on(Focus, "#search_input")
-    def _on_search_focus(self, event: Focus) -> None:
+        
         import os
         import subprocess
         if "PREFIX" in os.environ and "com.termux" in os.environ["PREFIX"]:
