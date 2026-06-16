@@ -22,9 +22,16 @@ Aplikasi ini telah **dikunci secara paksa** untuk selalu menyedot audio dengan k
 
 ---
 
-## 🎹 3. Panduan Kontrol & Pintasan (Shortcuts)
+## 🎹 3. Panduan Kontrol & Tombol (Widget)
 
-Aplikasi ini menggunakan UI interaktif (TUI). Anda bisa menyentuh layar / mengklik menggunakan mouse, atau menggunakan *keyboard shortcut* layaknya seorang pro:
+Aplikasi ini menggunakan UI interaktif (TUI). Di bagian bawah layar Anda, terdapat **Panel Widget (Tombol Visual)** yang bisa langsung Anda **sentuh (di layar HP)** atau **klik (menggunakan mouse)**.
+
+Tombol-tombol visual (Widget) yang tersedia di layar:
+- `[ ⏮ ]` `[ ⏯ PLAY/PAUSE ]` `[ ⏭ ]`
+- `[ ⏹ Stop ]` `[ 🔉 ]` `[ 🔊 ]`
+- `[ 📻 Radio ]` `[ 📝 Lirik ]` `[ ⬇ DL ]`
+
+Selain mengklik tombol-tombol widget di atas, Anda juga bisa menggunakan *keyboard shortcut* layaknya seorang pro:
 
 | Tombol Keyboard | Aksi / Perintah |
 | :---: | :--- |
