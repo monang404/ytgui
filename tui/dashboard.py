@@ -46,15 +46,24 @@ class Dashboard(App):
         border: tall #1E1E30;
         background: #141420;
     }
-    #lyrics_panel, #queue_panel {
+    #lyrics_panel {
         width: 100%;
         height: 1fr;
+        min-height: 5;
+        border: tall #1E1E30;
+        background: #141420;
+    }
+    #queue_panel {
+        width: 100%;
+        height: 1fr;
+        min-height: 5;
         border: tall #1E1E30;
         background: #141420;
     }
     #controls {
         width: 100%;
         height: auto;
+        min-height: 10;
         padding: 1;
         border-top: solid #1E1E30;
         background: #0D0D0D;
