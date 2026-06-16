@@ -30,26 +30,9 @@ class Dashboard(App):
         color: #E8E8FF;
         layout: vertical;
     }
-    #main_body {
-        height: 1fr;
-        layout: horizontal;
-        padding: 0 1;
-    }
-    #left_col {
-        width: 40%;
-        height: 100%;
-        margin-right: 1;
-        border: tall #1E1E30;
-        background: #141420;
-    }
-    #right_col {
-        width: 60%;
-        height: 100%;
-        layout: vertical;
-    }
     #search_input {
+        width: 100%;
         height: 3;
-        margin-bottom: 1;
         border: tall #2a2a45;
         background: #1E1E30;
         color: #E8E8FF;
@@ -57,12 +40,20 @@ class Dashboard(App):
     #search_input:focus {
         border: tall #FFC107;
     }
+    #now_playing {
+        width: 100%;
+        height: auto;
+        border: tall #1E1E30;
+        background: #141420;
+    }
     #lyrics_panel, #queue_panel {
+        width: 100%;
         height: 1fr;
         border: tall #1E1E30;
         background: #141420;
     }
     #controls {
+        width: 100%;
         height: auto;
         padding: 1;
         border-top: solid #1E1E30;
@@ -77,7 +68,7 @@ class Dashboard(App):
     #controls_row {
         layout: grid;
         grid-size: 4;
-        grid-gutter: 1 2;
+        grid-gutter: 1 1;
         grid-rows: auto;
         height: auto;
         align: center middle;
@@ -145,20 +136,16 @@ class Dashboard(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield Input(placeholder="Search... ('/' to focus, 'ESC' unfocus)", id="search_input")
         
-        self.now_playing = NowPlayingPanel(id="left_col")
+        self.now_playing = NowPlayingPanel(id="now_playing")
         self.queue_panel = QueuePanel(id="queue_panel")
         self.lyrics_panel = LyricsPanel(id="lyrics_panel")
         self.controls = ControlsPanel(id="controls")
         
-        with Horizontal(id="main_body"):
-            yield self.now_playing
-            
-            with Vertical(id="right_col"):
-                yield Input(placeholder="Cari lagu atau artis... ('/' to focus, 'ESC' to unfocus)", id="search_input")
-                yield self.queue_panel
-                yield self.lyrics_panel
-                
+        yield self.now_playing
+        yield self.queue_panel
+        yield self.lyrics_panel
         yield self.controls
         yield Footer()
 
