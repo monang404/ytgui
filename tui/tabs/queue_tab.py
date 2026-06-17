@@ -7,6 +7,7 @@ from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
 from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK
 from textual.binding import Binding
+from textual import work
 
 class QueueItem(ListItem):
     def __init__(self, index: int, text: str, is_current: bool = False, removable: bool = True, *args, **kwargs):
@@ -96,7 +97,8 @@ class QueueTab(Widget):
         self._last_state_hash = None
         self._is_radio = False
 
-    def update_state(self, state: AppState) -> None:
+    @work(exclusive=True)
+    async def update_state(self, state: AppState) -> None:
         self._is_radio = state.playback_mode == PlaybackMode.RADIO
         # Radio Mode dan Queue Mode masing-masing punya list lagunya sendiri.
         upcoming = state.radio_queue if self._is_radio else state.queue
@@ -108,32 +110,52 @@ class QueueTab(Widget):
             state.playback_mode
         ))
         
+        # Selalu update lirik jika container lirik tampil, terlepas dari hash list antrean
+        if self.lyrics_container.display:
+            if not state.lyrics_lines:
+                self.lyrics_content.update(f"[{TEXT_DIM}]Tidak ada lirik tersedia[/]")
+            else:
+                idx = state.lyrics_index
+                lines = state.lyrics_lines
+                start = max(0, idx - 2)
+                end = min(len(lines), idx + 3)
+                
+                content = ""
+                for i in range(start, end):
+                    text = lines[i][1]
+                    if i == idx:
+                        content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
+                    else:
+                        content += f"[{TEXT_DIM}]{escape(text)}[/]\n"
+                self.lyrics_content.update(content.strip())
+
+        # Update List View hanya jika ada perubahan lagu atau mode
         if self._last_state_hash == current_hash:
             return
             
         self._last_state_hash = current_hash
-        self.list_view.clear()
+        await self.list_view.clear()
         
-        terminal_width = self.size.width if self.size.width > 0 else 80
+        terminal_width = self.app.size.width if self.app.size.width > 0 else 80
         inner_width = terminal_width - 6
         max_title = max(10, inner_width - 15)
         
         if not upcoming and not state.current_track:
             placeholder = "Radio sedang menyiapkan lagu..." if self._is_radio else "Cari lagu atau aktifkan Radio"
-            self.list_view.append(ListItem(Label(f"[{TEXT_DIM}]{placeholder}[/]")))
+            await self.list_view.append(ListItem(Label(f"[{TEXT_DIM}]{placeholder}[/]")))
         else:
             if state.current_track:
                 title = state.current_track.title
                 if len(title) > max_title:
                     title = title[:max_title - 1] + "…"
-                self.list_view.append(QueueItem(-1, f"[{ACCENT_FIRE}]> {escape(title)}[/]", is_current=True))
+                await self.list_view.append(QueueItem(-1, f"[{ACCENT_FIRE}]> {escape(title)}[/]", is_current=True))
                 
             for i, track in enumerate(upcoming):
                 dur = f"{track.duration // 60}:{track.duration % 60:02d}"
                 title = track.title
                 if len(title) > max_title:
                     title = title[:max_title - 1] + "…"
-                self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [{TEXT_DIM}]{dur}[/]", removable=not self._is_radio))
+                await self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [{TEXT_DIM}]{dur}[/]", removable=not self._is_radio))
 
         mode_str = f"[{STATUS_OK}]RADIO[/]" if state.playback_mode == PlaybackMode.RADIO else f"[{TEXT_DIM}]QUEUE[/]"
         self.footer.update(f"Mode: {mode_str} | 📝 Lirik: Tekan L")
