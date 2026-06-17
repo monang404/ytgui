@@ -9,18 +9,19 @@ from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK
 from textual.binding import Binding
 
 class QueueItem(ListItem):
-    def __init__(self, index: int, text: str, is_current: bool = False, *args, **kwargs):
+    def __init__(self, index: int, text: str, is_current: bool = False, removable: bool = True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.queue_index = index
         self.text = text
         self.is_current = is_current
+        self.removable = removable
         if is_current:
             self.add_class("-current")
 
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Label(self.text, classes="queue-text")
-            if not self.is_current:
+            if not self.is_current and self.removable:
                 yield Button("✕", id=f"rm_{self.queue_index}", classes="queue-rm-btn")
 
 class QueueTab(Widget):
@@ -105,12 +106,17 @@ class QueueTab(Widget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._last_state_hash = None
+        self._is_radio = False
 
     def update_state(self, state: AppState) -> None:
+        self._is_radio = state.playback_mode == PlaybackMode.RADIO
+        # Radio Mode dan Queue Mode masing-masing punya list lagunya sendiri.
+        upcoming = state.radio_queue if self._is_radio else state.queue
+
         current_hash = hash((
             state.current_track.video_id if state.current_track else None,
-            len(state.queue),
-            state.queue[0].video_id if state.queue else None,
+            len(upcoming),
+            upcoming[0].video_id if upcoming else None,
             self.size.width,
             state.playback_mode
         ))
@@ -125,8 +131,9 @@ class QueueTab(Widget):
         inner_width = terminal_width - 6
         max_title = max(10, inner_width - 15)
         
-        if not state.queue and not state.current_track:
-            self.list_view.append(ListItem(Label(f"[{TEXT_DIM}]Cari lagu atau aktifkan Radio[/]")))
+        if not upcoming and not state.current_track:
+            placeholder = "Radio sedang menyiapkan lagu..." if self._is_radio else "Cari lagu atau aktifkan Radio"
+            self.list_view.append(ListItem(Label(f"[{TEXT_DIM}]{placeholder}[/]")))
         else:
             if state.current_track:
                 title = state.current_track.title
@@ -134,12 +141,12 @@ class QueueTab(Widget):
                     title = title[:max_title - 1] + "…"
                 self.list_view.append(QueueItem(-1, f"[{ACCENT_FIRE}]> {escape(title)}[/]", is_current=True))
                 
-            for i, track in enumerate(state.queue):
+            for i, track in enumerate(upcoming):
                 dur = f"{track.duration // 60}:{track.duration % 60:02d}"
                 title = track.title
                 if len(title) > max_title:
                     title = title[:max_title - 1] + "…"
-                self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [{TEXT_DIM}]{dur}[/]"))
+                self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [{TEXT_DIM}]{dur}[/]", removable=not self._is_radio))
 
         mode_str = f"[{STATUS_OK}]RADIO[/]" if state.playback_mode == PlaybackMode.RADIO else f"[{TEXT_DIM}]QUEUE[/]"
         self.footer.update(f"Mode: {mode_str} | 📝 Lirik: Tekan L")
@@ -174,11 +181,15 @@ class QueueTab(Widget):
         self._last_state_hash = None
 
     async def on_list_view_selected(self, event: ListView.Selected) -> None:
+        if self._is_radio:
+            return
         if isinstance(event.item, QueueItem) and not event.item.is_current:
             await bus.publish(CMD_QUEUE_SELECT, event.item.queue_index)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id and event.button.id.startswith("rm_"):
+            if self._is_radio:
+                return
             idx = int(event.button.id.split("_")[1])
             await bus.publish(CMD_QUEUE_REMOVE, idx)
             # Prevent list view selection when clicking the remove button

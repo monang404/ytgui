@@ -5,7 +5,10 @@ import bisect
 import asyncio
 import syncedlyrics
 from contextlib import asynccontextmanager
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 from config import LYRICS_API_BASE
 from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
 
@@ -53,7 +56,11 @@ class LyricsFetcher:
                     if resp.status == 200:
                         data = await resp.json()
                         lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
+<<<<<<< Updated upstream
                     
+=======
+
+>>>>>>> Stashed changes
             # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
             if not lrc:
                 url_search = f"{LYRICS_API_BASE}/search"

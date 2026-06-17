@@ -42,6 +42,9 @@ class AppState:
 
     # Queue (hanya aktif di QUEUE mode)
     queue:           list[TrackInfo] = field(default_factory=list)
+    # Radio (hanya aktif di RADIO mode) — TIDAK PERNAH dicampur dengan `queue`.
+    # Radio harus independen dari Queue Mode (lihat Constitution).
+    radio_queue:     list[TrackInfo] = field(default_factory=list)
     history:         list[TrackInfo] = field(default_factory=list)
 
     # Lyrics

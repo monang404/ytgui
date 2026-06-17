@@ -106,7 +106,11 @@ class PlaybackController:
                 await asyncio.sleep(backoff)
                 # Ensure we don't call _on_next if we are no longer trying to play this track
                 if self.state.current_track == track:
+<<<<<<< Updated upstream
                     asyncio.create_task(self._on_next())
+=======
+                    await self._on_next()
+>>>>>>> Stashed changes
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:
@@ -150,6 +154,7 @@ class PlaybackController:
         self.state.status = PlayerStatus.IDLE
         self.state.current_track = None
         self.state.queue.clear()
+        self.state.radio_queue.clear()
         self.state.position = 0.0
         self.state.lyrics_lines = []
         self.state.lyrics_index = 0
@@ -163,7 +168,10 @@ class PlaybackController:
 
     async def _on_set_mode(self, mode: PlaybackMode):
         if self.state.playback_mode != mode:
+            previous_mode = self.state.playback_mode
             self.state.playback_mode = mode
+            if previous_mode == PlaybackMode.RADIO:
+                await self.radio_mode.on_deactivated()
             if mode == PlaybackMode.RADIO:
                 await self.radio_mode.on_activated(self)
             await self.bus.publish(LOG_MESSAGE, f"Mode diubah ke {mode.name}")

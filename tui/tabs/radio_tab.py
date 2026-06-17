@@ -65,8 +65,8 @@ class RadioTab(Widget):
             self.radio_btn.label = "📻 RADIO: ON"
             self.radio_btn.add_class("-on")
             
-            if state.queue:
-                next_t = state.queue[0]
+            if state.radio_queue:
+                next_t = state.radio_queue[0]
                 self.info.update(f"Radio aktif.\nSelanjutnya: [bold]{escape(next_t.title)}[/]")
             else:
                 self.info.update("Radio aktif.\nSedang menyiapkan lagu berikutnya...")
