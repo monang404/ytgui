@@ -17,18 +17,18 @@ if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
 RANDOM_SEED_QUERIES = [
-    "popular hit song official audio",
-    "trending pop music",
-    "viral tiktok songs",
-    "best acoustic cover",
-    "chill lofi beats",
-    "classic rock hits",
-    "jazz background music",
-    "indie folk songs",
-    "r&b hits official",
-    "top edm drops",
-    "kpop trending hits",
-    "billboard hot 100 official"
+    "popular hit single track official audio",
+    "trending pop hit single",
+    "viral tiktok hit song",
+    "best acoustic cover single",
+    "chill lofi single track",
+    "classic rock hit song",
+    "popular jazz song official",
+    "indie folk hit single",
+    "r&b hit single official",
+    "top edm drop single",
+    "kpop trending hit track",
+    "billboard hot 100 hit single"
 ]
 MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
 

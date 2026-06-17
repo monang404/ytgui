@@ -12,10 +12,10 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = """
     PlayerBar {
-        height: 5;
+        height: auto;
         dock: bottom;
         background: $boost;
-        padding: 0 1;
+        padding: 0 1 1 1;
     }
     #pb_controls {
         height: 1;

@@ -53,10 +53,10 @@ class YtDlpClient:
             title_raw = e.get("title")
             title = str(title_raw).lower() if title_raw else ""
             
-            # Filter kompilasi dan album:
-            if duration > 900:  # 15 menit
+            # Filter kompilasi, album, dan mashup:
+            if duration > 600:  # 10 menit (sinkron dengan Radio Mode)
                 continue
-            if any(kw in title for kw in ["compilation", "full album", "mix", "playlist"]):
+            if any(kw in title for kw in ["compilation", "full album", "mix", "playlist", "mashup", "medley", "megamix"]):
                 continue
                 
             tracks.append(self._to_track(e))
