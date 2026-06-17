@@ -29,16 +29,23 @@ class YTGuiApp(App):
     #app_header {
         height: 1;
         width: 100%;
-        text-align: center;
         background: $primary;
         color: $text;
         text-style: bold;
     }
+    #header_left { width: 1fr; text-align: left; padding-left: 1; }
+    #header_right { width: 1fr; text-align: right; padding-right: 1; color: $success; }
     .section-title {
         text-style: bold;
         color: $accent;
         margin-top: 1;
         margin-bottom: 1;
+    }
+    .badge-baru {
+        background: white;
+        color: black;
+        text-style: bold;
+        padding: 0 1;
     }
     """
 
@@ -64,8 +71,11 @@ class YTGuiApp(App):
         self._refresh_timer = None
 
     def compose(self) -> ComposeResult:
-        self.header = Static("YTGUI V2", id="app_header")
-        yield self.header
+        with Horizontal(id="app_header"):
+            self.header_left = Static("yt termux player pro", id="header_left")
+            self.header_right = Static("● online [black on white] baru [/]", id="header_right")
+            yield self.header_left
+            yield self.header_right
         
         with Container(id="content_area"):
             self.tab_home = HomeTab(id=f"content_{TAB_HOME}")
@@ -102,8 +112,9 @@ class YTGuiApp(App):
     def refresh_ui(self) -> None:
         # Update header
         if hasattr(self.state, 'is_online'):
-            indicator = "🟢 ONLINE" if self.state.is_online else "🔴 OFFLINE"
-            self.header.update(f"YTGUI V2 | {indicator}")
+            indicator = "● online" if self.state.is_online else "● offline"
+            color = "$success" if self.state.is_online else "$error"
+            self.header_right.update(f"[{color}]{indicator}[/] [black on white] baru [/]")
             
         self.player_bar.update_state(self.state)
         # Update current active tab

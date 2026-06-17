@@ -10,9 +10,9 @@ from core.event_bus import bus, CMD_PLAY_TRACK, CMD_SET_MODE
 from tui.theme import TEXT_DIM, ACCENT_GOLD, TEXT_PRIMARY
 from services.discover_service import DiscoverService
 
-def make_track_card(track: TrackInfo, icon: str) -> Button:
+def make_track_card(track: TrackInfo) -> Button:
     dur = f"{track.duration // 60}:{track.duration % 60:02d}"
-    label = f"{icon} {escape(track.title)}\n[dim]{escape(track.artist)} · {dur}[/]"
+    label = f"{escape(track.title)}\n[dim]{escape(track.artist)} · {dur}[/]"
     btn = Button(label, id=f"track_{track.video_id}", classes="track-card")
     btn.track = track
     return btn
@@ -67,22 +67,22 @@ class HomeTab(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="home_container"):
-            yield Static("🌟 Welcome to YTGUI V2", classes="section-title")
+            yield Static("selamat datang di ytgui v2", classes="section-title", id="home_welcome")
             
-            self.radio_cta = Button("▶ Mulai Radio", id="home_radio_cta", classes="radio-cta")
-            yield self.radio_cta
-            
-            yield Static("Continue Listening", classes="section-title")
+            yield Static("continue listening", classes="section-title")
             self.recent_row = Horizontal(id="recent_row", classes="card-row")
             yield self.recent_row
             self.recent_empty = Static("Belum ada riwayat pemutaran.", classes="empty-msg")
             yield self.recent_empty
 
-            yield Static("Favorites", classes="section-title")
+            yield Static("favorites", classes="section-title")
             self.fav_row = Horizontal(id="fav_row", classes="card-row")
             yield self.fav_row
             self.fav_empty = Static("Belum ada lagu favorit.", classes="empty-msg")
             yield self.fav_empty
+            
+            self.radio_cta = Button("▷ mulai radio  [black on white] baru [/]", id="home_radio_cta", classes="radio-cta")
+            yield self.radio_cta
 
     def on_mount(self) -> None:
         if hasattr(self.app, 'db') and self.app.db:
@@ -114,7 +114,7 @@ class HomeTab(Widget):
             self.recent_row.display = True
             self.recent_empty.display = False
             for track in recent:
-                await self.recent_row.mount(make_track_card(track, "🕒"))
+                await self.recent_row.mount(make_track_card(track))
 
         if not favs:
             self.fav_row.display = False
@@ -124,7 +124,7 @@ class HomeTab(Widget):
             self.fav_row.display = True
             self.fav_empty.display = False
             for track in favs:
-                await self.fav_row.mount(make_track_card(track, "⭐"))
+                await self.fav_row.mount(make_track_card(track))
 
     @on(Button.Pressed)
     async def on_button_pressed(self, event: Button.Pressed) -> None:

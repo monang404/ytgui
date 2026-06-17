@@ -55,9 +55,9 @@ class SearchTab(Widget):
         self._last_query = ""
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield Input(placeholder="Ketik pencarian... (Tekan Enter untuk mencari)", id="search_input")
-            self.msg_label = Static(f"[{TEXT_DIM}]Ketik nama lagu atau artis[/]", id="search_msg")
+        with Vertical(id="search_container"):
+            yield Input(placeholder="ketik pencarian... (tekan enter)", id="search_input")
+            self.msg_label = Static(f"[{TEXT_DIM}]ketik nama lagu atau artis[/]", id="search_msg")
             yield self.msg_label
             self.list_view = ListView(id="search_results")
             self.list_view.display = False

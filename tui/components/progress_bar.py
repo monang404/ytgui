@@ -23,7 +23,7 @@ class ClickableProgressBar(Static):
         bar_width = max(10, self.size.width - 16)
         pct = min(1.0, self.position / self.duration)
         filled = int(pct * bar_width)
-        bar = "█" * filled + "░" * (bar_width - filled)
+        bar = "[#FFA500]" + "━" * filled + "[/][#333344]" + "─" * (bar_width - filled) + "[/]"
 
         pos_str = f"{int(self.position//60):02d}:{int(self.position%60):02d}"
         dur_str = f"{int(self.duration//60):02d}:{int(self.duration%60):02d}"

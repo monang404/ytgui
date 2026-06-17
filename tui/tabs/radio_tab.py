@@ -50,14 +50,14 @@ class RadioTab(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="radio_container"):
-            self.radio_btn = Button("📻 RADIO: OFF", id="radio_btn")
-            self.info = Static(f"[{TEXT_DIM}]Radio memutar lagu otomatis tanpa henti.[/]", id="radio_info")
+            self.radio_btn = Button("📻 radio: off", id="radio_btn")
+            self.info = Static(f"[{TEXT_DIM}]radio memutar lagu otomatis tanpa henti.[/]", id="radio_info")
             yield self.radio_btn
             yield self.info
             
             with Horizontal(id="radio_actions"):
-                yield Button("🔍 Ganti Seed Lagu", id="change_seed_btn")
-                yield Button("⏭ Skip lagu ini", id="radio_skip_btn")
+                yield Button("🔍 ganti seed lagu", id="change_seed_btn")
+                yield Button("⏭ skip lagu ini", id="radio_skip_btn")
 
     def update_state(self, state: AppState) -> None:
         is_radio = state.playback_mode == PlaybackMode.RADIO

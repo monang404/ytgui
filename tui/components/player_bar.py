@@ -60,21 +60,21 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Button("⏮", id="btn_prev", classes="player-btn")
-            self.btn_play = Button("⏯", id="btn_play", classes="player-btn")
-            self.btn_next = Button("⏭", id="btn_next", classes="player-btn")
+            self.btn_prev = Button("|◁", id="btn_prev", classes="player-btn")
+            self.btn_play = Button("||", id="btn_play", classes="player-btn")
+            self.btn_next = Button("▷|", id="btn_next", classes="player-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next
 
         with Horizontal(id="pb_meta_row"):
             with Horizontal(classes="meta-left", id="pb_vol_container"):
-                self.btn_voldown = Button("⏬", id="btn_voldown", classes="player-btn")
-                self.btn_volup = Button("⏫", id="btn_volup", classes="player-btn")
+                self.btn_voldown = Button("🔉", id="btn_voldown", classes="player-btn")
+                self.btn_volup = Button("🔊 85% [black on white] baru [/]", id="btn_volup", classes="player-btn")
                 yield self.btn_voldown
                 yield self.btn_volup
             self.badge_cache = Static("", id="pb_badge_cache", classes="meta-center")
-            self.btn_download = Button("⬇", id="btn_download", classes="meta-right player-btn")
+            self.btn_download = Button("⬇ unduh [black on white] baru [/]", id="btn_download", classes="meta-right player-btn")
             yield self.badge_cache
             yield self.btn_download
 
@@ -94,16 +94,16 @@ class PlayerBar(Widget):
 
     def update_state(self, state: AppState) -> None:
         if state.playback_mode == PlaybackMode.RADIO:
-            self.badge_mode.update("[bold #FF6B35][●] RADIO[/]")
+            self.badge_mode.update("[bold #FFA500]📻 radio [black on white] baru [/][/]")
         else:
-            self.badge_mode.update("[bold #555580][○] QUEUE[/]")
+            self.badge_mode.update("[bold #555580]≡ queue[/]")
             
         t = state.current_track
         if t:
             if t.local_path:
-                self.badge_cache.update("[bold #4ade80]✓ Cached[/]")
+                self.badge_cache.update("[bold #4ade80]✓ tersimpan [black on white] baru [/][/]")
             else:
-                self.badge_cache.update("[bold #A0A0C0]☁ Stream[/]")
+                self.badge_cache.update("[bold #A0A0C0]☁ stream[/]")
         else:
             self.badge_cache.update("")
 
@@ -111,27 +111,27 @@ class PlayerBar(Widget):
             self.info_line.update("Ketuk Radio untuk mulai ▶")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.label = "▶"
+            self.btn_play.label = "▷"
         elif state.status == PlayerStatus.LOADING:
             track_name = state.current_track.title if state.current_track else ""
-            self.info_line.update(f"⏳ Memuat... {escape(track_name)}")
+            self.info_line.update(f"⏳ memuat... {escape(track_name)}")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.label = "⏸"
+            self.btn_play.label = "||"
         elif state.status == PlayerStatus.PLAYING:
             t = state.current_track
             if t:
                 self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.label = "⏸"
+            self.btn_play.label = "[#FFA500]||[/]"
         elif state.status == PlayerStatus.PAUSED:
             t = state.current_track
             if t:
                 self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.label = "▶ RESUME"
+            self.btn_play.label = "▷"
         elif state.status == PlayerStatus.ERROR:
             msg = state.error_msg or "Terjadi kesalahan"
             self.info_line.update(f"[{STATUS_ERR}]{escape(msg)}[/]")
