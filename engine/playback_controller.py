@@ -88,7 +88,7 @@ class PlaybackController:
             logger.error(f"Failed to play track {track.title}: {e}", exc_info=True)
             self.state.status = PlayerStatus.ERROR
             self.state.error_msg = f"Error: {e}"
-            await self.bus.publish(LOG_MESSAGE, f"Gagal memutar lagu: {track.title}")
+            await self.bus.publish(LOG_MESSAGE, f"Gagal memutar lagu: {track.title} | {type(e).__name__}: {str(e)}")
             await asyncio.sleep(2)
             await self._on_next()
 

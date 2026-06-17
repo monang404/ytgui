@@ -35,8 +35,8 @@ class YtDlpClient:
     async def search(self, query: str, max_results: int = 10) -> list[TrackInfo]:
         opts = {**self._YDL_OPTS_INFO,
                 "extract_flat": True}
-        url = f"ytsearch30:{query}"
-        loop = asyncio.get_running_loop()  # HIGH-03 fix
+        url = f"ytsearch10:{query}"
+        loop = asyncio.get_running_loop()
         results = await loop.run_in_executor(None, self._extract_sync, url, opts)
         
         tracks = []
