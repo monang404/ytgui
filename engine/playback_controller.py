@@ -106,7 +106,7 @@ class PlaybackController:
                 await asyncio.sleep(backoff)
                 # Ensure we don't call _on_next if we are no longer trying to play this track
                 if self.state.current_track == track:
-                    await self._on_next()
+                    asyncio.create_task(self._on_next())
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:
