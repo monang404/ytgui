@@ -76,15 +76,15 @@ class HomeTab(Widget):
     def on_show(self) -> None:
         self.load_data()
 
-    @work(exclusive=True, thread=True)
-    def load_data(self) -> None:
+    @work(exclusive=True)
+    async def load_data(self) -> None:
         if not self.discover_service:
             return
             
-        recent = asyncio.run_coroutine_threadsafe(self.discover_service.get_recent(5), self.app.loop).result()
-        favs = asyncio.run_coroutine_threadsafe(self.discover_service.get_favorites(5), self.app.loop).result()
+        recent = await self.discover_service.get_recent(5)
+        favs = await self.discover_service.get_favorites(5)
         
-        self.app.call_from_thread(self._update_ui, recent, favs)
+        self._update_ui(recent, favs)
 
     def _update_ui(self, recent: list[TrackInfo], favs: list[TrackInfo]) -> None:
         self.recent_list.clear()
