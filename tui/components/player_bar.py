@@ -62,7 +62,7 @@ class PlayerBar(Widget):
     Static.main-btn:hover {
         background: $accent;
         color: $background;
-        border: solid $text;
+        border: solid white;
     }
     """
 
