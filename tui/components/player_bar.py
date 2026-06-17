@@ -12,13 +12,13 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = """
     PlayerBar {
-        height: 9;
+        height: 11;
         dock: bottom;
         background: $boost;
         padding: 1 1;
     }
     #pb_controls {
-        height: 1;
+        height: 3;
         align: center middle;
         margin-top: 1;
     }
@@ -50,6 +50,15 @@ class PlayerBar(Widget):
         color: $accent;
         text-style: bold;
     }
+    Static.main-btn {
+        height: 3;
+        content-align: center middle;
+        padding: 0 4;
+        border: round $border;
+    }
+    Static.main-btn:hover {
+        border: round $accent;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -63,9 +72,9 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Static(" |◁ ", id="btn_prev", classes="player-btn")
-            self.btn_play = Static(" ▷ ", id="btn_play", classes="player-btn")
-            self.btn_next = Static(" ▷| ", id="btn_next", classes="player-btn")
+            self.btn_prev = Static(" |◁ ", id="btn_prev", classes="player-btn main-btn")
+            self.btn_play = Static(" ▷ ", id="btn_play", classes="player-btn main-btn")
+            self.btn_next = Static(" ▷| ", id="btn_next", classes="player-btn main-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next

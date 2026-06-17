@@ -15,7 +15,7 @@ from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
-DEFAULT_SEED_QUERY = "top hits music"
+DEFAULT_SEED_QUERY = "popular hit song official audio"
 MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
 
 class RadioMode:

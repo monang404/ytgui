@@ -39,29 +39,39 @@ class QueueTab(Widget):
         height: 1fr;
     }
     QueueItem {
-        height: 3;
         border: round $border;
         margin-bottom: 1;
+        padding: 0 1;
+        height: auto;
     }
     QueueItem.-current {
         border: round $accent;
     }
+    QueueItem:hover {
+        border: round $accent;
+    }
     QueueItem Horizontal {
         align: left middle;
+        height: auto;
     }
     .queue-text {
         width: 1fr;
+        content-align: left middle;
     }
     .queue-rm-btn {
-        width: 5;
+        width: 3;
+        min-width: 3;
         height: 1;
+        min-height: 1;
         border: none;
         color: $error;
         background: transparent;
         margin-left: 1;
+        padding: 0;
     }
     .queue-rm-btn:hover {
         background: $error-muted;
+        color: $text;
     }
     #queue_footer {
         height: 1;
@@ -76,10 +86,13 @@ class QueueTab(Widget):
     }
     #lyrics_toggle_btn {
         width: 100%;
-        height: 3;
+        height: 1;
+        min-height: 1;
         border: none;
         background: transparent;
         color: $accent;
+        padding: 0;
+        margin: 1 0;
     }
     #lyrics_content {
         height: 1fr;
