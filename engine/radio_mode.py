@@ -21,19 +21,26 @@ class RadioMode:
         self.ytdlp = ytdlp
         self.state = state
         self._is_fetching = False
+        self._bg_tasks = set()
 
     async def on_activated(self, controller: "PlaybackController") -> None:
         """Dipanggil saat user switch ke Radio Mode."""
         if not self.state.current_track:
-            asyncio.create_task(self._fetch_and_play_initial(controller))
+            task = asyncio.create_task(self._fetch_and_play_initial(controller))
+            self._bg_tasks.add(task)
+            task.add_done_callback(self._bg_tasks.discard)
         elif len(self.state.queue) == 0:
-            asyncio.create_task(self._prefetch_next(controller))
+            task = asyncio.create_task(self._prefetch_next(controller))
+            self._bg_tasks.add(task)
+            task.add_done_callback(self._bg_tasks.discard)
 
     async def next(self, controller: "PlaybackController") -> None:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.queue:
             track = self.state.queue.pop(0)
-            asyncio.create_task(self._prefetch_next(controller))  # prefetch track berikutnya
+            task = asyncio.create_task(self._prefetch_next(controller))
+            self._bg_tasks.add(task)
+            task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
         else:
             await self._fetch_and_play_initial(controller)
@@ -54,8 +61,8 @@ class RadioMode:
             if new_tracks:
                 self.state.queue.extend(new_tracks)
                 await bus.publish(QUEUE_UPDATED)
-        except Exception:
-            pass  # silent best-effort
+        except Exception as e:
+            await bus.publish(LOG_MESSAGE, f"Prefetch Error: {str(e)}")
         finally:
             self._is_fetching = False
 
@@ -66,8 +73,10 @@ class RadioMode:
             if results:
                 self.state.queue = results[1:]
                 await controller.play_track(results[0])
-        except Exception:
-            await bus.publish(LOG_MESSAGE, "Radio: Tidak bisa memuat lagu awal.")
+            else:
+                await bus.publish(LOG_MESSAGE, "Radio: Tidak ada hasil lagu ditemukan.")
+        except Exception as e:
+            await bus.publish(LOG_MESSAGE, f"Radio Error: {str(e)}")
 
     def _build_exclusion_set(self) -> set[str]:
         ids = {t.video_id for t in self.state.queue}
