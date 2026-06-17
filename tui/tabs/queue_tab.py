@@ -78,9 +78,13 @@ class QueueTab(Widget):
     }
     #lyrics_toggle_btn {
         width: 100%;
-        height: 3;
+        height: 1;
         border: none;
         background: transparent;
+        color: $text-muted;
+        text-style: italic;
+    }
+    #lyrics_toggle_btn:hover {
         color: $accent;
     }
     #lyrics_content {
