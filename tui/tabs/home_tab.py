@@ -46,6 +46,12 @@ class HomeTab(Widget):
         text-align: center;
         margin: 2;
     }
+    TrackCard {
+        height: auto;
+    }
+    ListView {
+        height: auto;
+    }
     """
 
     def __init__(self, *args, **kwargs):

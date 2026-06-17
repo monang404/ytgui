@@ -40,6 +40,7 @@ class SearchTab(Widget):
     }
     SearchResultItem {
         padding: 0 1;
+        height: auto;
     }
     """
 
