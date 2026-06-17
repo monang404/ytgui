@@ -87,7 +87,7 @@ class YtDlpClient:
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
-                "preferredquality": "192",
+                "preferredquality": "320",
             }],
             "progress_hooks": hooks,
         }

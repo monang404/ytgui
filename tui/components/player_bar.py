@@ -12,21 +12,21 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = """
     PlayerBar {
-        height: 11;
+        height: 5;
         dock: bottom;
         background: $boost;
-        padding: 1 1;
+        padding: 0 1;
     }
     #pb_controls {
-        height: 3;
+        height: 1;
         align: center middle;
-        margin-top: 1;
+        margin-top: 0;
     }
     #pb_title_row { height: 1; }
     #pb_title_row #pb_info { width: 1fr; }
     #pb_title_row #pb_badge_mode { width: auto; color: $accent; }
 
-    #pb_meta_row { height: 1; margin-top: 1; }
+    #pb_meta_row { height: 1; margin-top: 0; }
     .meta-left   { width: 1fr; text-align: left; color: $text-muted; }
     .meta-center { width: 1fr; text-align: center; color: $success; }
     .meta-right  { width: 1fr; text-align: right; }
@@ -40,24 +40,26 @@ class PlayerBar(Widget):
     Static.player-btn {
         width: auto;
         height: 1;
-        padding: 0 1;
+        padding: 0 2;
         background: transparent;
         color: $text;
         margin: 0 1;
     }
     Static.player-btn:hover {
-        background: transparent;
+        background: $panel;
         color: $accent;
         text-style: bold;
     }
     Static.main-btn {
-        height: 3;
+        height: 1;
         content-align: center middle;
         padding: 0 4;
-        border: round $border;
+        background: $panel;
+        border: none;
     }
     Static.main-btn:hover {
-        border: round $accent;
+        background: $accent;
+        color: $background;
     }
     """
 
@@ -72,9 +74,9 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Static(" |◁ ", id="btn_prev", classes="player-btn main-btn")
-            self.btn_play = Static(" ▷ ", id="btn_play", classes="player-btn main-btn")
-            self.btn_next = Static(" ▷| ", id="btn_next", classes="player-btn main-btn")
+            self.btn_prev = Static("⏮ PREV", id="btn_prev", classes="player-btn main-btn")
+            self.btn_play = Static("⏯ PLAY", id="btn_play", classes="player-btn main-btn")
+            self.btn_next = Static("NEXT ⏭", id="btn_next", classes="player-btn main-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next

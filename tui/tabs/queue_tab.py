@@ -20,8 +20,6 @@ class QueueItem(ListItem):
 
     def compose(self) -> ComposeResult:
         yield Label(self.text, classes="queue-text")
-        if not self.is_current and self.removable:
-            yield Button("✕", id=f"rm_{self.queue_index}", classes="queue-rm-btn")
 
 class QueueTab(Widget):
     """The Queue Tab showing current track and upcoming queue."""
@@ -38,12 +36,10 @@ class QueueTab(Widget):
         height: 1fr;
     }
     QueueItem {
-        layout: horizontal;
-        height: auto;
         border: round $border;
         margin-bottom: 1;
         padding: 0 1;
-        align: left middle;
+        height: auto;
     }
     QueueItem.-current {
         border: round $accent;
@@ -53,22 +49,6 @@ class QueueTab(Widget):
     }
     .queue-text {
         width: 1fr;
-        content-align: left middle;
-    }
-    .queue-rm-btn {
-        width: 3;
-        min-width: 3;
-        height: 1;
-        min-height: 1;
-        border: none;
-        color: $error;
-        background: transparent;
-        margin-left: 1;
-        padding: 0;
-    }
-    .queue-rm-btn:hover {
-        background: $error-muted;
-        color: $text;
     }
     #queue_footer {
         height: 1;
