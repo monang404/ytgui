@@ -1,4 +1,5 @@
 import asyncio
+import random
 from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import Static
@@ -17,8 +18,10 @@ ASCII_ART = """[#A0A0C0]
        `─────'       
 [/]"""
 
+BARS = [" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+
 class NowPlayingTab(Widget):
-    """The Now Playing Tab showing large track info and lyrics."""
+    """The Now Playing Tab showing large track info and an equalizer."""
     DEFAULT_CSS = """
     NowPlayingTab {
         height: 1fr;
@@ -44,10 +47,11 @@ class NowPlayingTab(Widget):
         color: $text-muted;
         margin-bottom: 2;
     }
-    #np_lyrics {
+    #np_eq {
         text-align: center;
-        color: $accent;
-        height: 3;
+        height: 1;
+        margin-top: 1;
+        color: $success;
     }
     """
 
@@ -56,29 +60,27 @@ class NowPlayingTab(Widget):
             yield Static(ASCII_ART, id="np_art")
             self.title = Static("Belum ada lagu yang diputar", id="np_title")
             self.artist = Static("Cari lagu untuk memulai", id="np_artist")
-            self.lyrics = Static("", id="np_lyrics")
+            self.eq_animation = Static("", id="np_eq")
             yield self.title
             yield self.artist
-            yield self.lyrics
+            yield self.eq_animation
 
     def update_state(self, state: AppState) -> None:
         track = state.current_track
         if not track:
             self.title.update("Belum ada lagu yang diputar")
             self.artist.update("Cari lagu untuk memulai")
-            self.lyrics.update("")
+            self.eq_animation.update("")
             return
 
         self.title.update(escape(track.title))
         self.artist.update(escape(track.artist))
 
-        # Update Lirik
-        if state.lyrics_lines and 0 <= state.lyrics_index < len(state.lyrics_lines):
-            current_line = state.lyrics_lines[state.lyrics_index]
-            # Format text as bold to make it clear it's the lyric
-            self.lyrics.update(f"[bold]{escape(current_line[1])}[/bold]")
+        # Equalizer Animation
+        if state.status == PlayerStatus.PLAYING:
+            # Generate random bars
+            eq_str = "".join(random.choice(BARS) for _ in range(30))
+            self.eq_animation.update(eq_str)
         else:
-            if state.status == PlayerStatus.PLAYING:
-                self.lyrics.update(f"[{TEXT_DIM}]...[/{TEXT_DIM}]")
-            else:
-                self.lyrics.update("")
+            # Flat line when paused or stopped
+            self.eq_animation.update(f"[{TEXT_DIM}]" + " " * 30 + f"[/{TEXT_DIM}]")
