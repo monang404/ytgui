@@ -17,18 +17,24 @@ if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
 RANDOM_SEED_QUERIES = [
-    "popular hit single track official audio",
-    "trending pop hit single",
-    "viral tiktok hit song",
-    "best acoustic cover single",
-    "chill lofi single track",
-    "classic rock hit song",
-    "popular jazz song official",
-    "indie folk hit single",
-    "r&b hit single official",
-    "top edm drop single",
-    "kpop trending hit track",
-    "billboard hot 100 hit single"
+    "Taylor Swift official audio",
+    "Ed Sheeran official audio",
+    "The Weeknd official audio",
+    "Bruno Mars official audio",
+    "Adele official audio",
+    "Billie Eilish official audio",
+    "Coldplay official audio",
+    "Imagine Dragons official audio",
+    "Post Malone official audio",
+    "Maroon 5 official audio",
+    "Dua Lipa official audio",
+    "Justin Bieber official audio",
+    "Ariana Grande official audio",
+    "Shawn Mendes official audio",
+    "Charlie Puth official audio",
+    "Sam Smith official audio",
+    "Olivia Rodrigo official audio",
+    "Harry Styles official audio"
 ]
 MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
 
