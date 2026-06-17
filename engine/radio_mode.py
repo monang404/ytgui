@@ -56,7 +56,6 @@ class RadioMode:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.radio_queue:
             track = self.state.radio_queue.pop(0)
-            await bus.publish(QUEUE_UPDATED)
             task = asyncio.create_task(self._prefetch_next(controller))
             self._bg_tasks.add(task)
             task.add_done_callback(self._bg_tasks.discard)
@@ -75,7 +74,7 @@ class RadioMode:
             if not track:
                 return
             query = f"{track.artist} music"
-            results = await self.ytdlp.search(query, max_results=15)
+            results = await self.ytdlp.search(query, max_results=10)
             existing = self._build_exclusion_set()
             # Filter kompilasi: durasi harus < 10 menit (600 detik) dan bukan livestream (0)
             new_tracks = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION][:2]

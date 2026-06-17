@@ -117,8 +117,7 @@ class SearchTab(Widget):
         if query:
             self._show_loading()
             # C-01: Call perform_live_search instead of publishing CMD_SEARCH
-            # perform_live_search is decorated with @work, so it runs in the background and shouldn't be awaited
-            self.perform_live_search(query)
+            await self.perform_live_search(query)
 
     @on(ListView.Selected, "#search_results")
     async def on_list_selected(self, event: ListView.Selected) -> None:

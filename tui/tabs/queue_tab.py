@@ -39,17 +39,15 @@ class QueueTab(Widget):
         height: 1fr;
     }
     QueueItem {
-        height: auto;
+        height: 3;
         border: round $border;
         margin-bottom: 1;
-        padding: 0 1;
     }
     QueueItem.-current {
         border: round $accent;
     }
     QueueItem Horizontal {
         align: left middle;
-        height: auto;
     }
     .queue-text {
         width: 1fr;
@@ -78,13 +76,9 @@ class QueueTab(Widget):
     }
     #lyrics_toggle_btn {
         width: 100%;
-        height: 1;
+        height: 3;
         border: none;
         background: transparent;
-        color: $text-muted;
-        text-style: italic;
-    }
-    #lyrics_toggle_btn:hover {
         color: $accent;
     }
     #lyrics_content {
