@@ -85,8 +85,7 @@ class QueueTab(Widget):
             yield self.list_view
             yield self.footer
             
-            self.lyrics_container = Vertical(id="lyrics_container")
-            with self.lyrics_container:
+            with Vertical(id="lyrics_container") as self.lyrics_container:
                 self.lyrics_toggle_btn = Button("📝 Lirik ▾", id="lyrics_toggle_btn")
                 self.lyrics_content = Static("Tidak ada lirik", id="lyrics_content")
                 yield self.lyrics_toggle_btn
