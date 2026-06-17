@@ -1,27 +1,29 @@
 import asyncio
 import logging
-import signal
-import aiohttp
 import stat
+import sys
+import aiohttp
 from logging.handlers import RotatingFileHandler
 from core.state import AppState, PlayerStatus
-from tui.dashboard import Dashboard
-from core.event_bus import bus, CMD_SEARCH, SEARCH_RESULTS, LOG_MESSAGE, CMD_QUIT
+from core.event_bus import bus, CMD_SEARCH, LOG_MESSAGE, CMD_QUIT
 from engine.ytdlp_client import YtDlpClient
 from engine.mpv_controller import MpvController
 from cache.db import Database
 from cache.resolver import CacheResolver
 from integrations.sponsorblock import SponsorBlockHandler
 from integrations.lyrics import LyricsFetcher
-from engine.autoplay import AutoplayEngine
-from engine.queue_manager import QueueManager
+from engine.queue_mode import QueueMode
+from engine.radio_mode import RadioMode
+from engine.volume_service import VolumeService
+from engine.download_manager import DownloadManager
+from engine.playback_controller import PlaybackController
 from config import BASE_DIR
 
 log_path = BASE_DIR / "ytplayer.log"
 _log_handler = RotatingFileHandler(
     log_path,
-    maxBytes=1 * 1024 * 1024,  # 1 MB per file
-    backupCount=2,              # simpan maksimal 2 backup
+    maxBytes=1 * 1024 * 1024,
+    backupCount=2,
     encoding="utf-8"
 )
 _log_handler.setFormatter(logging.Formatter(
@@ -38,6 +40,7 @@ except OSError:
 
 async def main():
     state = AppState()
+    no_tui = "--no-tui" in sys.argv
     
     # 1. Initialize DB
     db = Database()
@@ -46,10 +49,8 @@ async def main():
     # 2. Initialize Core Engine
     ytdlp = YtDlpClient()
     mpv = MpvController()
-    mpv_connected = False
     try:
         await mpv.connect()
-        mpv_connected = True
     except Exception as e:
         logging.getLogger(__name__).error(f"mpv not available: {e}")
         state.error_msg = (
@@ -58,40 +59,45 @@ async def main():
         )
         state.status = PlayerStatus.ERROR
     
-    # 3. Shared HTTP session (MED-01 fix)
+    # 3. Shared HTTP session
     http_session = aiohttp.ClientSession()
     
     # 4. Initialize Integrations & Resolver
     resolver = CacheResolver(db, ytdlp)
     sponsorblock = SponsorBlockHandler(mpv, session=http_session)
     lyrics_fetcher = LyricsFetcher(state, session=http_session)
-    autoplay = AutoplayEngine(ytdlp, state)
     
-    # 5. Initialize Queue Manager (now receives ytdlp and db for download)
-    qm = QueueManager(state, mpv, ytdlp, db, resolver, sponsorblock, lyrics_fetcher)
+    # 5. Engine Modes & Services
+    queue_mode = QueueMode()
+    radio_mode = RadioMode(ytdlp, state)
+    volume_service = VolumeService(bus, mpv)
+    download_manager = DownloadManager(bus, state, ytdlp)
+    
+    # 6. Initialize Playback Controller
+    controller = PlaybackController(
+        bus, state, mpv, resolver, sponsorblock, lyrics_fetcher, queue_mode, radio_mode
+    )
 
-    # 6. Wire up user Search command -> YtDlp
+    # 7. Wire up Search Handler
     async def handle_search(query: str):
         await bus.publish(LOG_MESSAGE, f"Searching: {query}...")
         try:
             results = await ytdlp.search(query, max_results=10)
             state.is_online = True
             if results:
-                await bus.publish(SEARCH_RESULTS, results)
+                # Set queue from results[1:] and play the first result
+                state.queue = results[1:]
+                await controller.play_track(results[0])
             else:
                 await bus.publish(LOG_MESSAGE, "No results found.")
         except Exception as e:
             state.is_online = False
-            from engine.queue_manager import QueueManager
-            user_msg = QueueManager._user_friendly_error(e)
-            state.error_msg = user_msg
-            await bus.publish(LOG_MESSAGE, f"Search failed: {user_msg}")
+            state.error_msg = f"Search failed: {e}"
+            await bus.publish(LOG_MESSAGE, f"Search failed: {e}")
 
     bus.subscribe(CMD_SEARCH, handle_search)
 
-    # 7. Start TUI
-    dashboard = Dashboard(state)
-
+    # Connectivity Check
     async def check_connectivity():
         while True:
             try:
@@ -110,9 +116,26 @@ async def main():
     connectivity_task = asyncio.create_task(check_connectivity())
     tasks = [connectivity_task]
     
-    # CRITICAL-05 fix: Graceful shutdown with proper cleanup
+    # 8. Start App
     try:
-        await dashboard.run_async()
+        if no_tui:
+            print(f"Running in --no-tui mode. Logs available at {log_path}")
+            print("To quit, press Ctrl+C")
+            
+            # Send a test search to verify it works
+            asyncio.create_task(bus.publish(CMD_SEARCH, "top hits music"))
+            
+            # Run loop for 10 seconds then exit for testing purposes
+            for _ in range(15):
+                await asyncio.sleep(1)
+            print("Test timeout reached, exiting.")
+            return
+        else:
+            from tui.app import YTGuiApp
+            app = YTGuiApp(state, ytdlp, db)
+            await app.run_async()
+    except asyncio.CancelledError:
+        pass
     finally:
         import traceback
         for t in tasks:
@@ -139,4 +162,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        pass  # LOW-04: Clean exit on Ctrl+C at top level
+        pass

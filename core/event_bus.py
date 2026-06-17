@@ -1,3 +1,9 @@
+"""
+Purpose: EventBus untuk komunikasi antar modul secara decoupled dan asinkron.
+Subscribes to: (tidak ada)
+Publishes: (tidak ada)
+"""
+
 import asyncio
 import logging
 from collections import defaultdict
@@ -39,35 +45,38 @@ class EventBus:
 bus = EventBus()
 
 # Event names constants
-TRACK_STARTED    = "track.started"
-TRACK_ENDED      = "track.ended"
-TRACK_PROGRESS   = "track.progress"
-QUEUE_EMPTY      = "queue.empty"
-QUEUE_UPDATED    = "queue.updated"
-VOLUME_CHANGED   = "volume.changed"
-LYRICS_UPDATED   = "lyrics.updated"
-LYRICS_SYNC      = "lyrics.sync"
-ERROR_OCCURRED   = "error.occurred"
-SEARCH_RESULTS   = "search.results"
-LOG_MESSAGE      = "log.message"
-DOWNLOAD_PROGRESS = "download.progress"
-DOWNLOAD_COMPLETE = "download.complete"
-SKIP_SEGMENT     = "skip.segment"
-APP_SHUTDOWN     = "app.shutdown"
 
-# Command Events
+# === TRACK ===
+TRACK_STARTED    = "track.started"    # data: TrackInfo
+TRACK_ENDED      = "track.ended"      # data: {"reason": str}
+TRACK_PROGRESS   = "track.progress"   # data: float (seconds)
+
+# === QUEUE ===
+QUEUE_UPDATED    = "queue.updated"    # data: None
+
+# === LYRICS ===
+LYRICS_UPDATED   = "lyrics.updated"   # data: None
+
+# === DOWNLOAD ===
+DOWNLOAD_PROGRESS = "download.progress"  # data: float 0.0–1.0
+DOWNLOAD_COMPLETE = "download.complete"  # data: TrackInfo
+
+# === SYSTEM ===
+LOG_MESSAGE      = "log.message"      # data: str
+APP_SHUTDOWN     = "app.shutdown"     # data: None
+
+# === COMMANDS ===
+CMD_PLAY_TRACK   = "cmd.play.track"       # data: TrackInfo — BARU
 CMD_TOGGLE_PAUSE = "cmd.toggle.pause"
 CMD_NEXT         = "cmd.next"
 CMD_PREV         = "cmd.prev"
 CMD_STOP         = "cmd.stop"
+CMD_SEEK         = "cmd.seek"              # data: float
 CMD_VOLUME_UP    = "cmd.volume.up"
 CMD_VOLUME_DOWN  = "cmd.volume.down"
-CMD_DOWNLOAD     = "cmd.download"
-CMD_SEARCH       = "cmd.search"
-CMD_TOGGLE_RADIO = "cmd.toggle.radio"
-CMD_QUEUE_SELECT = "cmd.queue.select"
-CMD_TOGGLE_LYRICS = "cmd.toggle.lyrics"
+CMD_DOWNLOAD     = "cmd.download"          # data: TrackInfo | None
+CMD_SEARCH       = "cmd.search"            # data: str
+CMD_SET_MODE     = "cmd.set.mode"          # data: PlaybackMode — BARU
+CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
+CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index) — BARU
 CMD_QUIT         = "cmd.quit"
-CMD_FOCUS_SEARCH = "cmd.focus.search"
-CMD_UNFOCUS      = "cmd.unfocus"
-CMD_SEEK         = "cmd.seek"
