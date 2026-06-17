@@ -22,30 +22,28 @@ Aplikasi ini telah **dikunci secara paksa** untuk selalu menyedot audio dengan k
 
 ---
 
-## 🎹 3. Panduan Kontrol & Tombol (Widget)
+## 🎹 3. Panduan Navigasi & Kontrol (V2)
 
-Aplikasi ini menggunakan UI interaktif (TUI). Di bagian bawah layar Anda, terdapat **Panel Widget (Tombol Visual)** yang bisa langsung Anda **sentuh (di layar HP)** atau **klik (menggunakan mouse)**.
+Aplikasi ini menggunakan antarmuka interaktif berbasis **Tab (TUI V2)**. Di bagian layar Anda terdapat:
+- **Navigasi Tab (Bawah):** `🏠 Home` | `🔍 Search` | `📻 Radio` | `☰ Queue`
+- **Player Bar (Menempel di atas Navigasi):** Berisi status pemutaran dan kontrol sentuh/klik `[ ⏮ ]` `[ ⏯ ]` `[ ⏭ ]`.
 
-Tombol-tombol visual (Widget) yang tersedia di layar:
-- `[ ⏮ ]` `[ ⏯ PLAY/PAUSE ]` `[ ⏭ ]`
-- `[ ⏹ Stop ]` `[ 🔉 ]` `[ 🔊 ]`
-- `[ 📻 Radio ]` `[ 📝 Lirik ]` `[ ⬇ DL ]`
+Anda bisa langsung menyentuh/mengklik nama Tab untuk berpindah halaman, atau mengklik **Progress Bar** pada Player Bar untuk *seek* (memajukan lagu) secara instan!
 
-Selain mengklik tombol-tombol widget di atas, Anda juga bisa menggunakan *keyboard shortcut* layaknya seorang pro:
+Selain menggunakan mouse/sentuhan, berikut adalah daftar *keyboard shortcut* layaknya seorang pro:
 
 | Tombol Keyboard | Aksi / Perintah |
 | :---: | :--- |
-| **`/`** | Membuka kotak pencarian lagu. |
+| **`/`** | Membuka kotak pencarian lagu (otomatis pindah ke Tab Search). |
 | **`Enter`** | Memutar hasil pencarian pertama dan memasukkan hasil lainnya ke antrean. |
-| **`Esc`** | Membatalkan / keluar dari mode pencarian. |
+| **`Esc`** | Membatalkan / keluar dari mode pencarian atau panel fokus. |
 | **`P`** | Memutar (Play) atau menjeda (Pause) lagu saat ini. |
 | **`N`** | Melompat ke lagu selanjutnya di antrean (Next). |
 | **`B`** | Kembali ke lagu sebelumnya (Previous). |
 | **`S`** | Menghentikan pemutaran secara total dan mengosongkan antrean (Stop). |
 | **`U` / `D`** | Menaikkan (`U`) atau menurunkan (`D`) volume pemutar sebesar 5%. |
 | **`M`** | Mengunduh (Download) lagu yang sedang diputar agar kelak bisa didengarkan tanpa kuota internet! |
-| **`R`** | Menghidupkan/Mematikan Mode Radio (Auto-play lagu terkait jika antrean habis). |
-| **`L`** | Membuka/Menutup panel Lirik. |
+| **`R`** | Beralih antara Queue Mode (Antrean Normal) dan Radio Mode (Auto-play AI). |
 | **`Q`** | Keluar dari aplikasi dengan aman (Quit). |
 
 > **Pro Tip TUI:** Anda bisa langsung menggeser atau **meng-klik bagian Progress Bar** untuk memajukan (seek) lagu ke menit tertentu!
@@ -75,8 +73,8 @@ Dulu hal ini membuat aplikasi *stuck* (macet). Sekarang, aplikasi secara cerdas 
 ### D. Hemat Kuota dengan Fitur "M" (Manual Cache)
 Jika Anda punya lagu favorit yang sering diputar, tekan tombol **`M`** saat lagu sedang berjalan. Aplikasi akan mengunduhnya diam-diam ke folder `cache/`. Besoknya, saat Anda memutar lagu itu lagi, aplikasi akan membaca file lokal (100% tanpa menyedot kuota internet lagi!).
 
-### E. Biarkan Radio Berjalan (Smart Autoplay)
-Jika Anda sedang bekerja dan malas mencari lagu satu-satu, cukup cari satu lagu, lalu pastikan **Radio Mode aktif** (tombol `R`). Ketika antrean pencarian habis, aplikasi otomatis mencari lagu dengan nuansa yang mirip untuk terus diputar tanpa ujung.
+### E. Radio Mode Cerdas (Autonomous Playback)
+Di V2, **Radio Mode** tidak lagi bergantung pada antrean kosong. Jika Anda mengaktifkannya (tombol `R` atau via Tab Radio), sistem akan memisahkan diri dan memutar lagu rekomendasi secara terus-menerus tanpa merusak antrean (*queue*) utama Anda. Jika Anda bosan, Anda bisa menjelajahi artis lain langsung dari dalam Tab Radio.
 
 ---
 
