@@ -37,15 +37,18 @@ class PlayerBar(Widget):
     }
 
     Button.player-btn {
-        min-width: 5;
+        min-width: 3;
         min-height: 1;
         height: 1;
         border: none;
         padding: 0 1;
         background: transparent;
+        margin: 0 1;
     }
     Button.player-btn:hover {
-        background: $accent;
+        background: transparent;
+        color: $accent;
+        text-style: bold;
     }
     """
 
@@ -60,9 +63,9 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Button("|◁", id="btn_prev", classes="player-btn")
-            self.btn_play = Button("||", id="btn_play", classes="player-btn")
-            self.btn_next = Button("▷|", id="btn_next", classes="player-btn")
+            self.btn_prev = Button(" ◁ ", id="btn_prev", classes="player-btn")
+            self.btn_play = Button(" || ", id="btn_play", classes="player-btn")
+            self.btn_next = Button(" ▷ ", id="btn_next", classes="player-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next
@@ -111,27 +114,27 @@ class PlayerBar(Widget):
             self.info_line.update("Ketuk Radio untuk mulai ▶")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.label = "▷"
+            self.btn_play.label = " ▷ "
         elif state.status == PlayerStatus.LOADING:
             track_name = state.current_track.title if state.current_track else ""
             self.info_line.update(f"⏳ memuat... {escape(track_name)}")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.label = "||"
+            self.btn_play.label = " || "
         elif state.status == PlayerStatus.PLAYING:
             t = state.current_track
             if t:
                 self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.label = "[#FFA500]||[/]"
+            self.btn_play.label = "[#FFA500] || [/]"
         elif state.status == PlayerStatus.PAUSED:
             t = state.current_track
             if t:
                 self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.label = "▷"
+            self.btn_play.label = " ▷ "
         elif state.status == PlayerStatus.ERROR:
             msg = state.error_msg or "Terjadi kesalahan"
             self.info_line.update(f"[{STATUS_ERR}]{escape(msg)}[/]")

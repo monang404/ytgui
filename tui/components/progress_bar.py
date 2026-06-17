@@ -8,8 +8,8 @@ from tui.theme import TEXT_DIM
 class ClickableProgressBar(Static):
     DEFAULT_CSS = """
     ClickableProgressBar {
-        height: 2;
-        padding-top: 1;
+        height: 1;
+        margin-top: 1;
     }
     """
     
