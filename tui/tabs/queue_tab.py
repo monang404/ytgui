@@ -97,8 +97,7 @@ class QueueTab(Widget):
         self._last_state_hash = None
         self._is_radio = False
 
-    @work(exclusive=True)
-    async def update_state(self, state: AppState) -> None:
+    def update_state(self, state: AppState) -> None:
         self._is_radio = state.playback_mode == PlaybackMode.RADIO
         # Radio Mode dan Queue Mode masing-masing punya list lagunya sendiri.
         upcoming = state.radio_queue if self._is_radio else state.queue
@@ -134,6 +133,10 @@ class QueueTab(Widget):
             return
             
         self._last_state_hash = current_hash
+        self._rebuild_list(state, upcoming)
+
+    @work(exclusive=True)
+    async def _rebuild_list(self, state: AppState, upcoming: list) -> None:
         await self.list_view.clear()
         
         terminal_width = self.app.size.width if self.app.size.width > 0 else 80
