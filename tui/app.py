@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Vertical, Container
+from textual.containers import Vertical, Container, Horizontal
 from textual.binding import Binding
 from textual.widgets import Static
 from core.state import AppState, PlaybackMode
