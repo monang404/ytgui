@@ -5,7 +5,11 @@ Publishes: QUEUE_UPDATED, LOG_MESSAGE
 """
 
 import asyncio
+from typing import TYPE_CHECKING
 from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
+
+if TYPE_CHECKING:
+    from engine.playback_controller import PlaybackController
 
 class RadioMode:
     """
