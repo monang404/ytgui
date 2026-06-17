@@ -12,21 +12,22 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = """
     PlayerBar {
-        height: 6;
+        height: auto;
         dock: bottom;
         background: $boost;
         layout: vertical;
-        padding: 0 1;
+        padding: 1 2;
     }
     #pb_controls {
         height: 1;
         align: center middle;
+        margin-top: 1;
     }
     #pb_title_row { height: 1; }
     #pb_title_row #pb_info { width: 1fr; }
     #pb_title_row #pb_badge_mode { width: auto; color: $accent; }
 
-    #pb_meta_row { height: 1; }
+    #pb_meta_row { height: 1; margin-top: 1; }
     .meta-left   { width: 1fr; text-align: left; color: $text-muted; }
     .meta-center { width: 1fr; text-align: center; color: $success; }
     .meta-right  { width: 1fr; text-align: right; }
@@ -54,12 +55,11 @@ class PlayerBar(Widget):
         height: 1;
         content-align: center middle;
         padding: 0 2;
-        background: $panel;
+        background: transparent;
         border: none;
     }
     Static.main-btn:hover {
-        background: $accent;
-        color: $background;
+        color: $accent;
     }
     """
 
@@ -74,9 +74,9 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Static("⏮ PREV", id="btn_prev", classes="player-btn main-btn")
-            self.btn_play = Static("⏯ PLAY", id="btn_play", classes="player-btn main-btn")
-            self.btn_next = Static("NEXT ⏭", id="btn_next", classes="player-btn main-btn")
+            self.btn_prev = Static(" |◁ ", id="btn_prev", classes="player-btn main-btn")
+            self.btn_play = Static(" ▷ ", id="btn_play", classes="player-btn main-btn")
+            self.btn_next = Static(" ▷| ", id="btn_next", classes="player-btn main-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next
@@ -143,7 +143,7 @@ class PlayerBar(Widget):
             self.info_line.update(f"⏳ memuat... {escape(track_name)}")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.update(" || ")
+            self.btn_play.update("[#FFA500] || [/]")
         elif state.status == PlayerStatus.PLAYING:
             t = state.current_track
             if t:
