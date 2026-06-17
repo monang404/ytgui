@@ -33,7 +33,7 @@ class HomeTab(Widget):
         text-align: center;
         margin: 2;
     }
-    .radio-cta {
+    Button.radio-cta {
         width: 100%;
         height: 3;
         background: $accent;
