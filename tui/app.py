@@ -1,0 +1,154 @@
+from textual.app import App, ComposeResult
+from textual.containers import Vertical, Container
+from textual.binding import Binding
+from core.state import AppState, PlaybackMode
+from tui.components.player_bar import PlayerBar
+from tui.components.nav_bar import NavBar, TabChanged
+from tui.theme import TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE
+from tui.tabs.home_tab import HomeTab
+from tui.tabs.search_tab import SearchTab
+from tui.tabs.radio_tab import RadioTab
+from tui.tabs.queue_tab import QueueTab
+from core.event_bus import (
+    bus, LOG_MESSAGE, TRACK_STARTED, QUEUE_UPDATED, LYRICS_UPDATED,
+    DOWNLOAD_COMPLETE, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
+    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT
+)
+
+class YTGuiApp(App):
+    CSS = """
+    Screen {
+        layout: vertical;
+    }
+    #content_area {
+        height: 1fr;
+        width: 100%;
+        background: $surface;
+    }
+    """
+
+    BINDINGS = [
+        Binding("/", "search", "Search"),
+        Binding("escape", "unfocus", "Unfocus", show=False),
+        Binding("p", "pause", "Pause/Resume"),
+        Binding("n", "next", "Next"),
+        Binding("b", "prev", "Prev"),
+        Binding("s", "stop", "Stop"),
+        Binding("u", "vol_up", "Vol+"),
+        Binding("d", "vol_down", "Vol-"),
+        Binding("m", "download", "Download"),
+        Binding("r", "switch_radio", "Radio"),
+        Binding("q", "quit", "Quit"),
+    ]
+
+    def __init__(self, state: AppState, ytdlp=None, db=None):
+        super().__init__()
+        self.state = state
+        self.ytdlp = ytdlp
+        self.db = db
+        self._refresh_timer = None
+
+    def compose(self) -> ComposeResult:
+        with Container(id="content_area"):
+            self.tab_home = HomeTab(id=f"content_{TAB_HOME}")
+            self.tab_search = SearchTab(id=f"content_{TAB_SEARCH}")
+            self.tab_radio = RadioTab(id=f"content_{TAB_RADIO}")
+            self.tab_queue = QueueTab(id=f"content_{TAB_QUEUE}")
+            
+            yield self.tab_home
+            yield self.tab_search
+            yield self.tab_radio
+            yield self.tab_queue
+
+        
+        self.player_bar = PlayerBar(id="player_bar")
+        yield self.player_bar
+        
+        self.nav_bar = NavBar(id="nav_bar")
+        yield self.nav_bar
+
+    async def on_mount(self) -> None:
+        # Subscribe to domain events that require immediate UI updates
+        bus.subscribe(LOG_MESSAGE, self._on_log_message)
+        bus.subscribe(TRACK_STARTED, self._on_immediate_refresh)
+        bus.subscribe(QUEUE_UPDATED, self._on_immediate_refresh)
+        bus.subscribe(LYRICS_UPDATED, self._on_immediate_refresh)
+        bus.subscribe(DOWNLOAD_COMPLETE, self._on_immediate_refresh)
+
+        # Periodic refresh for progress bar
+        self._refresh_timer = self.set_interval(0.3, self.refresh_ui)
+
+        # Sync initial tab
+        self._sync_tab_visibility()
+
+    def refresh_ui(self) -> None:
+        self.player_bar.update_state(self.state)
+        # Update current active tab
+        if self.state.active_tab == TAB_HOME:
+            pass # Home load data di on_show()
+        elif self.state.active_tab == TAB_RADIO:
+            self.tab_radio.update_state(self.state)
+        elif self.state.active_tab == TAB_QUEUE:
+            self.tab_queue.update_state(self.state)
+
+    async def _on_log_message(self, msg: str) -> None:
+        # LOG_MESSAGE displayed in player_bar
+        self.state.error_msg = msg
+        self.call_from_thread(self.player_bar.info_line.update, f"ⓘ {msg}")
+
+    async def _on_immediate_refresh(self, _data=None) -> None:
+        self.call_from_thread(self.refresh_ui)
+
+    def _sync_tab_visibility(self) -> None:
+        self.tab_home.display = (self.state.active_tab == TAB_HOME)
+        self.tab_search.display = (self.state.active_tab == TAB_SEARCH)
+        self.tab_radio.display = (self.state.active_tab == TAB_RADIO)
+        self.tab_queue.display = (self.state.active_tab == TAB_QUEUE)
+        
+        # Trigger on_show manually if needed for SearchTab auto-focus
+        if self.state.active_tab == TAB_SEARCH:
+            self.tab_search.on_show()
+        elif self.state.active_tab == TAB_HOME:
+            self.tab_home.on_show()
+
+    async def on_tab_changed(self, event: TabChanged) -> None:
+        self.state.active_tab = event.tab_id
+        self._sync_tab_visibility()
+        self.refresh_ui()
+
+    async def action_search(self) -> None:
+        # Pindah ke Search Tab via event lokal
+        self.nav_bar.set_active_tab(TAB_SEARCH)
+        self.post_message(TabChanged(TAB_SEARCH))
+
+    async def action_unfocus(self) -> None:
+        self.set_focus(None)
+
+    async def action_pause(self) -> None:
+        await bus.publish(CMD_TOGGLE_PAUSE)
+
+    async def action_next(self) -> None:
+        await bus.publish(CMD_NEXT)
+
+    async def action_prev(self) -> None:
+        await bus.publish(CMD_PREV)
+
+    async def action_stop(self) -> None:
+        await bus.publish(CMD_STOP)
+
+    async def action_vol_up(self) -> None:
+        await bus.publish(CMD_VOLUME_UP)
+
+    async def action_vol_down(self) -> None:
+        await bus.publish(CMD_VOLUME_DOWN)
+
+    async def action_download(self) -> None:
+        await bus.publish(CMD_DOWNLOAD)
+
+    async def action_switch_radio(self) -> None:
+        new_mode = PlaybackMode.RADIO if self.state.playback_mode == PlaybackMode.QUEUE else PlaybackMode.QUEUE
+        await bus.publish(CMD_SET_MODE, new_mode)
+
+    async def action_quit(self) -> None:
+        await bus.publish(CMD_QUIT)
+        self.exit()

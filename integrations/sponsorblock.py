@@ -2,7 +2,7 @@ import json
 import aiohttp
 import logging
 from config import SPONSORBLOCK_CATS
-from core.event_bus import bus, TRACK_PROGRESS, SKIP_SEGMENT
+from core.event_bus import bus, TRACK_PROGRESS, LOG_MESSAGE
 
 logger = logging.getLogger(__name__)
 SPONSORBLOCK_API = "https://sponsor.ajay.app/api/skipSegments"
@@ -58,5 +58,5 @@ class SponsorBlockHandler:
         for start, end in self.segments:
             if start <= current_pos <= start + 0.6:
                 await self.mpv.seek(end)
-                await bus.publish(SKIP_SEGMENT, (start, end))
+                await bus.publish(LOG_MESSAGE, f"Melewati sponsor ({int(start)}s - {int(end)}s)")
                 break
