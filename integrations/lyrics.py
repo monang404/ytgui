@@ -9,6 +9,8 @@ from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
 
 logger = logging.getLogger(__name__)
 
+from core.state import TrackInfo
+
 class LyricsFetcher:
     """
     MED-01 fix: Accepts a shared aiohttp session.
@@ -20,8 +22,11 @@ class LyricsFetcher:
         self._session = session
         bus.subscribe(TRACK_PROGRESS, self._on_progress)
 
-    async def fetch(self, title: str, artist: str, duration: int):
+    async def fetch(self, track: TrackInfo):
         """Fetches synchronized lyrics from lrclib.net and parses them."""
+        title = track.title
+        artist = track.artist
+        duration = track.duration
         self.lyrics_data = []
         self.state.lyrics_lines = []
         self.state.lyrics_index = 0
