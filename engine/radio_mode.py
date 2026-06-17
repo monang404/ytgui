@@ -38,6 +38,7 @@ class RadioMode:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.queue:
             track = self.state.queue.pop(0)
+            await bus.publish(QUEUE_UPDATED)
             task = asyncio.create_task(self._prefetch_next(controller))
             self._bg_tasks.add(task)
             task.add_done_callback(self._bg_tasks.discard)
@@ -71,9 +72,15 @@ class RadioMode:
     async def _fetch_and_play_initial(self, controller: "PlaybackController") -> None:
         """Dipakai saat Radio diaktifkan tanpa track berjalan."""
         try:
-            results = await self.ytdlp.search("top hits music", max_results=15)
+            results = []
+            for query in ["popular pop songs official audio", "top hits music official", "trending music"]:
+                results = await self.ytdlp.search(query, max_results=15)
+                if results:
+                    break
+
             if results:
                 self.state.queue = results[1:]
+                await bus.publish(QUEUE_UPDATED)
                 await controller.play_track(results[0])
             else:
                 await bus.publish(LOG_MESSAGE, "Radio: Tidak ada hasil lagu ditemukan.")
