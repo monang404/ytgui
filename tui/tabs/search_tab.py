@@ -64,7 +64,7 @@ class SearchTab(Widget):
     def on_input_changed(self, event: Input.Changed) -> None:
         query = event.value.strip()
         if self._search_timer:
-            self._search_timer.cancel()
+            self._search_timer.stop()
 
         if not query:
             self.msg_label.update(f"[{TEXT_DIM}]Ketik nama lagu atau artis[/]")
@@ -76,16 +76,16 @@ class SearchTab(Widget):
         # Debounce: minimum 1.5 detik
         self._search_timer = self.set_timer(1.5, lambda: self.perform_live_search(query))
 
-    @work(exclusive=True, thread=True)
-    def perform_live_search(self, query: str) -> None:
-        self.app.call_from_thread(self._show_loading)
+    @work(exclusive=True)
+    async def perform_live_search(self, query: str) -> None:
+        self._show_loading()
         try:
             # We assume app.ytdlp is available (passed from main.py)
             if hasattr(self.app, 'ytdlp') and self.app.ytdlp:
-                results = self.app.ytdlp.search(query, max_results=10)
-                self.app.call_from_thread(self._show_results, results)
+                results = await self.app.ytdlp.search(query, max_results=10)
+                self._show_results(results)
         except Exception as e:
-            self.app.call_from_thread(self._show_error, str(e))
+            self._show_error(str(e))
 
     def _show_loading(self) -> None:
         self.msg_label.update(f"[{ACCENT_GOLD}]⏳ Mencari...[/]")
