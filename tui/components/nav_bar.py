@@ -23,6 +23,8 @@ class NavBar(Widget):
     }}
     Button.nav-btn {{
         width: 1fr;
+        min-width: 1;
+        padding: 0;
         height: 100%;
         border: none;
         color: {NAV_INACTIVE_COLOR};
