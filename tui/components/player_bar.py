@@ -3,7 +3,7 @@ from textual.widget import Widget
 from textual.widgets import Static, Button
 from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus, PlaybackMode
-from tui.theme import HEIGHT_PLAYER_BAR, STATUS_ERR
+from tui.theme import STATUS_ERR
 from core.event_bus import bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD
 from tui.components.progress_bar import ClickableProgressBar
 from rich.markup import escape
