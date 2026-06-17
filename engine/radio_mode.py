@@ -55,9 +55,10 @@ class RadioMode:
             if not track:
                 return
             query = f"{track.artist} music"
-            results = await self.ytdlp.search(query, max_results=5)
+            results = await self.ytdlp.search(query, max_results=10)
             existing = self._build_exclusion_set()
-            new_tracks = [t for t in results if t.video_id not in existing][:2]
+            # Filter kompilasi: durasi harus < 10 menit (600 detik) dan bukan livestream (0)
+            new_tracks = [t for t in results if t.video_id not in existing and 0 < t.duration < 600][:2]
             if new_tracks:
                 self.state.queue.extend(new_tracks)
                 await bus.publish(QUEUE_UPDATED)
@@ -69,7 +70,9 @@ class RadioMode:
     async def _fetch_and_play_initial(self, controller: "PlaybackController") -> None:
         """Dipakai saat Radio diaktifkan tanpa track berjalan."""
         try:
-            results = await self.ytdlp.search("top hits music", max_results=3)
+            results = await self.ytdlp.search("top hits music", max_results=10)
+            # Filter kompilasi: durasi harus < 10 menit
+            results = [t for t in results if 0 < t.duration < 600]
             if results:
                 self.state.queue = results[1:]
                 await controller.play_track(results[0])
