@@ -54,14 +54,9 @@ class RadioMode:
 
     async def next(self, controller: "PlaybackController") -> None:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
-<<<<<<< Updated upstream
-        if self.state.queue:
-            track = self.state.queue.pop(0)
-            await bus.publish(QUEUE_UPDATED)
-=======
         if self.state.radio_queue:
             track = self.state.radio_queue.pop(0)
->>>>>>> Stashed changes
+            await bus.publish(QUEUE_UPDATED)
             task = asyncio.create_task(self._prefetch_next(controller))
             self._bg_tasks.add(task)
             task.add_done_callback(self._bg_tasks.discard)
@@ -82,14 +77,8 @@ class RadioMode:
             query = f"{track.artist} music"
             results = await self.ytdlp.search(query, max_results=15)
             existing = self._build_exclusion_set()
-<<<<<<< Updated upstream
-            # YtDlpClient already filters duration > 900 and keywords. 
-            # We just filter out what we've already played.
-            new_tracks = [t for t in results if t.video_id not in existing][:2]
-=======
             # Filter kompilasi: durasi harus < 10 menit (600 detik) dan bukan livestream (0)
             new_tracks = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION][:2]
->>>>>>> Stashed changes
             if new_tracks:
                 self.state.radio_queue.extend(new_tracks)
                 await bus.publish(QUEUE_UPDATED)
@@ -102,18 +91,6 @@ class RadioMode:
         """Cari & putar lagu radio baru — dipakai saat Radio baru diaktifkan
         atau saat radio_queue habis. Selalu langsung memutar (tidak menunggu)."""
         try:
-<<<<<<< Updated upstream
-            results = []
-            for query in ["popular pop songs official audio", "top hits music official", "trending music"]:
-                results = await self.ytdlp.search(query, max_results=15)
-                if results:
-                    break
-
-            if results:
-                self.state.queue = results[1:]
-                await bus.publish(QUEUE_UPDATED)
-                await controller.play_track(results[0])
-=======
             query = f"{seed_artist} music" if seed_artist else DEFAULT_SEED_QUERY
             results = await self.ytdlp.search(query, max_results=10)
             existing = self._build_exclusion_set()
@@ -129,7 +106,6 @@ class RadioMode:
                 self.state.radio_queue = filtered[1:]
                 await controller.play_track(filtered[0])
                 await bus.publish(QUEUE_UPDATED)
->>>>>>> Stashed changes
             else:
                 await bus.publish(LOG_MESSAGE, "Radio: Tidak ada hasil lagu ditemukan.")
         except Exception as e:
