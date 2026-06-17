@@ -6,6 +6,7 @@ from rich.markup import escape
 from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
 from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK
+from textual.binding import Binding
 
 class QueueItem(ListItem):
     def __init__(self, index: int, text: str, is_current: bool = False, *args, **kwargs):
@@ -22,6 +23,10 @@ class QueueItem(ListItem):
 
 class QueueTab(Widget):
     """The Queue Tab showing current track and upcoming queue."""
+    BINDINGS = [
+        Binding("l", "toggle_lyrics", "Toggle Lyrics")
+    ]
+    
     DEFAULT_CSS = """
     QueueTab {
         height: 1fr;
@@ -54,6 +59,20 @@ class QueueTab(Widget):
         margin-top: 1;
         text-align: center;
     }
+    #lyrics_container {
+        height: 8;
+        border-top: solid $primary;
+        padding: 0 1;
+        display: none;
+    }
+    #lyrics_header {
+        text-align: center;
+        color: $accent;
+    }
+    #lyrics_content {
+        height: 1fr;
+        text-align: center;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -62,6 +81,13 @@ class QueueTab(Widget):
             self.footer = Static(f"Mode: [{TEXT_DIM}]QUEUE[/]", id="queue_footer")
             yield self.list_view
             yield self.footer
+            
+            self.lyrics_container = Vertical(id="lyrics_container")
+            with self.lyrics_container:
+                self.lyrics_header = Static("📝 [b]Lirik[/b] (Tekan L untuk tutup)", id="lyrics_header")
+                self.lyrics_content = Static("Tidak ada lirik", id="lyrics_content")
+                yield self.lyrics_header
+                yield self.lyrics_content
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,7 +129,35 @@ class QueueTab(Widget):
                 self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [{TEXT_DIM}]{dur}[/]"))
 
         mode_str = f"[{STATUS_OK}]RADIO[/]" if state.playback_mode == PlaybackMode.RADIO else f"[{TEXT_DIM}]QUEUE[/]"
-        self.footer.update(f"Mode: {mode_str}")
+        self.footer.update(f"Mode: {mode_str} | 📝 Lirik: Tekan L")
+        
+        # Update lyrics if visible
+        if self.lyrics_container.display:
+            if not state.lyrics_lines:
+                self.lyrics_content.update(f"[{TEXT_DIM}]Tidak ada lirik tersedia[/]")
+            else:
+                idx = state.lyrics_index
+                lines = state.lyrics_lines
+                start = max(0, idx - 2)
+                end = min(len(lines), idx + 3)
+                
+                content = ""
+                for i in range(start, end):
+                    text = lines[i][1]
+                    if i == idx:
+                        content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
+                    else:
+                        content += f"[{TEXT_DIM}]{escape(text)}[/]\n"
+                self.lyrics_content.update(content.strip())
+
+    async def action_toggle_lyrics(self) -> None:
+        self.lyrics_container.display = not self.lyrics_container.display
+        if self.lyrics_container.display:
+            self.list_view.styles.height = "1fr"
+        else:
+            self.list_view.styles.height = "1fr"
+        # Trigger update explicitly
+        self._last_state_hash = None
 
     async def on_list_view_selected(self, event: ListView.Selected) -> None:
         if isinstance(event.item, QueueItem) and not event.item.is_current:

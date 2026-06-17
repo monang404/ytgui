@@ -134,11 +134,15 @@ class PlaybackController:
             await self.bus.publish(LOG_MESSAGE, "Tidak ada lagu sebelumnya")
 
     async def _on_stop(self, _data=None):
-        await self.mpv.pause()  # MPV stop is loadfile empty or just pause and clear
+        await self.mpv.pause()
         self.state.status = PlayerStatus.IDLE
         self.state.current_track = None
+        self.state.queue.clear()
         self.state.position = 0.0
+        self.state.lyrics_lines = []
+        self.state.lyrics_index = 0
         await self.bus.publish(LOG_MESSAGE, "Pemutaran dihentikan")
+        await self.bus.publish(QUEUE_UPDATED)
 
     async def _on_seek(self, position: float):
         if self.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED):

@@ -5,7 +5,7 @@ from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus
 from tui.theme import HEIGHT_PLAYER_BAR, STATUS_ERR
 from core.event_bus import bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT
-from tui.panels.now_playing import ClickableProgressBar
+from tui.components.progress_bar import ClickableProgressBar
 from rich.markup import escape
 
 class PlayerBar(Widget):
