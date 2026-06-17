@@ -38,8 +38,7 @@ class MpvController:
         common_args = [
             "--no-video", "--idle",
             "--ytdl-format=bestaudio/best",
-            "--audio-pitch-correction=yes",
-            "--ytdl-raw-options=format-sort=abr,asr"
+            "--audio-pitch-correction=yes"
         ]
         
         if os.name == 'nt':
