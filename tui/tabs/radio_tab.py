@@ -5,7 +5,7 @@ from textual.containers import Vertical, Horizontal
 from textual import on
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
-from core.event_bus import bus, CMD_SET_MODE, CMD_NEXT
+from core.event_bus import bus, CMD_SET_MODE, CMD_NEXT, CMD_RADIO_RANDOMIZE
 from tui.theme import TEXT_DIM
 from tui.components.nav_bar import TabChanged
 
@@ -33,7 +33,7 @@ class RadioTab(Widget):
         text-align: center;
         margin-bottom: 2;
     }
-    #change_seed_btn {
+    #random_radio_btn {
         width: 1fr;
         height: 3;
     }
@@ -56,7 +56,7 @@ class RadioTab(Widget):
             yield self.info
             
             with Horizontal(id="radio_actions"):
-                yield Button("🔍 ganti seed lagu", id="change_seed_btn")
+                yield Button("🎲 acak ulang radio", id="random_radio_btn")
                 yield Button("⏭ skip lagu ini", id="radio_skip_btn")
 
     def update_state(self, state: AppState) -> None:
@@ -80,10 +80,9 @@ class RadioTab(Widget):
         mode = PlaybackMode.QUEUE if self.app.state.playback_mode == PlaybackMode.RADIO else PlaybackMode.RADIO
         await bus.publish(CMD_SET_MODE, mode)
 
-    @on(Button.Pressed, "#change_seed_btn")
-    def on_change_seed(self, event: Button.Pressed) -> None:
-        # Pindah ke tab pencarian (SearchTab) menggunakan TabChanged
-        self.app.post_message(TabChanged("search"))
+    @on(Button.Pressed, "#random_radio_btn")
+    async def on_randomize_radio(self, event: Button.Pressed) -> None:
+        await bus.publish(CMD_RADIO_RANDOMIZE)
 
     @on(Button.Pressed, "#radio_skip_btn")
     async def on_skip(self, event: Button.Pressed) -> None:

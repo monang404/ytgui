@@ -79,4 +79,5 @@ CMD_SEARCH       = "cmd.search"            # data: str
 CMD_SET_MODE     = "cmd.set.mode"          # data: PlaybackMode — BARU
 CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
 CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index) — BARU
+CMD_RADIO_RANDOMIZE = "cmd.radio.randomize"
 CMD_QUIT         = "cmd.quit"

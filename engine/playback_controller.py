@@ -9,7 +9,7 @@ import logging
 from core.event_bus import (
     EventBus, TRACK_ENDED, TRACK_PROGRESS, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT,
-    CMD_QUEUE_REMOVE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
+    CMD_QUEUE_REMOVE, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
 from engine.mpv_controller import MpvController
@@ -57,6 +57,7 @@ class PlaybackController:
         self.bus.subscribe(CMD_SET_MODE, self._on_set_mode)
         self.bus.subscribe(CMD_QUEUE_SELECT, self._on_queue_select)
         self.bus.subscribe(CMD_QUEUE_REMOVE, self._on_queue_remove)
+        self.bus.subscribe(CMD_RADIO_RANDOMIZE, self._on_radio_randomize)
         self.bus.subscribe("track.pause.changed", self._on_pause_changed)
 
     async def play_track(self, track: TrackInfo):
@@ -185,6 +186,16 @@ class PlaybackController:
             removed = self.state.queue.pop(index)
             await self.bus.publish(QUEUE_UPDATED)
             await self.bus.publish(LOG_MESSAGE, f"Dihapus dari antrean: {removed.title}")
+
+    async def _on_radio_randomize(self, _data=None):
+        async with self._lock:
+            if self.state.playback_mode == PlaybackMode.RADIO:
+                self.state.radio_queue.clear()
+                await self.bus.publish(LOG_MESSAGE, "Mengacak ulang stasiun radio...")
+                # Panggil fetch dengan seed=None agar memaksa penggunaan seed acak dari list
+                await self.radio_mode._fetch_and_play_initial(self, seed_artist=None)
+            else:
+                await self.bus.publish(LOG_MESSAGE, "Radio tidak aktif")
 
     async def _on_pause_changed(self, paused: bool):
         if paused:
