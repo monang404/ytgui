@@ -1,4 +1,4 @@
-# YT Termux Player Pro
+# YT Termux Player Pro V2
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![MPV](https://img.shields.io/badge/Powered_by-MPV-purple.svg)
@@ -39,16 +39,12 @@ Aplikasi ini membutuhkan beberapa program eksternal untuk berjalan:
 3. Clone repository ini (atau salin file project ke dalam Termux):
    ```bash
    pkg install socat termux-api -y
-   git clone https://github.com/username/ytcli.git
-   cd ytcli
+   git clone https://github.com/monang404/ytgui.git
+   cd ytgui
    ```
 4. Instal dependensi Python:
    ```bash
-   # User install:
    pip install -r requirements.txt
-
-   # Developer install (untuk menjalankan tests):
-   pip install -r requirements.txt -r requirements-dev.txt
    ```
 
 ### 💻 Instalasi di Windows
@@ -58,7 +54,7 @@ Aplikasi ini membutuhkan beberapa program eksternal untuk berjalan:
    *(Saran: Gunakan package manager seperti Scoop: `scoop install mpv ffmpeg`)*
 3. Buka Command Prompt / PowerShell, masuk ke direktori aplikasi:
    ```cmd
-   cd ytcli
+   cd ytgui
    pip install -r requirements.txt
    ```
 
@@ -66,7 +62,7 @@ Aplikasi ini membutuhkan beberapa program eksternal untuk berjalan:
 
 ## 🚀 Cara Menjalankan
 
-Dari dalam direktori `ytcli`, jalankan perintah:
+Dari dalam direktori `ytgui`, jalankan perintah:
 
 ```bash
 python main.py

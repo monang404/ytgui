@@ -4,8 +4,9 @@ __pycache__/
 *$py.class
 *.so
 
-# Virtual environments
+# Virtual environments and secrets
 .env
+*.env
 .venv
 env/
 venv/
@@ -19,6 +20,11 @@ cache/*.db
 cache/*.db-shm
 cache/*.db-wal
 *.log
+*.mp3
+*.webm
+*.m4a
+secrets.json
+config.local.py
 
 # Dokumen internal developer — bukan untuk user
 agen_konteks.md
