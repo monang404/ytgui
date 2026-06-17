@@ -12,21 +12,21 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = """
     PlayerBar {
-        height: auto;
+        height: 6;
         dock: bottom;
         background: $boost;
-        padding: 0 1 1 1;
+        layout: vertical;
+        padding: 0 1;
     }
     #pb_controls {
         height: 1;
         align: center middle;
-        margin-top: 0;
     }
     #pb_title_row { height: 1; }
     #pb_title_row #pb_info { width: 1fr; }
     #pb_title_row #pb_badge_mode { width: auto; color: $accent; }
 
-    #pb_meta_row { height: 1; margin-top: 0; }
+    #pb_meta_row { height: 1; }
     .meta-left   { width: 1fr; text-align: left; color: $text-muted; }
     .meta-center { width: 1fr; text-align: center; color: $success; }
     .meta-right  { width: 1fr; text-align: right; }
@@ -43,7 +43,7 @@ class PlayerBar(Widget):
         padding: 0 2;
         background: transparent;
         color: $text;
-        margin: 0 1;
+        margin: 0;
     }
     Static.player-btn:hover {
         background: $panel;
@@ -53,7 +53,7 @@ class PlayerBar(Widget):
     Static.main-btn {
         height: 1;
         content-align: center middle;
-        padding: 0 4;
+        padding: 0 2;
         background: $panel;
         border: none;
     }
