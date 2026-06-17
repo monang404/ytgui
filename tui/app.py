@@ -60,6 +60,7 @@ class YTGuiApp(App):
         Binding("d", "vol_down", "Vol-"),
         Binding("m", "download", "Download"),
         Binding("r", "switch_radio", "Radio"),
+        Binding("l", "toggle_lyrics", "Lyrics"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -178,6 +179,17 @@ class YTGuiApp(App):
 
     async def action_download(self) -> None:
         await bus.publish(CMD_DOWNLOAD)
+
+    async def action_toggle_lyrics(self) -> None:
+        if self.state.active_tab != TAB_QUEUE:
+            self.nav_bar.set_active_tab(TAB_QUEUE)
+            await self.on_tab_changed(TabChanged(TAB_QUEUE))
+        if not self.tab_queue.lyrics_container.display:
+            await self.tab_queue.action_toggle_lyrics()
+        else:
+            # If already on queue and displayed, just let it toggle
+            if self.state.active_tab == TAB_QUEUE:
+                await self.tab_queue.action_toggle_lyrics()
 
     async def action_switch_radio(self) -> None:
         new_mode = PlaybackMode.RADIO if self.state.playback_mode == PlaybackMode.QUEUE else PlaybackMode.QUEUE

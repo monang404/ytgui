@@ -4,6 +4,8 @@ import aiohttp
 import bisect
 import asyncio
 import syncedlyrics
+from contextlib import asynccontextmanager
+
 from config import LYRICS_API_BASE
 from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
 
@@ -32,19 +34,25 @@ class LyricsFetcher:
         self.state.lyrics_index = 0
         await bus.publish(LYRICS_UPDATED)
 
-        session = self._session or aiohttp.ClientSession()
-        close_after = self._session is None
+        @asynccontextmanager
+        async def get_session():
+            if self._session:
+                yield self._session
+            else:
+                async with aiohttp.ClientSession() as s:
+                    yield s
         
         try:
-            # 1. Coba pencarian spesifik (exact match) dengan durasi
-            url_get = f"{LYRICS_API_BASE}/get"
-            params_get = {"track_name": title, "artist_name": artist, "duration": duration}
-            lrc = None
-            
-            async with session.get(url_get, params=params_get, timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
+            async with get_session() as session:
+                # 1. Coba pencarian spesifik (exact match) dengan durasi
+                url_get = f"{LYRICS_API_BASE}/get"
+                params_get = {"track_name": title, "artist_name": artist, "duration": duration}
+                lrc = None
+                
+                async with session.get(url_get, params=params_get, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
                     
             # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
             if not lrc:
@@ -93,9 +101,6 @@ class LyricsFetcher:
                 
         except Exception as e:
             logger.debug(f"Lyrics fetch failed: {e}")
-        finally:
-            if close_after:
-                await session.close()
 
     def _parse_lrc(self, lrc_text: str) -> list[tuple[float, str]]:
         """Parse LRC format. Strips timestamp tags from text content."""

@@ -42,6 +42,9 @@ class PlaybackController:
         self.queue_mode = queue_mode
         self.radio_mode = radio_mode
 
+        self._lock = asyncio.Lock()
+        self._retry_count = 0
+
         # Subscribe
         self.bus.subscribe(TRACK_ENDED, self._on_track_ended)
         self.bus.subscribe(TRACK_PROGRESS, self._on_track_progress)
@@ -78,7 +81,11 @@ class PlaybackController:
             await self.mpv.play(uri)
             
             self.state.status = PlayerStatus.PLAYING
+            self._retry_count = 0  # Reset retry count on success
             await self.bus.publish(TRACK_STARTED, track)
+            
+            # C-02: Increment play count for favorites
+            await self.resolver.db.increment_play_count(track.video_id)
             
             # Fetch sponsorblock and lyrics
             asyncio.create_task(self.sponsorblock.fetch_segments(track.video_id))
@@ -89,11 +96,21 @@ class PlaybackController:
             self.state.status = PlayerStatus.ERROR
             self.state.error_msg = f"Error: {e}"
             await self.bus.publish(LOG_MESSAGE, f"Gagal memutar lagu: {track.title} | {type(e).__name__}: {str(e)}")
-            await asyncio.sleep(2)
-            await self._on_next()
+            
+            self._retry_count += 1
+            if self._retry_count >= 3:
+                await self.bus.publish(LOG_MESSAGE, "Terlalu banyak kegagalan beruntun. Pemutaran dihentikan.")
+                self._retry_count = 0
+            else:
+                backoff = 2 ** self._retry_count
+                await asyncio.sleep(backoff)
+                # Ensure we don't call _on_next if we are no longer trying to play this track
+                if self.state.current_track == track:
+                    await self._on_next()
 
     async def _on_cmd_play_track(self, track: TrackInfo):
-        await self.play_track(track)
+        async with self._lock:
+            await self.play_track(track)
 
     async def _on_track_ended(self, data: dict):
         reason = data.get("reason")
@@ -113,25 +130,20 @@ class PlaybackController:
             await self.mpv.toggle_pause()
 
     async def _on_next(self, _data=None):
-        if self.state.playback_mode == PlaybackMode.QUEUE:
-            await self.queue_mode.next(self)
-        else:
-            await self.radio_mode.next(self)
+        async with self._lock:
+            if self.state.playback_mode == PlaybackMode.QUEUE:
+                await self.queue_mode.next(self)
+            else:
+                await self.radio_mode.next(self)
 
     async def _on_prev(self, _data=None):
-        if self.state.history:
-            track = self.state.history.pop()
-            # To avoid adding it back to history again when play_track is called,
-            # we temporarily clear current_track, or just let play_track handle it
-            # and clean up history later. But the simplest is to pop current, 
-            # set current to None, then play.
-            self.state.current_track = None 
-            await self.play_track(track)
-            # Remove the last appended item which was the None or the previous current_track
-            # Actually, play_track pushes `current_track` to history. 
-            # By setting it to None before calling, we avoid pushing None.
-        else:
-            await self.bus.publish(LOG_MESSAGE, "Tidak ada lagu sebelumnya")
+        async with self._lock:
+            if self.state.history:
+                track = self.state.history.pop()
+                self.state.current_track = None 
+                await self.play_track(track)
+            else:
+                await self.bus.publish(LOG_MESSAGE, "Tidak ada lagu sebelumnya")
 
     async def _on_stop(self, _data=None):
         await self.mpv.pause()
@@ -158,10 +170,11 @@ class PlaybackController:
             await self.bus.publish(QUEUE_UPDATED)
 
     async def _on_queue_select(self, index: int):
-        if 0 <= index < len(self.state.queue):
-            track = self.state.queue[index]
-            self.state.queue = self.state.queue[index+1:]
-            await self.play_track(track)
+        async with self._lock:
+            if 0 <= index < len(self.state.queue):
+                track = self.state.queue[index]
+                self.state.queue = self.state.queue[index+1:]
+                await self.play_track(track)
 
     async def _on_queue_remove(self, index: int):
         if 0 <= index < len(self.state.queue):

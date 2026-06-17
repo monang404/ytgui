@@ -19,10 +19,10 @@ class DiscoverService:
             
         tracks = []
         try:
-            self.db._conn.row_factory = aiosqlite.Row
             async with self.db._conn.execute(
                 "SELECT * FROM tracks ORDER BY last_played DESC LIMIT ?", (n,)
             ) as cursor:
+                cursor.row_factory = aiosqlite.Row
                 async for row in cursor:
                     d = dict(row)
                     tracks.append(TrackInfo(
@@ -46,10 +46,10 @@ class DiscoverService:
             
         tracks = []
         try:
-            self.db._conn.row_factory = aiosqlite.Row
             async with self.db._conn.execute(
                 "SELECT * FROM tracks WHERE play_count > 0 ORDER BY play_count DESC LIMIT ?", (n,)
             ) as cursor:
+                cursor.row_factory = aiosqlite.Row
                 async for row in cursor:
                     d = dict(row)
                     tracks.append(TrackInfo(

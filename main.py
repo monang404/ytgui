@@ -78,24 +78,7 @@ async def main():
         bus, state, mpv, resolver, sponsorblock, lyrics_fetcher, queue_mode, radio_mode
     )
 
-    # 7. Wire up Search Handler
-    async def handle_search(query: str):
-        await bus.publish(LOG_MESSAGE, f"Searching: {query}...")
-        try:
-            results = await ytdlp.search(query, max_results=10)
-            state.is_online = True
-            if results:
-                # Set queue from results[1:] and play the first result
-                state.queue = results[1:]
-                await controller.play_track(results[0])
-            else:
-                await bus.publish(LOG_MESSAGE, "No results found.")
-        except Exception as e:
-            state.is_online = False
-            state.error_msg = f"Search failed: {e}"
-            await bus.publish(LOG_MESSAGE, f"Search failed: {e}")
-
-    bus.subscribe(CMD_SEARCH, handle_search)
+    # 7. Search Handler removed (moved to SearchTab)
 
     # Connectivity Check
     async def check_connectivity():
@@ -123,7 +106,15 @@ async def main():
             print("To quit, press Ctrl+C")
             
             # Send a test search to verify it works
-            asyncio.create_task(bus.publish(CMD_SEARCH, "top hits music"))
+            async def test_search():
+                try:
+                    res = await ytdlp.search("top hits music", max_results=10)
+                    if res:
+                        state.queue = res[1:]
+                        await controller.play_track(res[0])
+                except Exception as e:
+                    print(f"Test search failed: {e}")
+            asyncio.create_task(test_search())
             
             # Run loop for 10 seconds then exit for testing purposes
             for _ in range(15):

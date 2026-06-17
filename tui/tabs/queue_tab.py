@@ -164,7 +164,8 @@ class QueueTab(Widget):
     async def action_toggle_lyrics(self) -> None:
         self.lyrics_container.display = not self.lyrics_container.display
         if self.lyrics_container.display:
-            self.list_view.styles.height = "1fr"
+            self.list_view.styles.height = "60%"
+            self.lyrics_container.styles.height = "40%"
         else:
             self.list_view.styles.height = "1fr"
         # Trigger update explicitly

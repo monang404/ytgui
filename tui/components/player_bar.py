@@ -73,11 +73,11 @@ class PlayerBar(Widget):
         with Horizontal(id="pb_meta_row"):
             with Horizontal(classes="meta-left", id="pb_vol_container"):
                 self.btn_voldown = Static("🔉", id="btn_voldown", classes="player-btn")
-                self.btn_volup = Static("🔊 85% [black on white] baru [/]", id="btn_volup", classes="player-btn")
+                self.btn_volup = Static("🔊 80%", id="btn_volup", classes="player-btn")
                 yield self.btn_voldown
                 yield self.btn_volup
             self.badge_cache = Static("", id="pb_badge_cache", classes="meta-center")
-            self.btn_download = Static("⬇ unduh [black on white] baru [/]", id="btn_download", classes="meta-right player-btn")
+            self.btn_download = Static("⬇ unduh", id="btn_download", classes="meta-right player-btn")
             yield self.badge_cache
             yield self.btn_download
 
@@ -99,18 +99,28 @@ class PlayerBar(Widget):
 
     def update_state(self, state: AppState) -> None:
         if state.playback_mode == PlaybackMode.RADIO:
-            self.badge_mode.update("[bold #FFA500]📻 radio [black on white] baru [/][/]")
+            self.badge_mode.update("[bold #FFA500]📻 radio[/]")
         else:
             self.badge_mode.update("[bold #555580]≡ queue[/]")
             
         t = state.current_track
         if t:
             if t.local_path:
-                self.badge_cache.update("[bold #4ade80]✓ tersimpan [black on white] baru [/][/]")
+                self.badge_cache.update("[bold #4ade80]✓ tersimpan[/]")
             else:
                 self.badge_cache.update("[bold #A0A0C0]☁ stream[/]")
         else:
             self.badge_cache.update("")
+
+        # Update Volume
+        self.btn_volup.update(f"🔊 {state.volume}%")
+
+        # Update Download
+        if state.download_progress is not None:
+            pct = int(state.download_progress * 100)
+            self.btn_download.update(f"⬇ {pct}%")
+        else:
+            self.btn_download.update("⬇ unduh")
 
         if state.status == PlayerStatus.IDLE:
             self.info_line.update("Ketuk Radio untuk mulai ▶")

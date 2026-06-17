@@ -116,7 +116,8 @@ class SearchTab(Widget):
         query = event.value.strip()
         if query:
             self._show_loading()
-            await bus.publish(CMD_SEARCH, query)
+            # C-01: Call perform_live_search instead of publishing CMD_SEARCH
+            await self.perform_live_search(query)
 
     @on(ListView.Selected, "#search_results")
     async def on_list_selected(self, event: ListView.Selected) -> None:
