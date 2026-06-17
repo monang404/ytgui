@@ -39,8 +39,13 @@ class SearchTab(Widget):
         margin-top: 1;
     }
     SearchResultItem {
+        border: round $border;
+        margin-bottom: 1;
         padding: 0 1;
         height: auto;
+    }
+    SearchResultItem:hover {
+        border: round $accent;
     }
     """
 
@@ -51,7 +56,7 @@ class SearchTab(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield Input(placeholder="Ketik pencarian... (Enter untuk mainkan semua hasil)", id="search_input")
+            yield Input(placeholder="Ketik pencarian... (Tekan Enter untuk mencari)", id="search_input")
             self.msg_label = Static(f"[{TEXT_DIM}]Ketik nama lagu atau artis[/]", id="search_msg")
             yield self.msg_label
             self.list_view = ListView(id="search_results")
@@ -64,18 +69,12 @@ class SearchTab(Widget):
     @on(Input.Changed, "#search_input")
     def on_input_changed(self, event: Input.Changed) -> None:
         query = event.value.strip()
-        if self._search_timer:
-            self._search_timer.stop()
 
         if not query:
             self.msg_label.update(f"[{TEXT_DIM}]Ketik nama lagu atau artis[/]")
             self.msg_label.display = True
             self.list_view.display = False
             self.list_view.clear()
-            return
-
-        # Debounce: minimum 1.5 detik
-        self._search_timer = self.set_timer(1.5, lambda: self.perform_live_search(query))
 
     @work(exclusive=True)
     async def perform_live_search(self, query: str) -> None:
@@ -116,6 +115,7 @@ class SearchTab(Widget):
     async def on_submit(self, event: Input.Submitted) -> None:
         query = event.value.strip()
         if query:
+            self._show_loading()
             await bus.publish(CMD_SEARCH, query)
 
     @on(ListView.Selected, "#search_results")

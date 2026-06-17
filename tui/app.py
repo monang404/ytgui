@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Container
 from textual.binding import Binding
+from textual.widgets import Static
 from core.state import AppState, PlaybackMode
 from tui.components.player_bar import PlayerBar
 from tui.components.nav_bar import NavBar, TabChanged
@@ -24,6 +25,20 @@ class YTGuiApp(App):
         height: 1fr;
         width: 100%;
         background: $surface;
+    }
+    #app_header {
+        height: 1;
+        width: 100%;
+        text-align: center;
+        background: $primary;
+        color: $text;
+        text-style: bold;
+    }
+    .section-title {
+        text-style: bold;
+        color: $accent;
+        margin-top: 1;
+        margin-bottom: 1;
     }
     """
 
@@ -49,6 +64,9 @@ class YTGuiApp(App):
         self._refresh_timer = None
 
     def compose(self) -> ComposeResult:
+        self.header = Static("YTGUI V2", id="app_header")
+        yield self.header
+        
         with Container(id="content_area"):
             self.tab_home = HomeTab(id=f"content_{TAB_HOME}")
             self.tab_search = SearchTab(id=f"content_{TAB_SEARCH}")
@@ -82,6 +100,11 @@ class YTGuiApp(App):
         self._sync_tab_visibility()
 
     def refresh_ui(self) -> None:
+        # Update header
+        if hasattr(self.state, 'is_online'):
+            indicator = "🟢 ONLINE" if self.state.is_online else "🔴 OFFLINE"
+            self.header.update(f"YTGUI V2 | {indicator}")
+            
         self.player_bar.update_state(self.state)
         # Update current active tab
         if self.state.active_tab == TAB_HOME:

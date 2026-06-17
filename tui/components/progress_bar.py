@@ -6,6 +6,13 @@ from core.event_bus import bus, CMD_SEEK
 from tui.theme import TEXT_DIM
 
 class ClickableProgressBar(Static):
+    DEFAULT_CSS = """
+    ClickableProgressBar {
+        height: 2;
+        padding-top: 1;
+    }
+    """
+    
     position = reactive(0.0)
     duration = reactive(0.0)
 

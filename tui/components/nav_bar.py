@@ -27,6 +27,8 @@ class NavBar(Widget):
         border: none;
         color: {NAV_INACTIVE_COLOR};
         background: transparent;
+        text-align: center;
+        content-align: center middle;
     }}
     Button.nav-btn:hover {{
         background: $boost;
@@ -39,10 +41,10 @@ class NavBar(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="nav_container"):
-            yield Button("🏠 Home", id=TAB_HOME, classes="nav-btn")
-            yield Button("🔍 Search", id=TAB_SEARCH, classes="nav-btn")
-            yield Button("📻 Radio", id=TAB_RADIO, classes="nav-btn")
-            yield Button("☰ Queue", id=TAB_QUEUE, classes="nav-btn")
+            yield Button("🏠\nHome", id=TAB_HOME, classes="nav-btn")
+            yield Button("🔍\nSearch", id=TAB_SEARCH, classes="nav-btn")
+            yield Button("📻\nRadio", id=TAB_RADIO, classes="nav-btn")
+            yield Button("☰\nQueue", id=TAB_QUEUE, classes="nav-btn")
 
     def on_mount(self) -> None:
         self.set_active_tab(TAB_HOME)

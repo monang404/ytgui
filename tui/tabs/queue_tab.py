@@ -14,6 +14,8 @@ class QueueItem(ListItem):
         self.queue_index = index
         self.text = text
         self.is_current = is_current
+        if is_current:
+            self.add_class("-current")
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -37,6 +39,11 @@ class QueueTab(Widget):
     }
     QueueItem {
         height: 3;
+        border: round $border;
+        margin-bottom: 1;
+    }
+    QueueItem.-current {
+        border: round $accent;
     }
     QueueItem Horizontal {
         align: left middle;
@@ -50,6 +57,7 @@ class QueueTab(Widget):
         border: none;
         color: $error;
         background: transparent;
+        margin-left: 1;
     }
     .queue-rm-btn:hover {
         background: $error-muted;
@@ -65,8 +73,11 @@ class QueueTab(Widget):
         padding: 0 1;
         display: none;
     }
-    #lyrics_header {
-        text-align: center;
+    #lyrics_toggle_btn {
+        width: 100%;
+        height: 3;
+        border: none;
+        background: transparent;
         color: $accent;
     }
     #lyrics_content {
@@ -84,9 +95,9 @@ class QueueTab(Widget):
             
             self.lyrics_container = Vertical(id="lyrics_container")
             with self.lyrics_container:
-                self.lyrics_header = Static("📝 [b]Lirik[/b] (Tekan L untuk tutup)", id="lyrics_header")
+                self.lyrics_toggle_btn = Button("📝 Lirik ▾", id="lyrics_toggle_btn")
                 self.lyrics_content = Static("Tidak ada lirik", id="lyrics_content")
-                yield self.lyrics_header
+                yield self.lyrics_toggle_btn
                 yield self.lyrics_content
 
     def __init__(self, *args, **kwargs):
@@ -169,3 +180,5 @@ class QueueTab(Widget):
             await bus.publish(CMD_QUEUE_REMOVE, idx)
             # Prevent list view selection when clicking the remove button
             event.stop()
+        elif event.button.id == "lyrics_toggle_btn":
+            await self.action_toggle_lyrics()

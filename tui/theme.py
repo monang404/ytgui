@@ -25,7 +25,12 @@ HEIGHT_CONTROLS_TOTAL   = 11   # 3 baris tombol + 2 margin antar grup
 MIN_SIDE_PANEL_HEIGHT   = 6    # ambang minimum sebelum masuk mode compact (Tahap 2)
 
 # V2 additions
-HEIGHT_PLAYER_BAR   = 6    # tinggi PlayerBar sticky
+CARD_WIDTH          = 18
+CARD_HEIGHT         = 3
+CARD_BORDER         = "round"
+ROW_GAP             = 1
+SECTION_TITLE_MARGIN= 1
+
 HEIGHT_NAV_BAR      = 3    # tinggi bottom navigation
 NAV_ACTIVE_COLOR    = ACCENT_GOLD
 NAV_INACTIVE_COLOR  = TEXT_DIM

@@ -1,11 +1,11 @@
 from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import Static, Button
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
 from textual import on
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
-from core.event_bus import bus, CMD_SET_MODE
+from core.event_bus import bus, CMD_SET_MODE, CMD_NEXT
 from tui.theme import TEXT_DIM
 from tui.components.nav_bar import TabChanged
 
@@ -34,8 +34,17 @@ class RadioTab(Widget):
         margin-bottom: 2;
     }
     #change_seed_btn {
-        width: 100%;
+        width: 1fr;
         height: 3;
+    }
+    #radio_skip_btn {
+        width: 1fr;
+        height: 3;
+        margin-left: 1;
+    }
+    #radio_actions {
+        height: 3;
+        layout: horizontal;
     }
     """
 
@@ -45,7 +54,10 @@ class RadioTab(Widget):
             self.info = Static(f"[{TEXT_DIM}]Radio memutar lagu otomatis tanpa henti.[/]", id="radio_info")
             yield self.radio_btn
             yield self.info
-            yield Button("🔍 Ganti Seed Lagu", id="change_seed_btn")
+            
+            with Horizontal(id="radio_actions"):
+                yield Button("🔍 Ganti Seed Lagu", id="change_seed_btn")
+                yield Button("⏭ Skip lagu ini", id="radio_skip_btn")
 
     def update_state(self, state: AppState) -> None:
         is_radio = state.playback_mode == PlaybackMode.RADIO
@@ -72,3 +84,7 @@ class RadioTab(Widget):
     def on_change_seed(self, event: Button.Pressed) -> None:
         # Pindah ke tab pencarian (SearchTab) menggunakan TabChanged
         self.app.post_message(TabChanged("search"))
+
+    @on(Button.Pressed, "#radio_skip_btn")
+    async def on_skip(self, event: Button.Pressed) -> None:
+        await bus.publish(CMD_NEXT)
