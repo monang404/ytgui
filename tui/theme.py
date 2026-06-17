@@ -23,3 +23,13 @@ HEIGHT_TAB_BAR          = 3
 HEIGHT_CONTROLS_ROW     = 3
 HEIGHT_CONTROLS_TOTAL   = 11   # 3 baris tombol + 2 margin antar grup
 MIN_SIDE_PANEL_HEIGHT   = 6    # ambang minimum sebelum masuk mode compact (Tahap 2)
+
+# V2 additions
+HEIGHT_PLAYER_BAR   = 6    # tinggi PlayerBar sticky
+HEIGHT_NAV_BAR      = 3    # tinggi bottom navigation
+NAV_ACTIVE_COLOR    = ACCENT_GOLD
+NAV_INACTIVE_COLOR  = TEXT_DIM
+TAB_HOME   = "home"
+TAB_SEARCH = "search"
+TAB_RADIO  = "radio"
+TAB_QUEUE  = "queue"
