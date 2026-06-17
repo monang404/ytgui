@@ -6,7 +6,7 @@ from core.state import AppState, PlaybackMode
 from tui.components.player_bar import PlayerBar
 from tui.components.nav_bar import NavBar, TabChanged
 from tui.theme import TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE
-from tui.tabs.home_tab import HomeTab
+from tui.tabs.now_playing_tab import NowPlayingTab
 from tui.tabs.search_tab import SearchTab
 from tui.tabs.radio_tab import RadioTab
 from tui.tabs.queue_tab import QueueTab
@@ -78,8 +78,8 @@ class YTGuiApp(App):
             yield self.header_left
             yield self.header_right
         
-        with Container(id="content_area"):
-            self.tab_home = HomeTab(id=f"content_{TAB_HOME}")
+        with Vertical(id="content_area"):
+            self.tab_home = NowPlayingTab(id=f"content_{TAB_HOME}")
             self.tab_search = SearchTab(id=f"content_{TAB_SEARCH}")
             self.tab_radio = RadioTab(id=f"content_{TAB_RADIO}")
             self.tab_queue = QueueTab(id=f"content_{TAB_QUEUE}")
@@ -120,7 +120,7 @@ class YTGuiApp(App):
         self.player_bar.update_state(self.state)
         # Update current active tab
         if self.state.active_tab == TAB_HOME:
-            pass # Home load data di on_show()
+            self.tab_home.update_state(self.state)
         elif self.state.active_tab == TAB_RADIO:
             self.tab_radio.update_state(self.state)
         elif self.state.active_tab == TAB_QUEUE:
@@ -143,8 +143,6 @@ class YTGuiApp(App):
         # Trigger on_show manually if needed for SearchTab auto-focus
         if self.state.active_tab == TAB_SEARCH:
             self.tab_search.on_show()
-        elif self.state.active_tab == TAB_HOME:
-            self.tab_home.on_show()
 
     async def on_tab_changed(self, event: TabChanged) -> None:
         self.state.active_tab = event.tab_id

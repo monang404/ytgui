@@ -41,7 +41,7 @@ class NavBar(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="nav_container"):
-            yield Button("🏠\nhome", id=TAB_HOME, classes="nav-btn")
+            yield Button("💿\nplayer", id=TAB_HOME, classes="nav-btn")
             yield Button("🔍\nsearch", id=TAB_SEARCH, classes="nav-btn")
             yield Button("📻\nradio", id=TAB_RADIO, classes="nav-btn")
             yield Button("☰\nqueue", id=TAB_QUEUE, classes="nav-btn")
