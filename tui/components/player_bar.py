@@ -12,14 +12,14 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = """
     PlayerBar {
-        height: auto;
+        height: 11;
         dock: bottom;
         background: $boost;
         layout: vertical;
         padding: 1 2;
     }
     #pb_controls {
-        height: 1;
+        height: 3;
         align: center middle;
         margin-top: 1;
     }
@@ -52,14 +52,17 @@ class PlayerBar(Widget):
         text-style: bold;
     }
     Static.main-btn {
-        height: 1;
+        height: 3;
+        width: 11;
         content-align: center middle;
-        padding: 0 2;
-        background: transparent;
-        border: none;
+        background: $surface;
+        border: solid $accent;
+        margin: 0 1;
     }
     Static.main-btn:hover {
-        color: $accent;
+        background: $accent;
+        color: $background;
+        border: solid $text;
     }
     """
 
