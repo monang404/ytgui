@@ -38,9 +38,6 @@ class MpvController:
         common_args = [
             "--no-video", "--idle",
             "--ytdl-format=bestaudio/best",
-            "--audio-channels=stereo",
-            "--audio-samplerate=48000",
-            "--volume-max=100",  # Mencegah distorsi / noise digital
             "--audio-pitch-correction=yes",
             "--ytdl-raw-options=format-sort=abr,asr"
         ]
