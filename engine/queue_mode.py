@@ -4,8 +4,12 @@ Subscribes to: (tidak ada — dipanggil oleh PlaybackController)
 Publishes: QUEUE_UPDATED
 """
 
+from typing import TYPE_CHECKING
 from core.event_bus import bus, QUEUE_UPDATED
 from core.state import PlayerStatus
+
+if TYPE_CHECKING:
+    from engine.playback_controller import PlaybackController
 
 class QueueMode:
     """

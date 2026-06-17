@@ -38,15 +38,17 @@ class QueueTab(Widget):
         height: 1fr;
     }
     QueueItem {
-        height: 3;
+        height: auto;
         border: round $border;
         margin-bottom: 1;
+        padding: 0 1;
     }
     QueueItem.-current {
         border: round $accent;
     }
     QueueItem Horizontal {
         align: left middle;
+        height: auto;
     }
     .queue-text {
         width: 1fr;
