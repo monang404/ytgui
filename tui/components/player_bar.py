@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import Static, Button
+from textual import events, on
 from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus, PlaybackMode
 from tui.theme import STATUS_ERR
@@ -36,16 +37,15 @@ class PlayerBar(Widget):
         layout: horizontal;
     }
 
-    Button.player-btn {
-        min-width: 5;
+    Static.player-btn {
+        width: auto;
         height: 1;
-        border: none;
-        padding: 0;
+        padding: 0 1;
         background: transparent;
         color: $text;
         margin: 0 1;
     }
-    Button.player-btn:hover {
+    Static.player-btn:hover {
         background: transparent;
         color: $accent;
         text-style: bold;
@@ -63,36 +63,38 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Button(" |◁ ", id="btn_prev", classes="player-btn")
-            self.btn_play = Button(" ▷ ", id="btn_play", classes="player-btn")
-            self.btn_next = Button(" ▷| ", id="btn_next", classes="player-btn")
+            self.btn_prev = Static(" |◁ ", id="btn_prev", classes="player-btn")
+            self.btn_play = Static(" ▷ ", id="btn_play", classes="player-btn")
+            self.btn_next = Static(" ▷| ", id="btn_next", classes="player-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next
 
         with Horizontal(id="pb_meta_row"):
             with Horizontal(classes="meta-left", id="pb_vol_container"):
-                self.btn_voldown = Button("🔉", id="btn_voldown", classes="player-btn")
-                self.btn_volup = Button("🔊 85% [black on white] baru [/]", id="btn_volup", classes="player-btn")
+                self.btn_voldown = Static("🔉", id="btn_voldown", classes="player-btn")
+                self.btn_volup = Static("🔊 85% [black on white] baru [/]", id="btn_volup", classes="player-btn")
                 yield self.btn_voldown
                 yield self.btn_volup
             self.badge_cache = Static("", id="pb_badge_cache", classes="meta-center")
-            self.btn_download = Button("⬇ unduh [black on white] baru [/]", id="btn_download", classes="meta-right player-btn")
+            self.btn_download = Static("⬇ unduh [black on white] baru [/]", id="btn_download", classes="meta-right player-btn")
             yield self.badge_cache
             yield self.btn_download
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn_prev":
+    @on(events.Click, ".player-btn")
+    async def on_player_btn_click(self, event: events.Click) -> None:
+        btn_id = event.control.id
+        if btn_id == "btn_prev":
             await bus.publish(CMD_PREV)
-        elif event.button.id == "btn_play":
+        elif btn_id == "btn_play":
             await bus.publish(CMD_TOGGLE_PAUSE)
-        elif event.button.id == "btn_next":
+        elif btn_id == "btn_next":
             await bus.publish(CMD_NEXT)
-        elif event.button.id == "btn_download":
+        elif btn_id == "btn_download":
             await bus.publish(CMD_DOWNLOAD)
-        elif event.button.id == "btn_voldown":
+        elif btn_id == "btn_voldown":
             await bus.publish(CMD_VOLUME_DOWN)
-        elif event.button.id == "btn_volup":
+        elif btn_id == "btn_volup":
             await bus.publish(CMD_VOLUME_UP)
 
     def update_state(self, state: AppState) -> None:
@@ -114,27 +116,27 @@ class PlayerBar(Widget):
             self.info_line.update("Ketuk Radio untuk mulai ▶")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.label = " ▷ "
+            self.btn_play.update(" ▷ ")
         elif state.status == PlayerStatus.LOADING:
             track_name = state.current_track.title if state.current_track else ""
             self.info_line.update(f"⏳ memuat... {escape(track_name)}")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.label = " || "
+            self.btn_play.update(" || ")
         elif state.status == PlayerStatus.PLAYING:
             t = state.current_track
             if t:
                 self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.label = "[#FFA500] || [/]"
+            self.btn_play.update("[#FFA500] || [/]")
         elif state.status == PlayerStatus.PAUSED:
             t = state.current_track
             if t:
                 self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.label = " ▷ "
+            self.btn_play.update(" ▷ ")
         elif state.status == PlayerStatus.ERROR:
             msg = state.error_msg or "Terjadi kesalahan"
             self.info_line.update(f"[{STATUS_ERR}]{escape(msg)}[/]")
