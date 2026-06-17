@@ -9,13 +9,27 @@ Publishes: QUEUE_UPDATED, LOG_MESSAGE
 """
 
 import asyncio
+import random
 from typing import TYPE_CHECKING, Optional
 from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
-DEFAULT_SEED_QUERY = "popular hit song official audio"
+RANDOM_SEED_QUERIES = [
+    "popular hit song official audio",
+    "trending pop music",
+    "viral tiktok songs",
+    "best acoustic cover",
+    "chill lofi beats",
+    "classic rock hits",
+    "jazz background music",
+    "indie folk songs",
+    "r&b hits official",
+    "top edm drops",
+    "kpop trending hits",
+    "billboard hot 100 official"
+]
 MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
 
 class RadioMode:
@@ -77,9 +91,10 @@ class RadioMode:
             results = await self.ytdlp.search(query, max_results=10)
             existing = self._build_exclusion_set()
             # Filter kompilasi: durasi harus < 10 menit (600 detik) dan bukan livestream (0)
-            new_tracks = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION][:2]
+            new_tracks = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION]
+            random.shuffle(new_tracks)
             if new_tracks:
-                self.state.radio_queue.extend(new_tracks)
+                self.state.radio_queue.extend(new_tracks[:2])
                 await bus.publish(QUEUE_UPDATED)
         except Exception as e:
             await bus.publish(LOG_MESSAGE, f"Prefetch Error: {str(e)}")
@@ -90,18 +105,20 @@ class RadioMode:
         """Cari & putar lagu radio baru — dipakai saat Radio baru diaktifkan
         atau saat radio_queue habis. Selalu langsung memutar (tidak menunggu)."""
         try:
-            query = f"{seed_artist} music" if seed_artist else DEFAULT_SEED_QUERY
-            results = await self.ytdlp.search(query, max_results=10)
+            query = f"{seed_artist} music" if seed_artist else random.choice(RANDOM_SEED_QUERIES)
+            results = await self.ytdlp.search(query, max_results=15)
             existing = self._build_exclusion_set()
             filtered = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION]
 
             if not filtered and seed_artist:
                 # Seed artis tidak membuahkan hasil baru (semua duplikat) -> fallback umum
-                results = await self.ytdlp.search(DEFAULT_SEED_QUERY, max_results=10)
+                query = random.choice(RANDOM_SEED_QUERIES)
+                results = await self.ytdlp.search(query, max_results=15)
                 existing = self._build_exclusion_set()
                 filtered = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION]
 
             if filtered:
+                random.shuffle(filtered)
                 self.state.radio_queue = filtered[1:]
                 await controller.play_track(filtered[0])
                 await bus.publish(QUEUE_UPDATED)

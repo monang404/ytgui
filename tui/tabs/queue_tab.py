@@ -105,7 +105,6 @@ class QueueTab(Widget):
             state.current_track.video_id if state.current_track else None,
             len(upcoming),
             upcoming[0].video_id if upcoming else None,
-            self.size.width,
             state.playback_mode
         ))
         
