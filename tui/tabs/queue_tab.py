@@ -19,10 +19,9 @@ class QueueItem(ListItem):
             self.add_class("-current")
 
     def compose(self) -> ComposeResult:
-        with Horizontal():
-            yield Label(self.text, classes="queue-text")
-            if not self.is_current and self.removable:
-                yield Button("✕", id=f"rm_{self.queue_index}", classes="queue-rm-btn")
+        yield Label(self.text, classes="queue-text")
+        if not self.is_current and self.removable:
+            yield Button("✕", id=f"rm_{self.queue_index}", classes="queue-rm-btn")
 
 class QueueTab(Widget):
     """The Queue Tab showing current track and upcoming queue."""
@@ -39,18 +38,18 @@ class QueueTab(Widget):
         height: 1fr;
     }
     QueueItem {
-        height: 3;
+        layout: horizontal;
+        height: auto;
         border: round $border;
         margin-bottom: 1;
+        padding: 0 1;
+        align: left middle;
     }
     QueueItem.-current {
         border: round $accent;
     }
     QueueItem:hover {
         border: round $accent;
-    }
-    QueueItem Horizontal {
-        align: left middle;
     }
     .queue-text {
         width: 1fr;
