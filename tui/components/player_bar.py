@@ -11,19 +11,26 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = f"""
     PlayerBar {{
-        height: {HEIGHT_PLAYER_BAR};
+        height: auto;
         dock: bottom;
         background: $boost;
-        padding: 0 1;
+        padding: 1 1;
     }}
     #pb_controls {{
-        height: 1;
+        height: auto;
         align: center middle;
+        margin-top: 1;
     }}
     Button.player-btn {{
         min-width: 5;
-        border: none;
+        min-height: 1;
         height: 1;
+        border: none;
+        padding: 0 1;
+        background: transparent;
+    }}
+    Button.player-btn:hover {{
+        background: $accent;
     }}
     """
 
