@@ -17,10 +17,12 @@ class ClickableProgressBar(Static):
     duration = reactive(0.0)
 
     def render(self) -> str:
-        if self.duration <= 0:
-            return ""
-        
         bar_width = max(10, self.size.width - 16)
+        
+        if self.duration <= 0:
+            bar = "[#333344]" + "─" * bar_width + "[/]"
+            return f"[{TEXT_DIM}]00:00[/] {bar} [{TEXT_DIM}]00:00[/]"
+            
         pct = min(1.0, self.position / self.duration)
         filled = int(pct * bar_width)
         bar = "[#FFA500]" + "━" * filled + "[/][#333344]" + "─" * (bar_width - filled) + "[/]"

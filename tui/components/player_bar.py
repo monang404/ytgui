@@ -37,12 +37,12 @@ class PlayerBar(Widget):
     }
 
     Button.player-btn {
-        min-width: 3;
-        min-height: 1;
+        min-width: 5;
         height: 1;
         border: none;
-        padding: 0 1;
+        padding: 0;
         background: transparent;
+        color: $text;
         margin: 0 1;
     }
     Button.player-btn:hover {
@@ -63,9 +63,9 @@ class PlayerBar(Widget):
         yield self.progress_bar
 
         with Horizontal(id="pb_controls"):
-            self.btn_prev = Button(" ◁ ", id="btn_prev", classes="player-btn")
-            self.btn_play = Button(" || ", id="btn_play", classes="player-btn")
-            self.btn_next = Button(" ▷ ", id="btn_next", classes="player-btn")
+            self.btn_prev = Button(" |◁ ", id="btn_prev", classes="player-btn")
+            self.btn_play = Button(" ▷ ", id="btn_play", classes="player-btn")
+            self.btn_next = Button(" ▷| ", id="btn_next", classes="player-btn")
             yield self.btn_prev
             yield self.btn_play
             yield self.btn_next
