@@ -180,7 +180,7 @@ class RadioMode:
         Radio SELALU langsung melakukan pencarian baru dan memutar lagu —
         tidak peduli apa yang sebelumnya terjadi di Queue Mode.
         """
-        self.state.radio_queue = []
+        self.state.radio_queue.clear()
         seed_artist = random.choice(SEED_ARTISTS)
         task = asyncio.create_task(self._fetch_and_play_initial(controller, seed_artist))
         self._bg_tasks.add(task)
@@ -190,7 +190,7 @@ class RadioMode:
         """Dipanggil saat user mematikan Radio Mode. Bersihkan sisa state
         Radio agar sesi berikutnya selalu mulai dari kondisi yang bersih,
         dan tidak membocorkan lagu radio ke dalam Queue Mode."""
-        self.state.radio_queue = []
+        self.state.radio_queue.clear()
 
     async def next(self, controller: "PlaybackController") -> None:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
@@ -241,7 +241,8 @@ class RadioMode:
                 tracks = await self._gather_batch()
 
             if tracks:
-                self.state.radio_queue = tracks[1:]
+                self.state.radio_queue.clear()
+                self.state.radio_queue.extend(tracks[1:])
                 await controller.play_track(tracks[0])
                 await bus.publish(QUEUE_UPDATED)
             else:
