@@ -71,7 +71,7 @@ class PlayerBar(Widget):
         with Horizontal(id="pb_title_row"):
             self.info_line = Static("Ketuk Radio untuk mulai ▶", id="pb_info")
             self.seek_hint = Static("[dim]← klik bar untuk seek →[/]", id="pb_seek_hint")
-            self.badge_mode = Static("[bold #555580][○] QUEUE[/]", id="pb_badge_mode")
+            self.badge_mode = Static(r"[bold #555580]\[○] QUEUE[/]", id="pb_badge_mode")
             yield self.info_line
             yield self.seek_hint
             yield self.badge_mode
@@ -125,9 +125,9 @@ class PlayerBar(Widget):
         t = state.current_track
         if t:
             if t.local_path:
-                self.badge_cache.update("[bold #4ade80]✓ tersimpan[/]")
+                self.badge_cache.update(r"[bold #4ade80]\[✓] tersimpan[/]")
             else:
-                self.badge_cache.update("[bold #A0A0C0]☁ stream[/]")
+                self.badge_cache.update(r"[bold #A0A0C0]\[☁] stream[/]")
         else:
             self.badge_cache.update("")
 

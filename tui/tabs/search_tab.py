@@ -57,10 +57,10 @@ class SearchResultItem(ListItem):
         self.track = track
 
     def compose(self) -> ComposeResult:
-        via = "[✓] Cache" if self.track.local_path else "[☁] Stream"
+        via = r"\[✓] Cache" if self.track.local_path else r"\[☁] Stream"
         via_color = STATUS_OK if self.track.local_path else TEXT_DIM
         dur = f"{self.track.duration // 60}:{self.track.duration % 60:02d}"
-        yield Label(f"[bold]{escape(self.track.title)}[/] - {escape(self.track.artist)} [{TEXT_DIM}]{dur} | [{via_color}]{via}[/][/]")
+        yield Label(f"[bold]{escape(self.track.title)}[/] - {escape(self.track.artist)} [{TEXT_DIM}]{dur}[/] | [{via_color}]{via}[/]")
 
 class SearchTab(Widget):
     """The Search Tab for finding tracks."""
