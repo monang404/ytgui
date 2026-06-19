@@ -9,31 +9,31 @@ from textual import work, on
 from rich.markup import escape
 from core.state import TrackInfo
 from core.event_bus import bus, CMD_PLAY_TRACK, CMD_QUEUE_ADD, LOG_MESSAGE
-from tui.theme import TEXT_DIM, ACCENT_GOLD, STATUS_OK, STATUS_ERR
+from tui.theme import TEXT_DIM, ACCENT_GOLD, STATUS_OK, STATUS_ERR, BG_PANEL, BG_VOID, BORDER, ACCENT_FIRE
 
 class SearchActionModal(ModalScreen[str]):
-    DEFAULT_CSS = """
-    SearchActionModal {
+    DEFAULT_CSS = f"""
+    SearchActionModal {{
         align: center middle;
-        background: $background 80%;
-    }
-    #action_modal {
+        background: {BG_VOID} 80%;
+    }}
+    #action_modal {{
         width: 60;
         height: auto;
         padding: 2;
-        background: $surface;
-        border: thick $primary;
-    }
-    #action_title {
+        background: {BG_PANEL};
+        border: thick {ACCENT_FIRE};
+    }}
+    #action_title {{
         text-align: center;
         margin-bottom: 2;
         text-style: bold;
-    }
-    #action_buttons {
+    }}
+    #action_buttons {{
         layout: horizontal;
         align: center middle;
         height: 3;
-    }
+    }}
     """
     def __init__(self, track_title: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,31 +67,31 @@ class SearchResultItem(ListItem):
 
 class SearchTab(Widget):
     """The Search Tab for finding tracks."""
-    DEFAULT_CSS = """
-    SearchTab {
+    DEFAULT_CSS = f"""
+    SearchTab {{
         height: 1fr;
         padding: 1;
-    }
-    #search_input {
+    }}
+    #search_input {{
         width: 1fr;
         margin-bottom: 1;
-    }
-    #search_results {
+    }}
+    #search_results {{
         height: 1fr;
-    }
-    #search_msg {
+    }}
+    #search_msg {{
         text-align: center;
         margin-top: 1;
-    }
-    SearchResultItem {
-        border: round $border;
+    }}
+    SearchResultItem {{
+        border: round {BORDER};
         margin-bottom: 1;
         padding: 0 1;
         height: auto;
-    }
-    SearchResultItem:hover {
-        border: round $accent;
-    }
+    }}
+    SearchResultItem:hover {{
+        border: round {ACCENT_FIRE};
+    }}
     """
 
     def __init__(self, *args, **kwargs):

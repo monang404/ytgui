@@ -2,31 +2,31 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import Label, Button
 from textual.containers import Vertical, Center
-from tui.theme import TEXT_DIM
+from tui.theme import TEXT_DIM, BG_VOID, BG_PANEL, ACCENT_FIRE
 
 class HelpScreen(ModalScreen):
     """Screen for displaying a shortcut cheatsheet."""
-    DEFAULT_CSS = """
-    HelpScreen {
+    DEFAULT_CSS = f"""
+    HelpScreen {{
         align: center middle;
-        background: $background 80%;
-    }
-    #help_container {
+        background: {BG_VOID} 80%;
+    }}
+    #help_container {{
         width: 60;
         height: auto;
         padding: 2;
-        background: $surface;
-        border: thick $primary;
-    }
-    .help_title {
+        background: {BG_PANEL};
+        border: thick {ACCENT_FIRE};
+    }}
+    .help_title {{
         text-align: center;
         text-style: bold;
         margin-bottom: 1;
-        color: $accent;
-    }
-    .help_text {
+        color: {ACCENT_FIRE};
+    }}
+    .help_text {{
         margin-bottom: 1;
-    }
+    }}
     """
 
     def compose(self) -> ComposeResult:

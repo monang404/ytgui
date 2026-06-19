@@ -1,16 +1,19 @@
 # tui/theme.py
-BG_VOID     = "#0D0D0D"
-BG_PANEL    = "#141420"
-BG_ELEVATED = "#1E1E30"
-BORDER      = "#2a2a45"
-BORDER_FOCUS = "#FFC107"
-ACCENT_FIRE = "#FF6B35"
-ACCENT_GOLD = "#FFA500"
-TEXT_PRIMARY = "#E8E8FF"
-TEXT_MUTED   = "#A0A0C0"
-TEXT_DIM     = "#555580"
-STATUS_OK    = "#4ade80"
-STATUS_ERR   = "#ef4444"
+# Claude/Anthropic Brand Palette
+BG_VOID      = "#141413"    # Dark
+BG_PANEL     = "#1c1c1b"    # Dark + panel elevation
+BG_ELEVATED  = "#242422"    # Dark + elevated surface
+BORDER       = "#b0aea5"    # Mid Gray
+BORDER_FOCUS = "#d97757"    # Orange (aksen utama)
+ACCENT_FIRE  = "#d97757"    # Orange — aksen utama Claude
+ACCENT_GOLD  = "#d97757"    # Orange — alias untuk backward compat
+ACCENT_BLUE  = "#6a9bcc"    # Blue — aksen sekunder
+ACCENT_GREEN = "#788c5d"    # Green — aksen tersier
+TEXT_PRIMARY = "#faf9f5"    # Light
+TEXT_MUTED   = "#b0aea5"    # Mid Gray
+TEXT_DIM     = "#706f66"    # Dim variant
+STATUS_OK    = "#788c5d"    # Green Claude
+STATUS_ERR   = "#c45040"    # Warm red
 
 # Breakpoint lebar kolom terminal — bukan device pixel, ini character columns
 BREAKPOINT_LANDSCAPE = 80
@@ -32,7 +35,7 @@ ROW_GAP             = 1
 SECTION_TITLE_MARGIN= 1
 
 HEIGHT_NAV_BAR      = 3    # tinggi bottom navigation
-NAV_ACTIVE_COLOR    = ACCENT_GOLD
+NAV_ACTIVE_COLOR    = ACCENT_FIRE
 NAV_INACTIVE_COLOR  = TEXT_DIM
 TAB_HOME   = "home"
 TAB_SEARCH = "search"

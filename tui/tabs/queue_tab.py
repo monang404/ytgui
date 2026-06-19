@@ -5,7 +5,7 @@ from textual.containers import Vertical, Horizontal
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
-from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK
+from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK, BORDER
 from textual.binding import Binding
 from textual import work
 
@@ -28,54 +28,54 @@ class QueueTab(Widget):
         Binding("l", "toggle_lyrics", "Toggle Lyrics")
     ]
     
-    DEFAULT_CSS = """
-    QueueTab {
+    DEFAULT_CSS = f"""
+    QueueTab {{
         height: 1fr;
         padding: 1;
-    }
-    #queue_list {
+    }}
+    #queue_list {{
         height: 1fr;
-    }
-    QueueItem {
-        border: round $border;
+    }}
+    QueueItem {{
+        border: round {BORDER};
         margin-bottom: 1;
         padding: 0 1;
         height: auto;
-    }
-    QueueItem.-current {
-        border: round $accent;
-    }
-    QueueItem:hover {
-        border: round $accent;
-    }
-    .queue-text {
+    }}
+    QueueItem.-current {{
+        border: round {ACCENT_FIRE};
+    }}
+    QueueItem:hover {{
+        border: round {ACCENT_FIRE};
+    }}
+    .queue-text {{
         width: 1fr;
-    }
-    #queue_footer {
+    }}
+    #queue_footer {{
         height: 1;
         margin-top: 1;
         text-align: center;
-    }
-    #lyrics_container {
+    }}
+    #lyrics_container {{
         height: 8;
-        border-top: solid $primary;
-        padding: 0 1;
+        border-top: solid {ACCENT_FIRE};
+        padding: 1;
         display: none;
-    }
-    #lyrics_toggle_btn {
+    }}
+    #lyrics_toggle_btn {{
         width: 100%;
         height: 1;
         min-height: 1;
         border: none;
         background: transparent;
-        color: $accent;
+        color: {ACCENT_FIRE};
         padding: 0;
         margin: 1 0;
-    }
-    #lyrics_content {
+    }}
+    #lyrics_content {{
         height: 1fr;
         text-align: center;
-    }
+    }}
     """
 
     def compose(self) -> ComposeResult:

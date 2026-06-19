@@ -4,67 +4,67 @@ from textual.widgets import Static, Button
 from textual import events, on
 from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus, PlaybackMode
-from tui.theme import STATUS_ERR
+from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID
 from core.event_bus import bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD
 from tui.components.progress_bar import ClickableProgressBar
 from rich.markup import escape
 
 class PlayerBar(Widget):
-    DEFAULT_CSS = """
-    PlayerBar {
+    DEFAULT_CSS = f"""
+    PlayerBar {{
         height: 11;
         dock: bottom;
-        background: $boost;
+        background: {BG_ELEVATED};
         layout: vertical;
         padding: 1 2;
-    }
-    #pb_controls {
+    }}
+    #pb_controls {{
         height: 3;
         align: center middle;
         margin-top: 1;
-    }
-    #pb_title_row { height: 1; }
-    #pb_title_row #pb_info { width: 1fr; }
-    #pb_title_row #pb_seek_hint { width: auto; margin-right: 2; }
-    #pb_title_row #pb_badge_mode { width: auto; color: $accent; }
+    }}
+    #pb_title_row {{ height: 1; }}
+    #pb_title_row #pb_info {{ width: 1fr; }}
+    #pb_title_row #pb_seek_hint {{ width: auto; margin-right: 2; }}
+    #pb_title_row #pb_badge_mode {{ width: auto; color: {ACCENT_FIRE}; }}
 
-    #pb_meta_row { height: 1; margin-top: 1; }
-    .meta-left   { width: 1fr; text-align: left; color: $text-muted; }
-    .meta-center { width: 1fr; text-align: center; color: $success; }
-    .meta-right  { width: 1fr; text-align: right; }
+    #pb_meta_row {{ height: 1; margin-top: 1; }}
+    .meta-left   {{ width: 1fr; text-align: left; color: {TEXT_MUTED}; }}
+    .meta-center {{ width: 1fr; text-align: center; color: {STATUS_OK}; }}
+    .meta-right  {{ width: 1fr; text-align: right; }}
     
-    #pb_vol_container {
+    #pb_vol_container {{
         width: 1fr;
         height: 1;
         layout: horizontal;
-    }
+    }}
 
-    Static.player-btn {
+    Static.player-btn {{
         width: auto;
         height: 1;
         padding: 0 2;
         background: transparent;
-        color: $text;
+        color: {TEXT_PRIMARY};
         margin: 0;
-    }
-    Static.player-btn:hover {
-        background: $panel;
-        color: $accent;
+    }}
+    Static.player-btn:hover {{
+        background: {BG_PANEL};
+        color: {ACCENT_FIRE};
         text-style: bold;
-    }
-    Static.main-btn {
+    }}
+    Static.main-btn {{
         height: 3;
         width: 11;
         content-align: center middle;
-        background: $surface;
-        border: solid $accent;
+        background: {BG_PANEL};
+        border: solid {ACCENT_FIRE};
         margin: 0 1;
-    }
-    Static.main-btn:hover {
-        background: $accent;
-        color: $background;
+    }}
+    Static.main-btn:hover {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
         border: solid white;
-    }
+    }}
     """
 
     def compose(self) -> ComposeResult:

@@ -5,7 +5,10 @@ from textual.widgets import Static
 from core.state import AppState, PlaybackMode
 from tui.components.player_bar import PlayerBar
 from tui.components.nav_bar import NavBar, TabChanged
-from tui.theme import TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE
+from tui.theme import (
+    TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE,
+    BG_VOID, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, STATUS_OK, ACCENT_GOLD
+)
 from tui.tabs.now_playing_tab import NowPlayingTab
 from tui.tabs.search_tab import SearchTab
 from tui.tabs.radio_tab import RadioTab
@@ -18,36 +21,37 @@ from core.event_bus import (
 )
 
 class YTGuiApp(App):
-    CSS = """
-    Screen {
+    CSS = f"""
+    Screen {{
         layout: vertical;
-    }
-    #content_area {
+        background: {BG_VOID};
+    }}
+    #content_area {{
         height: 1fr;
         width: 100%;
-        background: $surface;
-    }
-    #app_header {
+        background: {BG_PANEL};
+    }}
+    #app_header {{
         height: 1;
         width: 100%;
-        background: $primary;
-        color: $text;
+        background: {ACCENT_FIRE};
+        color: {TEXT_PRIMARY};
         text-style: bold;
-    }
-    #header_left { width: 1fr; text-align: left; padding-left: 1; }
-    #header_right { width: 1fr; text-align: right; padding-right: 1; color: $success; }
-    .section-title {
+    }}
+    #header_left {{ width: 1fr; text-align: left; padding-left: 1; }}
+    #header_right {{ width: 1fr; text-align: right; padding-right: 1; color: {STATUS_OK}; }}
+    .section-title {{
         text-style: bold;
-        color: $accent;
+        color: {ACCENT_FIRE};
         margin-top: 1;
         margin-bottom: 1;
-    }
-    .badge-baru {
+    }}
+    .badge-baru {{
         background: white;
         color: black;
         text-style: bold;
         padding: 0 1;
-    }
+    }}
     """
 
     BINDINGS = [
