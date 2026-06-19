@@ -12,27 +12,27 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = f"""
     PlayerBar {{
-        height: 11;
+        height: 14;
         dock: bottom;
         background: {BG_ELEVATED};
         layout: vertical;
         padding: 1 2;
-    }}
-    #pb_controls {{
-        height: 3;
-        align: center middle;
-        margin-top: 1;
     }}
     #pb_title_row {{ height: 1; }}
     #pb_title_row #pb_info {{ width: 1fr; }}
     #pb_title_row #pb_seek_hint {{ width: auto; margin-right: 2; }}
     #pb_title_row #pb_badge_mode {{ width: auto; color: {ACCENT_FIRE}; }}
 
+    #pb_controls {{
+        height: 3;
+        align: center middle;
+    }}
+
     #pb_meta_row {{ height: 1; margin-top: 1; }}
     .meta-left   {{ width: 1fr; text-align: left; color: {TEXT_MUTED}; }}
     .meta-center {{ width: 1fr; text-align: center; color: {TEXT_MUTED}; }}
     .meta-right  {{ width: 1fr; text-align: right; }}
-    
+
     #pb_vol_container {{
         width: 1fr;
         height: 1;
@@ -41,7 +41,6 @@ class PlayerBar(Widget):
 
     Static.player-btn {{
         width: auto;
-        height: 1;
         padding: 0 2;
         background: transparent;
         color: {TEXT_PRIMARY};
@@ -52,7 +51,7 @@ class PlayerBar(Widget):
         color: {ACCENT_FIRE};
         text-style: bold;
     }}
-    Static.main-btn {{
+    #pb_controls .main-btn {{
         height: 3;
         width: 11;
         content-align: center middle;
@@ -60,7 +59,7 @@ class PlayerBar(Widget):
         border: tall {ACCENT_FIRE};
         margin: 0 1;
     }}
-    Static.main-btn:hover {{
+    #pb_controls .main-btn:hover {{
         background: {ACCENT_FIRE};
         color: {BG_VOID};
         border: tall {TEXT_PRIMARY};
