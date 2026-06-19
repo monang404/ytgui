@@ -57,10 +57,13 @@ class SearchResultItem(ListItem):
         self.track = track
 
     def compose(self) -> ComposeResult:
-        via = r"\[✓] Cache" if self.track.local_path else r"\[☁] Stream"
-        via_color = STATUS_OK if self.track.local_path else TEXT_DIM
         dur = f"{self.track.duration // 60}:{self.track.duration % 60:02d}"
-        yield Label(f"[bold]{escape(self.track.title)}[/] - {escape(self.track.artist)} [{TEXT_DIM}]{dur}[/] | [{via_color}]{via}[/]")
+        if self.track.local_path:
+            via = r"\[✓] Cache"
+            yield Label(f"[bold]{escape(self.track.title)}[/bold] - {escape(self.track.artist)} [dim]{dur}[/dim] | [green]{via}[/green]")
+        else:
+            via = r"\[☁] Stream"
+            yield Label(f"[bold]{escape(self.track.title)}[/bold] - {escape(self.track.artist)} [dim]{dur}[/dim] | [dim]{via}[/dim]")
 
 class SearchTab(Widget):
     """The Search Tab for finding tracks."""
@@ -138,14 +141,14 @@ class SearchTab(Widget):
             self._show_error(str(e))
 
     def _show_loading(self) -> None:
-        self.msg_label.update(f"[{ACCENT_GOLD}]⏳ Mencari...[/]")
+        self.msg_label.update("[bold yellow]⏳ Mencari...[/bold yellow]")
         self.msg_label.display = True
         self.list_view.display = False
 
     def _show_results(self, results: list[TrackInfo]) -> None:
         self.list_view.clear()
         if not results:
-            self.msg_label.update(f"[{TEXT_DIM}]Tidak ditemukan hasil.[/]")
+            self.msg_label.update("[dim]Tidak ditemukan hasil.[/dim]")
             self.msg_label.display = True
             self.list_view.display = False
             return
@@ -157,7 +160,7 @@ class SearchTab(Widget):
         self.list_view.display = True
 
     def _show_error(self, msg: str) -> None:
-        self.msg_label.update(f"[{STATUS_ERR}]Gagal mencari: {escape(msg)}[/]")
+        self.msg_label.update(f"[red]Gagal mencari: {escape(msg)}[/red]")
         self.msg_label.display = True
         self.list_view.display = False
 

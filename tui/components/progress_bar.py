@@ -20,17 +20,17 @@ class ClickableProgressBar(Static):
         bar_width = max(10, self.size.width - 16)
         
         if self.duration <= 0:
-            bar = "[#333344]" + "─" * bar_width + "[/]"
-            return f"[{TEXT_DIM}]00:00[/] {bar} [{TEXT_DIM}]00:00[/]"
+            bar = "[dim]" + "─" * bar_width + "[/dim]"
+            return f"[dim]00:00[/dim] {bar} [dim]00:00[/dim]"
             
         pct = min(1.0, self.position / self.duration)
         filled = int(pct * bar_width)
-        bar = "[#FFA500]" + "━" * filled + "[/][#333344]" + "─" * (bar_width - filled) + "[/]"
+        bar = "[yellow]" + "━" * filled + "[/yellow][dim]" + "─" * (bar_width - filled) + "[/dim]"
 
         pos_str = f"{int(self.position//60):02d}:{int(self.position%60):02d}"
         dur_str = f"{int(self.duration//60):02d}:{int(self.duration%60):02d}"
         
-        return f"[{TEXT_DIM}]{pos_str}[/] {bar} [{TEXT_DIM}]{dur_str}[/]"
+        return f"[dim]{pos_str}[/dim] {bar} [dim]{dur_str}[/dim]"
 
     async def on_click(self, event: events.Click) -> None:
         if self.duration <= 0:

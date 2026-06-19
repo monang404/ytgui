@@ -14,7 +14,7 @@ EQ_HEIGHT = 8
 def generate_multiline_eq(is_playing: bool) -> str:
     if not is_playing:
         empty_rows = "\n".join(" " * EQ_WIDTH for _ in range(EQ_HEIGHT - 1))
-        bottom_row = f"[{TEXT_DIM}]" + "▄" * EQ_WIDTH + f"[/{TEXT_DIM}]"
+        bottom_row = "[dim]" + "▄" * EQ_WIDTH + "[/dim]"
         return empty_rows + "\n" + bottom_row
 
     lines = []
@@ -40,13 +40,13 @@ def generate_multiline_eq(is_playing: bool) -> str:
         
         # Color gradient based on row
         if row >= 7:
-            color = "#ff4b4b" # Red top
+            color = "red"          # high bands
         elif row >= 4:
-            color = "#fca311" # Orange middle
+            color = "yellow"       # mid bands
         else:
-            color = "#4ade80" # Green bottom
+            color = "green"        # low bands
             
-        lines.append(f"[{color}]{''.join(line_chars)}[/]")
+        lines.append(f"[{color}]{''.join(line_chars)}[/{color}]")
         
     return "\n".join(lines)
 

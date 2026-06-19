@@ -70,8 +70,8 @@ class PlayerBar(Widget):
     def compose(self) -> ComposeResult:
         with Horizontal(id="pb_title_row"):
             self.info_line = Static("Ketuk Radio untuk mulai ▶", id="pb_info")
-            self.seek_hint = Static("[dim]← klik bar untuk seek →[/]", id="pb_seek_hint")
-            self.badge_mode = Static(r"[bold #555580]\[○] QUEUE[/]", id="pb_badge_mode")
+            self.seek_hint = Static("[dim]← klik bar untuk seek →[/dim]", id="pb_seek_hint")
+            self.badge_mode = Static("[dim]\u2261 queue[/dim]", id="pb_badge_mode")
             yield self.info_line
             yield self.seek_hint
             yield self.badge_mode
@@ -118,21 +118,21 @@ class PlayerBar(Widget):
 
     def update_state(self, state: AppState) -> None:
         if state.playback_mode == PlaybackMode.RADIO:
-            self.badge_mode.update("[bold #FFA500]📻 radio[/]")
+            self.badge_mode.update("[bold yellow]\U0001f4fb radio[/bold yellow]")
         else:
-            self.badge_mode.update("[bold #555580]≡ queue[/]")
+            self.badge_mode.update("[dim]\u2261 queue[/dim]")
             
         t = state.current_track
         if t:
             if t.local_path:
-                self.badge_cache.update(r"[bold #4ade80]\[✓] tersimpan[/]")
+                self.badge_cache.update(r"[green]\[✓] tersimpan[/green]")
             else:
-                self.badge_cache.update(r"[bold #A0A0C0]\[☁] stream[/]")
+                self.badge_cache.update(r"[dim]\[☁] stream[/dim]")
         else:
             self.badge_cache.update("")
 
         if getattr(state, "sponsorblock_active", False):
-            self.badge_sb.update("[bold #facc15]SB: ON[/]")
+            self.badge_sb.update("[bold yellow]SB: ON[/bold yellow]")
         else:
             self.badge_sb.update("")
 
@@ -156,23 +156,23 @@ class PlayerBar(Widget):
             self.info_line.update(f"⏳ memuat... {escape(track_name)}")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.update("[#FFA500] || [/]")
+            self.btn_play.update("[yellow] || [/yellow]")
         elif state.status == PlayerStatus.PLAYING:
             t = state.current_track
             if t:
-                self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
+                self.info_line.update(f"[bold]{escape(t.title)}[/bold] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.update("[#FFA500] || [/]")
+            self.btn_play.update("[yellow] || [/yellow]")
         elif state.status == PlayerStatus.PAUSED:
             t = state.current_track
             if t:
-                self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
+                self.info_line.update(f"[bold]{escape(t.title)}[/bold] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
             self.btn_play.update(" ▷ ")
         elif state.status == PlayerStatus.ERROR:
             msg = state.error_msg or "Terjadi kesalahan"
-            self.info_line.update(f"[{STATUS_ERR}]{escape(msg)}[/]")
+            self.info_line.update(f"[red]{escape(msg)}[/red]")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
