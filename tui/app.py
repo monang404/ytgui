@@ -112,6 +112,15 @@ class YTGuiApp(App):
     Input:focus {{
         border: round {ACCENT_FIRE};
     }}
+
+    /* ── Global ListView Overrides ── */
+    ListItem.--highlight {{
+        background: {ACCENT_FIRE} 30%;
+    }}
+    ListView:focus > ListItem.--highlight {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+    }}
     """
 
     BINDINGS = [
