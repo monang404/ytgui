@@ -79,6 +79,7 @@ class PlaybackController:
             
             # Play
             await self.mpv.play(uri)
+            await self.mpv.resume()
             
             self.state.status = PlayerStatus.PLAYING
             self._retry_count = 0  # Reset retry count on success
