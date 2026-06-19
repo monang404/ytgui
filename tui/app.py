@@ -110,6 +110,15 @@ class YTGuiApp(App):
         # Sync initial tab
         self._sync_tab_visibility()
 
+    async def on_unmount(self) -> None:
+        if self._refresh_timer:
+            self._refresh_timer.stop()
+        bus.unsubscribe(LOG_MESSAGE, self._on_log_message)
+        bus.unsubscribe(TRACK_STARTED, self._on_immediate_refresh)
+        bus.unsubscribe(QUEUE_UPDATED, self._on_immediate_refresh)
+        bus.unsubscribe(LYRICS_UPDATED, self._on_immediate_refresh)
+        bus.unsubscribe(DOWNLOAD_COMPLETE, self._on_immediate_refresh)
+
     def refresh_ui(self) -> None:
         # Update header
         if hasattr(self.state, 'is_online'):

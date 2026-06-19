@@ -198,6 +198,10 @@ class MpvController:
                     break
         finally:
             self.is_connected = False
+            for fut in self._pending.values():
+                if not fut.done():
+                    fut.cancel()
+            self._pending.clear()
             logger.warning("mpv observer loop ended — connection lost.")
 
     async def _handle_event(self, msg: dict):

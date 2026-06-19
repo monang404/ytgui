@@ -22,11 +22,19 @@ class Database:
         """Initializes the database using the schema.sql file."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = await aiosqlite.connect(self.db_path)
+        self._conn.row_factory = aiosqlite.Row
         await self._conn.execute("PRAGMA journal_mode=WAL")
         
         with open(self._schema_path, "r", encoding="utf-8") as f:
             schema_sql = f.read()
         await self._conn.executescript(schema_sql)
+        
+        # Eviction Policy: Hapus lagu yang tidak diputar > 30 hari, bukan favorit, dan belum di-download
+        thirty_days_ago = int(time.time()) - (30 * 24 * 3600)
+        await self._conn.execute(
+            "DELETE FROM tracks WHERE last_played < ? AND play_count = 0 AND local_path IS NULL",
+            (thirty_days_ago,)
+        )
         await self._conn.commit()
         logger.info(f"Database initialized at {self.db_path}")
 
@@ -38,7 +46,6 @@ class Database:
 
     async def get_track(self, video_id: str) -> dict | None:
         """Retrieves track metadata from the database as a dictionary."""
-        self._conn.row_factory = aiosqlite.Row
         async with self._conn.execute(
             "SELECT * FROM tracks WHERE video_id = ?", (video_id,)
         ) as cursor:

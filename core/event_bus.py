@@ -4,10 +4,12 @@ Subscribes to: (tidak ada)
 Publishes: (tidak ada)
 """
 
+import weakref
+from typing import Callable, Any
+from collections import defaultdict
 import asyncio
 import logging
-from collections import defaultdict
-from typing import Callable, Any
+import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -17,22 +19,39 @@ class EventBus:
     all communication goes through events to prevent circular imports.
     """
     def __init__(self):
-        self._subscribers: dict[str, list[Callable]] = defaultdict(list)
+        self._subscribers = defaultdict(list)
 
     def subscribe(self, event: str, handler: Callable):
-        self._subscribers[event].append(handler)
+        # Gunakan weakref untuk method agar tidak memory leak
+        if inspect.ismethod(handler):
+            ref = weakref.WeakMethod(handler)
+        else:
+            ref = handler # Fallback strong reference untuk fungsi biasa/lambda
+        self._subscribers[event].append(ref)
 
     def unsubscribe(self, event: str, handler: Callable):
         """Remove a handler from an event."""
-        try:
-            self._subscribers[event].remove(handler)
-        except ValueError:
-            pass
+        if event in self._subscribers:
+            self._subscribers[event] = [
+                r for r in self._subscribers[event]
+                if (r() if isinstance(r, weakref.ref) else r) != handler
+            ]
 
     async def publish(self, event: str, data: Any = None):
         """Publish event to all subscribers. Exceptions in one handler
         do NOT prevent subsequent handlers from executing (CRITICAL-01 fix)."""
-        for handler in self._subscribers[event]:
+        active_handlers = []
+        for ref in list(self._subscribers[event]):
+            if isinstance(ref, weakref.ref):
+                handler = ref()
+                if handler is None:
+                    self._subscribers[event].remove(ref) # Cleanup dead reference
+                    continue
+            else:
+                handler = ref
+            active_handlers.append(handler)
+
+        for handler in active_handlers:
             try:
                 if asyncio.iscoroutinefunction(handler):
                     await handler(data)

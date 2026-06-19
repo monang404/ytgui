@@ -165,6 +165,7 @@ class RadioMode:
         self.state = state
         self._is_fetching = False
         self._bg_tasks = set()
+        self._search_lock = asyncio.Semaphore(1)
         # Rotasi artis tanpa pengulangan: urutan acak dari SEED_ARTISTS yang
         # "dikonsumsi" dari depan tiap kali batch baru diambil. Begitu deck
         # ini habis, semua artis sudah pasti kebagian giliran sekali, lalu
@@ -194,7 +195,7 @@ class RadioMode:
     async def next(self, controller: "PlaybackController") -> None:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.radio_queue:
-            track = self.state.radio_queue.pop(0)
+            track = self.state.radio_queue.popleft()
             task = asyncio.create_task(self._prefetch_next(controller))
             self._bg_tasks.add(task)
             task.add_done_callback(self._bg_tasks.discard)
@@ -311,7 +312,8 @@ class RadioMode:
         Mengembalikan sekitar TRACKS_PER_ARTIST_TARGET track unik
         (bisa kurang kalau memang stoknya tipis)."""
         query = f"{artist} music"
-        results = await self.ytdlp.search(query, max_results=15)
+        async with self._search_lock:
+            results = await self.ytdlp.search(query, max_results=15)
         existing = self._build_exclusion_set()
 
         seen_titles: set[str] = set()

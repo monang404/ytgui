@@ -120,7 +120,7 @@ class QueueTab(Widget):
                 
                 content = ""
                 for i in range(start, end):
-                    text = lines[i][1]
+                    text = lines[i]
                     if i == idx:
                         content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
                     else:
@@ -174,7 +174,7 @@ class QueueTab(Widget):
                 
                 content = ""
                 for i in range(start, end):
-                    text = lines[i][1]
+                    text = lines[i]
                     if i == idx:
                         content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
                     else:

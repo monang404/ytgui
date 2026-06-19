@@ -18,6 +18,9 @@ class SponsorBlockHandler:
         self._session = session
         bus.subscribe(TRACK_PROGRESS, self._on_progress)
 
+    def cleanup(self):
+        bus.unsubscribe(TRACK_PROGRESS, self._on_progress)
+
     async def fetch_segments(self, video_id: str):
         """Fetches skip segments and stores them in memory for the current track."""
         self.segments = []

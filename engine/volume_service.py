@@ -7,12 +7,14 @@ Publishes: LOG_MESSAGE
 import asyncio
 from core.event_bus import EventBus, CMD_VOLUME_UP, CMD_VOLUME_DOWN, LOG_MESSAGE
 from engine.mpv_controller import MpvController
+from core.state import AppState
 
 class VolumeService:
-    def __init__(self, bus: EventBus, mpv: MpvController):
+    def __init__(self, bus: EventBus, mpv: MpvController, state: AppState):
         self.bus = bus
         self.mpv = mpv
-        self.current_volume = 100
+        self.state = state
+        self.current_volume = state.volume
         
         self.bus.subscribe(CMD_VOLUME_UP, self._on_volume_up)
         self.bus.subscribe(CMD_VOLUME_DOWN, self._on_volume_down)
@@ -27,4 +29,5 @@ class VolumeService:
         
     async def _apply_volume(self):
         await self.mpv.set_volume(self.current_volume)
+        self.state.volume = self.current_volume
         await self.bus.publish(LOG_MESSAGE, f"Volume: {self.current_volume}%")

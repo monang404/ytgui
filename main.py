@@ -70,7 +70,7 @@ async def main():
     # 5. Engine Modes & Services
     queue_mode = QueueMode()
     radio_mode = RadioMode(ytdlp, state)
-    volume_service = VolumeService(bus, mpv)
+    volume_service = VolumeService(bus, mpv, state)
     download_manager = DownloadManager(bus, state, ytdlp)
     
     # 6. Initialize Playback Controller
@@ -142,6 +142,8 @@ async def main():
             t.cancel()
         
         # Cleanup resources
+        lyrics_fetcher.cleanup()
+        sponsorblock.cleanup()
         ytdlp.cancel_download()
         await http_session.close()
         await mpv.close()

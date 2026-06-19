@@ -66,11 +66,24 @@ class YtDlpClient:
         return tracks
 
     async def get_stream_url(self, video_id: str) -> str:
-        """Get direct audio URL. We now delegate this to mpv internally to avoid HTTP 403 Forbidden."""
-        return f"https://www.youtube.com/watch?v={video_id}"
+        """Get direct audio URL using yt-dlp to allow true caching."""
+        opts = {
+            **self._YDL_OPTS_INFO,
+            "extract_flat": False,
+        }
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        loop = asyncio.get_running_loop()
+        try:
+            info = await loop.run_in_executor(None, self._extract_sync, url, opts)
+            if info:
+                return self._pick_audio_url(info)
+        except Exception:
+            pass
+        return url
 
     async def download_mp3(self, video_id: str, on_progress=None) -> str:
         """Download to CACHE_DIR/video_id.mp3. Returns the local path."""
+        self.is_cancelled = False
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', video_id)
         out_path = CACHE_DIR / f"{safe_id}.%(ext)s"

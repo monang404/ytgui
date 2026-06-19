@@ -26,9 +26,18 @@ class CacheResolver:
                 track.local_path = path
                 return path
 
-        # Rule 2: Selalu pakai YouTube URL (MPV + yt-dlp hook akan handle)
-        url = f"https://www.youtube.com/watch?v={track.video_id}"
+        import time
+        # Rule 2: Gunakan stream_url dari cache jika belum kadaluwarsa (6 jam = 21600 detik)
+        if row and row.get("stream_url") and row.get("stream_url_ts"):
+            ts = row.get("stream_url_ts")
+            # Jika URL bukan format standar youtube (berarti direct audio) dan masih fresh
+            if time.time() - ts < 21600:
+                track.stream_url = row["stream_url"]
+                return track.stream_url
+
+        # Rule 3: Ambil direct URL dari yt-dlp
+        url = await self.ytdlp.get_stream_url(track.video_id)
         track.stream_url = url
-        # Simpan metadata track ke DB (tanpa stream_url)
-        await self.db.upsert_track(track)
+        # Simpan metadata track ke DB
+        await self.db.upsert_track(track, stream_url=url)
         return url

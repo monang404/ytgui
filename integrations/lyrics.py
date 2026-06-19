@@ -23,6 +23,9 @@ class LyricsFetcher:
         self._session = session
         bus.subscribe(TRACK_PROGRESS, self._on_progress)
 
+    def cleanup(self):
+        bus.unsubscribe(TRACK_PROGRESS, self._on_progress)
+
     async def fetch(self, track: TrackInfo):
         """Fetches synchronized lyrics from lrclib.net and parses them."""
         title = track.title

@@ -7,6 +7,7 @@ Publishes: (tidak ada)
 from enum import Enum, auto
 from dataclasses import dataclass, field
 from typing import Optional
+from collections import deque
 
 class PlayerStatus(Enum):
     IDLE     = auto()
@@ -41,11 +42,11 @@ class AppState:
     volume:          int   = 80
 
     # Queue (hanya aktif di QUEUE mode)
-    queue:           list[TrackInfo] = field(default_factory=list)
+    queue:           deque = field(default_factory=deque)
     # Radio (hanya aktif di RADIO mode) — TIDAK PERNAH dicampur dengan `queue`.
     # Radio harus independen dari Queue Mode (lihat Constitution).
-    radio_queue:     list[TrackInfo] = field(default_factory=list)
-    history:         list[TrackInfo] = field(default_factory=list)
+    radio_queue:     deque = field(default_factory=deque)
+    history:         deque = field(default_factory=lambda: deque(maxlen=50))
 
     # Lyrics
     lyrics_lines:    list[tuple[float, str]] = field(default_factory=list)

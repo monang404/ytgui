@@ -64,8 +64,6 @@ class PlaybackController:
         # Push current to history if it exists
         if self.state.current_track:
             self.state.history.append(self.state.current_track)
-            if len(self.state.history) > 50:
-                self.state.history.pop(0)
 
         self.state.current_track = track
         self.state.status = PlayerStatus.LOADING
@@ -107,7 +105,7 @@ class PlaybackController:
                 await asyncio.sleep(backoff)
                 # Ensure we don't call _on_next if we are no longer trying to play this track
                 if self.state.current_track == track:
-                    await self._on_next()
+                    await self._advance_to_next()
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:
@@ -132,10 +130,13 @@ class PlaybackController:
 
     async def _on_next(self, _data=None):
         async with self._lock:
-            if self.state.playback_mode == PlaybackMode.QUEUE:
-                await self.queue_mode.next(self)
-            else:
-                await self.radio_mode.next(self)
+            await self._advance_to_next()
+
+    async def _advance_to_next(self):
+        if self.state.playback_mode == PlaybackMode.QUEUE:
+            await self.queue_mode.next(self)
+        else:
+            await self.radio_mode.next(self)
 
     async def _on_prev(self, _data=None):
         async with self._lock:
@@ -178,12 +179,14 @@ class PlaybackController:
         async with self._lock:
             if 0 <= index < len(self.state.queue):
                 track = self.state.queue[index]
-                self.state.queue = self.state.queue[index+1:]
+                for _ in range(index + 1):
+                    self.state.queue.popleft()
                 await self.play_track(track)
 
     async def _on_queue_remove(self, index: int):
         if 0 <= index < len(self.state.queue):
-            removed = self.state.queue.pop(index)
+            removed = self.state.queue[index]
+            del self.state.queue[index]
             await self.bus.publish(QUEUE_UPDATED)
             await self.bus.publish(LOG_MESSAGE, f"Dihapus dari antrean: {removed.title}")
 
