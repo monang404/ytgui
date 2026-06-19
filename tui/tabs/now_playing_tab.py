@@ -58,7 +58,6 @@ class NowPlayingTab(Widget):
         height: 1fr;
         padding: 2 4;
         align: center middle;
-        overflow-y: auto;
     }}
     #np_container {{
         height: auto;
