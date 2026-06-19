@@ -13,12 +13,12 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = f"""
     PlayerBar {{
-        height: 7;
+        height: 14;
         dock: bottom;
         background: transparent;
         border-top: solid {BORDER};
         layout: vertical;
-        padding: 0 2;
+        padding: 1 2;
     }}
     #pb_title_row {{ height: 1; }}
     #pb_title_row #pb_info {{ width: 1fr; }}
@@ -30,7 +30,7 @@ class PlayerBar(Widget):
         align: center middle;
     }}
 
-    #pb_meta_row {{ height: 1; margin-top: 0; }}
+    #pb_meta_row {{ height: 1; margin-top: 1; }}
     .meta-left   {{ width: 1fr; text-align: left; color: {TEXT_MUTED}; }}
     .meta-center {{ width: 1fr; text-align: center; color: {TEXT_MUTED}; }}
     .meta-right  {{ width: 1fr; text-align: right; }}
@@ -56,8 +56,7 @@ class PlayerBar(Widget):
     }}
     #pb_controls .main-btn {{
         height: 3;
-        width: 1fr;
-        max-width: 15;
+        width: 15;
         content-align: center middle;
         background: transparent;
         border: round {ACCENT_FIRE};
