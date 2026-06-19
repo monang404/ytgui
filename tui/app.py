@@ -112,6 +112,12 @@ class YTGuiApp(App):
     }}
 
     /* ── Global ListView Overrides ── */
+    ListView {{
+        background: transparent;
+    }}
+    ListItem {{
+        background: transparent;
+    }}
     ListItem.--highlight {{
         background: {ACCENT_FIRE} 30%;
     }}
