@@ -34,7 +34,7 @@ CARD_BORDER         = "round"
 ROW_GAP             = 1
 SECTION_TITLE_MARGIN= 1
 
-HEIGHT_NAV_BAR      = 4    # tinggi bottom navigation
+HEIGHT_NAV_BAR      = 5    # tinggi bottom navigation
 NAV_ACTIVE_COLOR    = ACCENT_FIRE
 NAV_INACTIVE_COLOR  = TEXT_DIM
 TAB_HOME   = "home"

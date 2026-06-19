@@ -30,7 +30,7 @@ class NavBar(Widget):
         min-width: 1;
         padding: 0;
         height: 100%;
-        border: none;
+        border: round {BORDER};
         color: {NAV_INACTIVE_COLOR};
         background: transparent;
         text-align: center;
@@ -39,18 +39,17 @@ class NavBar(Widget):
         overflow: hidden;
     }}
     Button.nav-btn:focus {{
-        border: none;
+        border: round {ACCENT_FIRE};
     }}
     Button.nav-btn:hover {{
         background: {BG_PANEL};
         color: {TEXT_PRIMARY};
-        border: none;
+        border: round {BORDER};
     }}
     Button.nav-btn.-active {{
         color: {NAV_ACTIVE_COLOR};
-        background: transparent;
-        border: none;
-        border-bottom: solid {NAV_ACTIVE_COLOR};
+        background: {BG_PANEL};
+        border: round {NAV_ACTIVE_COLOR};
         text-style: bold;
     }}
     """
@@ -60,7 +59,7 @@ class NavBar(Widget):
             yield Button("💿\nplayer", id=TAB_HOME, classes="nav-btn")
             yield Button("🔍\nsearch", id=TAB_SEARCH, classes="nav-btn")
             yield Button("📻\nradio", id=TAB_RADIO, classes="nav-btn")
-            yield Button("☰\nqueue", id=TAB_QUEUE, classes="nav-btn")
+            yield Button("📋\nqueue", id=TAB_QUEUE, classes="nav-btn")
 
     def on_mount(self) -> None:
         self.set_active_tab(TAB_HOME)
