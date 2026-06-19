@@ -25,7 +25,7 @@ class YTGuiApp(App):
     CSS = f"""
     Screen {{
         layout: vertical;
-        background: transparent;
+        background: {BG_VOID};
     }}
     #content_area {{
         height: 1fr;
