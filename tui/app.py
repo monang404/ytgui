@@ -5,48 +5,127 @@ from textual.widgets import Static
 from core.state import AppState, PlaybackMode
 from tui.components.player_bar import PlayerBar
 from tui.components.nav_bar import NavBar, TabChanged
-from tui.theme import TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE
+from tui.theme import (
+    TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE,
+    BG_VOID, BG_PANEL, BG_ELEVATED, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED,
+    STATUS_OK, STATUS_ERR, ACCENT_GOLD, BORDER
+)
 from tui.tabs.now_playing_tab import NowPlayingTab
 from tui.tabs.search_tab import SearchTab
 from tui.tabs.radio_tab import RadioTab
 from tui.tabs.queue_tab import QueueTab
+from tui.screens.help_screen import HelpScreen
 from core.event_bus import (
     bus, LOG_MESSAGE, TRACK_STARTED, QUEUE_UPDATED, LYRICS_UPDATED,
     DOWNLOAD_COMPLETE, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
-    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT
+    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT,
+    TRACK_PROGRESS
 )
 
 class YTGuiApp(App):
-    CSS = """
-    Screen {
+    CSS = f"""
+    Screen {{
         layout: vertical;
-    }
-    #content_area {
+        background: {BG_VOID};
+    }}
+    #content_area {{
         height: 1fr;
         width: 100%;
-        background: $surface;
-    }
-    #app_header {
+        background: transparent;
+    }}
+    #app_header {{
         height: 1;
         width: 100%;
-        background: $primary;
-        color: $text;
+        background: {ACCENT_FIRE};
+        color: {TEXT_PRIMARY};
         text-style: bold;
-    }
-    #header_left { width: 1fr; text-align: left; padding-left: 1; }
-    #header_right { width: 1fr; text-align: right; padding-right: 1; color: $success; }
-    .section-title {
+    }}
+    #header_left {{ width: 1fr; text-align: left; padding-left: 1; }}
+    #header_right {{ width: 1fr; text-align: right; padding-right: 1; color: {STATUS_OK}; }}
+    .section-title {{
         text-style: bold;
-        color: $accent;
+        color: {ACCENT_FIRE};
         margin-top: 1;
         margin-bottom: 1;
-    }
-    .badge-baru {
-        background: white;
-        color: black;
+    }}
+    .badge-baru {{
+        background: {TEXT_PRIMARY};
+        color: {BG_VOID};
         text-style: bold;
         padding: 0 1;
-    }
+    }}
+
+    /* ── Global Button Overrides ── */
+    Button {{
+        background: {BG_PANEL};
+        color: {TEXT_PRIMARY};
+        border: round {BORDER};
+        text-style: bold;
+        overflow: hidden;
+    }}
+    Button:hover {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: round {ACCENT_FIRE};
+    }}
+    Button:focus {{
+        border: round {ACCENT_FIRE};
+    }}
+    Button.-primary {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: round {ACCENT_FIRE};
+    }}
+    Button.-primary:hover {{
+        background: {TEXT_PRIMARY};
+        color: {BG_VOID};
+        border: round {TEXT_PRIMARY};
+    }}
+    Button.-error {{
+        background: {STATUS_ERR};
+        color: {TEXT_PRIMARY};
+        border: round {STATUS_ERR};
+    }}
+    Button.-error:hover {{
+        background: {TEXT_PRIMARY};
+        color: {STATUS_ERR};
+        border: round {TEXT_PRIMARY};
+    }}
+    Button.-success {{
+        background: {STATUS_OK};
+        color: {TEXT_PRIMARY};
+        border: round {STATUS_OK};
+    }}
+    Button.-success:hover {{
+        background: {TEXT_PRIMARY};
+        color: {STATUS_OK};
+        border: round {TEXT_PRIMARY};
+    }}
+
+    /* ── Global Input Overrides ── */
+    Input {{
+        background: {BG_ELEVATED};
+        color: {TEXT_PRIMARY};
+        border: round {BORDER};
+    }}
+    Input:focus {{
+        border: round {ACCENT_FIRE};
+    }}
+
+    /* ── Global ListView Overrides ── */
+    ListView {{
+        background: transparent;
+    }}
+    ListItem {{
+        background: transparent;
+    }}
+    ListItem.--highlight {{
+        background: {ACCENT_FIRE} 30%;
+    }}
+    ListView:focus > ListItem.--highlight {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+    }}
     """
 
     BINDINGS = [
@@ -59,9 +138,13 @@ class YTGuiApp(App):
         Binding("u", "vol_up", "Vol+"),
         Binding("d", "vol_down", "Vol-"),
         Binding("m", "download", "Download"),
+        Binding("M", "download", "Download", show=False),
         Binding("r", "switch_radio", "Radio"),
         Binding("l", "toggle_lyrics", "Lyrics"),
+        Binding("[", "lyrics_offset_dec", "Lirik -0.5s"),
+        Binding("]", "lyrics_offset_inc", "Lirik +0.5s"),
         Binding("q", "quit", "Quit"),
+        Binding("?", "help", "Help"),
     ]
 
     def __init__(self, state: AppState, ytdlp=None, db=None):
@@ -74,7 +157,7 @@ class YTGuiApp(App):
     def compose(self) -> ComposeResult:
         with Horizontal(id="app_header"):
             self.header_left = Static("yt termux player pro", id="header_left")
-            self.header_right = Static("● online [black on white] baru [/]", id="header_right")
+            self.header_right = Static("● online", id="header_right")
             yield self.header_left
             yield self.header_right
         
@@ -123,8 +206,8 @@ class YTGuiApp(App):
         # Update header
         if hasattr(self.state, 'is_online'):
             indicator = "● online" if self.state.is_online else "● offline"
-            color = "$success" if self.state.is_online else "$error"
-            self.header_right.update(f"[{color}]{indicator}[/] [black on white] baru [/]")
+            color = STATUS_OK if self.state.is_online else STATUS_ERR
+            self.header_right.update(f"[{color}]{indicator}[/{color}]")
             
         self.player_bar.update_state(self.state)
         # Update current active tab
@@ -198,6 +281,17 @@ class YTGuiApp(App):
             if self.state.active_tab == TAB_QUEUE:
                 await self.tab_queue.action_toggle_lyrics()
 
+    async def action_lyrics_offset_inc(self) -> None:
+        self.state.lyrics_offset += 0.5
+        await bus.publish(LOG_MESSAGE, f"Offset Lirik: {self.state.lyrics_offset:+.1f}s")
+        # Immediately re-evaluate lyrics index
+        await bus.publish(TRACK_PROGRESS, self.state.position)
+
+    async def action_lyrics_offset_dec(self) -> None:
+        self.state.lyrics_offset -= 0.5
+        await bus.publish(LOG_MESSAGE, f"Offset Lirik: {self.state.lyrics_offset:+.1f}s")
+        await bus.publish(TRACK_PROGRESS, self.state.position)
+
     async def action_switch_radio(self) -> None:
         new_mode = PlaybackMode.RADIO if self.state.playback_mode == PlaybackMode.QUEUE else PlaybackMode.QUEUE
         await bus.publish(CMD_SET_MODE, new_mode)
@@ -205,3 +299,6 @@ class YTGuiApp(App):
     async def action_quit(self) -> None:
         await bus.publish(CMD_QUIT)
         self.exit()
+
+    async def action_help(self) -> None:
+        self.push_screen(HelpScreen())

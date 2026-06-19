@@ -17,9 +17,9 @@ from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
-# Pool band & penyanyi Indonesia 2000-an-sekarang. 99 nama unik
-# (daftar asli 100, "Nadin Amizah" yang dobel sudah dihapus salah satunya).
+#artis
 SEED_ARTISTS = [
+    "Nadin Amizah",
     "Peterpan",
     "NOAH",
     "Dewa 19",
@@ -196,9 +196,10 @@ class RadioMode:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.radio_queue:
             track = self.state.radio_queue.popleft()
-            task = asyncio.create_task(self._prefetch_next(controller))
-            self._bg_tasks.add(task)
-            task.add_done_callback(self._bg_tasks.discard)
+            if len(self.state.radio_queue) <= 5:
+                task = asyncio.create_task(self._prefetch_next(controller))
+                self._bg_tasks.add(task)
+                task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
         else:
             seed_artist = random.choice(SEED_ARTISTS)
@@ -215,6 +216,7 @@ class RadioMode:
         try:
             new_tracks = await self._gather_batch()
             if new_tracks:
+                self.state.radio_queue.clear()
                 self.state.radio_queue.extend(new_tracks)
                 await bus.publish(QUEUE_UPDATED)
         except Exception as e:
@@ -351,6 +353,6 @@ class RadioMode:
         ids = {t.video_id for t in self.state.radio_queue}
         if self.state.current_track:
             ids.add(self.state.current_track.video_id)
-        for t in self.state.history[-20:]:
+        for t in list(self.state.history)[-20:]:
             ids.add(t.video_id)
         return ids

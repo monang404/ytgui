@@ -5,7 +5,7 @@ import sys
 import aiohttp
 from logging.handlers import RotatingFileHandler
 from core.state import AppState, PlayerStatus
-from core.event_bus import bus, CMD_SEARCH, LOG_MESSAGE, CMD_QUIT
+from core.event_bus import bus, LOG_MESSAGE, CMD_QUIT
 from engine.ytdlp_client import YtDlpClient
 from engine.mpv_controller import MpvController
 from cache.db import Database
@@ -64,7 +64,7 @@ async def main():
     
     # 4. Initialize Integrations & Resolver
     resolver = CacheResolver(db, ytdlp)
-    sponsorblock = SponsorBlockHandler(mpv, session=http_session)
+    sponsorblock = SponsorBlockHandler(mpv, state=state, session=http_session)
     lyrics_fetcher = LyricsFetcher(state, session=http_session)
     
     # 5. Engine Modes & Services

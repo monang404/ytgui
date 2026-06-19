@@ -4,73 +4,80 @@ from textual.widgets import Static, Button
 from textual import events, on
 from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus, PlaybackMode
-from tui.theme import STATUS_ERR
+from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID
+from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID, BORDER
 from core.event_bus import bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD
 from tui.components.progress_bar import ClickableProgressBar
 from rich.markup import escape
 
 class PlayerBar(Widget):
-    DEFAULT_CSS = """
-    PlayerBar {
-        height: 11;
+    DEFAULT_CSS = f"""
+    PlayerBar {{
+        height: 16;
         dock: bottom;
-        background: $boost;
+        background: transparent;
+        border-top: solid {BORDER};
         layout: vertical;
         padding: 1 2;
-    }
-    #pb_controls {
+    }}
+    #pb_title_row {{ height: 1; }}
+    #pb_title_row #pb_info {{ width: 1fr; }}
+    #pb_title_row #pb_seek_hint {{ width: auto; margin-right: 2; }}
+    #pb_title_row #pb_badge_mode {{ width: auto; color: {ACCENT_FIRE}; }}
+
+    #pb_controls {{
         height: 3;
         align: center middle;
-        margin-top: 1;
-    }
-    #pb_title_row { height: 1; }
-    #pb_title_row #pb_info { width: 1fr; }
-    #pb_title_row #pb_badge_mode { width: auto; color: $accent; }
+    }}
 
-    #pb_meta_row { height: 1; margin-top: 1; }
-    .meta-left   { width: 1fr; text-align: left; color: $text-muted; }
-    .meta-center { width: 1fr; text-align: center; color: $success; }
-    .meta-right  { width: 1fr; text-align: right; }
-    
-    #pb_vol_container {
+    #pb_meta_row {{ height: 1; margin-top: 1; }}
+    .meta-left   {{ width: 1fr; text-align: left; color: {TEXT_MUTED}; }}
+    .meta-center {{ width: 1fr; text-align: center; color: {TEXT_MUTED}; }}
+    .meta-right  {{ width: 1fr; text-align: right; }}
+
+    #pb_vol_container {{
         width: 1fr;
         height: 1;
         layout: horizontal;
-    }
+    }}
 
-    Static.player-btn {
+    Static.player-btn {{
         width: auto;
-        height: 1;
         padding: 0 2;
         background: transparent;
-        color: $text;
+        color: {TEXT_PRIMARY};
         margin: 0;
-    }
-    Static.player-btn:hover {
-        background: $panel;
-        color: $accent;
+        overflow: hidden;
+    }}
+    Static.player-btn:hover {{
+        background: {BG_PANEL};
+        color: {ACCENT_FIRE};
         text-style: bold;
-    }
-    Static.main-btn {
+    }}
+    #pb_controls .main-btn {{
         height: 3;
-        width: 11;
+        width: 1fr;
         content-align: center middle;
-        background: $surface;
-        border: solid $accent;
+        background: transparent;
+        border: round {ACCENT_FIRE};
         margin: 0 1;
-    }
-    Static.main-btn:hover {
-        background: $accent;
-        color: $background;
-        border: solid white;
-    }
+        padding: 0;
+        overflow: hidden;
+    }}
+    #pb_controls .main-btn:hover {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: round {TEXT_PRIMARY};
+    }}
     """
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="pb_title_row"):
-            self.info_line = Static("Ketuk Radio untuk mulai ▶", id="pb_info")
-            self.badge_mode = Static("[bold #555580][○] QUEUE[/]", id="pb_badge_mode")
+            self.info_line = Static("", id="pb_info")
+            self.seek_hint = Static("[dim] →[/dim]", id="pb_seek_hint")
+            self.badge_mode = Static("[dim]\u2261 queue[/dim]", id="pb_badge_mode")
             yield self.info_line
+            yield self.seek_hint
             yield self.badge_mode
 
         self.progress_bar = ClickableProgressBar(id="pb_progress")
@@ -90,8 +97,10 @@ class PlayerBar(Widget):
                 self.btn_volup = Static("🔊 80%", id="btn_volup", classes="player-btn")
                 yield self.btn_voldown
                 yield self.btn_volup
+            self.badge_sb = Static("", id="pb_badge_sb", classes="meta-center")
             self.badge_cache = Static("", id="pb_badge_cache", classes="meta-center")
             self.btn_download = Static("⬇ unduh", id="btn_download", classes="meta-right player-btn")
+            yield self.badge_sb
             yield self.badge_cache
             yield self.btn_download
 
@@ -113,18 +122,23 @@ class PlayerBar(Widget):
 
     def update_state(self, state: AppState) -> None:
         if state.playback_mode == PlaybackMode.RADIO:
-            self.badge_mode.update("[bold #FFA500]📻 radio[/]")
+            self.badge_mode.update("[bold yellow]\U0001f4fb radio[/bold yellow]")
         else:
-            self.badge_mode.update("[bold #555580]≡ queue[/]")
+            self.badge_mode.update("[dim]\u2261 queue[/dim]")
             
         t = state.current_track
         if t:
             if t.local_path:
-                self.badge_cache.update("[bold #4ade80]✓ tersimpan[/]")
+                self.badge_cache.update(r"[green]\[✓] tersimpan[/green]")
             else:
-                self.badge_cache.update("[bold #A0A0C0]☁ stream[/]")
+                self.badge_cache.update(r"[dim]\[☁] stream[/dim]")
         else:
             self.badge_cache.update("")
+
+        if getattr(state, "sponsorblock_active", False):
+            self.badge_sb.update("[bold yellow]SB: ON[/bold yellow]")
+        else:
+            self.badge_sb.update("")
 
         # Update Volume
         self.btn_volup.update(f"🔊 {state.volume}%")
@@ -137,7 +151,7 @@ class PlayerBar(Widget):
             self.btn_download.update("⬇ unduh")
 
         if state.status == PlayerStatus.IDLE:
-            self.info_line.update("Ketuk Radio untuk mulai ▶")
+            self.info_line.update("")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
             self.btn_play.update(" ▷ ")
@@ -146,23 +160,23 @@ class PlayerBar(Widget):
             self.info_line.update(f"⏳ memuat... {escape(track_name)}")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
-            self.btn_play.update("[#FFA500] || [/]")
+            self.btn_play.update("[yellow] || [/yellow]")
         elif state.status == PlayerStatus.PLAYING:
             t = state.current_track
             if t:
-                self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
+                self.info_line.update(f"[bold]{escape(t.title)}[/bold] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
-            self.btn_play.update("[#FFA500] || [/]")
+            self.btn_play.update("[yellow] || [/yellow]")
         elif state.status == PlayerStatus.PAUSED:
             t = state.current_track
             if t:
-                self.info_line.update(f"[bold]{escape(t.title)}[/] - {escape(t.artist)}")
+                self.info_line.update(f"[bold]{escape(t.title)}[/bold] - {escape(t.artist)}")
                 self.progress_bar.position = state.position
                 self.progress_bar.duration = t.duration
             self.btn_play.update(" ▷ ")
         elif state.status == PlayerStatus.ERROR:
             msg = state.error_msg or "Terjadi kesalahan"
-            self.info_line.update(f"[{STATUS_ERR}]{escape(msg)}[/]")
+            self.info_line.update(f"[red]{escape(msg)}[/red]")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0

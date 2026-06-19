@@ -3,7 +3,7 @@ from textual.widget import Widget
 from textual.widgets import Button
 from textual.containers import Horizontal
 from textual.message import Message
-from tui.theme import HEIGHT_NAV_BAR, NAV_ACTIVE_COLOR, NAV_INACTIVE_COLOR, TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE
+from tui.theme import HEIGHT_NAV_BAR, NAV_ACTIVE_COLOR, NAV_INACTIVE_COLOR, TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE, BG_ELEVATED, BG_PANEL, BORDER, TEXT_PRIMARY, ACCENT_FIRE
 
 class TabChanged(Message):
     """Event sent when a nav bar tab is clicked."""
@@ -16,28 +16,41 @@ class NavBar(Widget):
     NavBar {{
         height: {HEIGHT_NAV_BAR};
         dock: bottom;
+        background: transparent;
+        border-top: solid {BORDER};
+        overflow: hidden;
     }}
     #nav_container {{
         width: 100%;
         height: 100%;
+        overflow: hidden;
     }}
     Button.nav-btn {{
         width: 1fr;
         min-width: 1;
         padding: 0;
         height: 100%;
-        border: none;
+        border: round {BORDER};
         color: {NAV_INACTIVE_COLOR};
         background: transparent;
         text-align: center;
         content-align: center middle;
+        text-style: none;
+        overflow: hidden;
+    }}
+    Button.nav-btn:focus {{
+        border: round {ACCENT_FIRE};
     }}
     Button.nav-btn:hover {{
-        background: $boost;
+        background: {BG_PANEL};
+        color: {TEXT_PRIMARY};
+        border: round {BORDER};
     }}
     Button.nav-btn.-active {{
         color: {NAV_ACTIVE_COLOR};
-        border-bottom: solid {NAV_ACTIVE_COLOR};
+        background: {BG_PANEL};
+        border: round {NAV_ACTIVE_COLOR};
+        text-style: bold;
     }}
     """
 
@@ -46,7 +59,7 @@ class NavBar(Widget):
             yield Button("💿\nplayer", id=TAB_HOME, classes="nav-btn")
             yield Button("🔍\nsearch", id=TAB_SEARCH, classes="nav-btn")
             yield Button("📻\nradio", id=TAB_RADIO, classes="nav-btn")
-            yield Button("☰\nqueue", id=TAB_QUEUE, classes="nav-btn")
+            yield Button("📋\nqueue", id=TAB_QUEUE, classes="nav-btn")
 
     def on_mount(self) -> None:
         self.set_active_tab(TAB_HOME)

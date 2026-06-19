@@ -5,7 +5,7 @@ from textual.widget import Widget
 from textual.widgets import Static
 from textual.containers import Vertical, Center
 from core.state import AppState, PlayerStatus
-from tui.theme import TEXT_DIM, ACCENT_GOLD, TEXT_PRIMARY
+from tui.theme import TEXT_DIM, ACCENT_GOLD, TEXT_PRIMARY, TEXT_MUTED
 from rich.markup import escape
 
 EQ_WIDTH = 39
@@ -14,7 +14,7 @@ EQ_HEIGHT = 8
 def generate_multiline_eq(is_playing: bool) -> str:
     if not is_playing:
         empty_rows = "\n".join(" " * EQ_WIDTH for _ in range(EQ_HEIGHT - 1))
-        bottom_row = f"[{TEXT_DIM}]" + "▄" * EQ_WIDTH + f"[/{TEXT_DIM}]"
+        bottom_row = "[dim]" + "▄" * EQ_WIDTH + "[/dim]"
         return empty_rows + "\n" + bottom_row
 
     lines = []
@@ -40,44 +40,44 @@ def generate_multiline_eq(is_playing: bool) -> str:
         
         # Color gradient based on row
         if row >= 7:
-            color = "#ff4b4b" # Red top
+            color = "yellow"       # high bands (orange-ish in some themes)
         elif row >= 4:
-            color = "#fca311" # Orange middle
+            color = "blue"         # mid bands
         else:
-            color = "#4ade80" # Green bottom
+            color = "green"        # low bands
             
-        lines.append(f"[{color}]{''.join(line_chars)}[/]")
+        lines.append(f"[{color}]{''.join(line_chars)}[/{color}]")
         
     return "\n".join(lines)
 
 
 class NowPlayingTab(Widget):
     """The Now Playing Tab showing large track info and a big responsive equalizer."""
-    DEFAULT_CSS = """
-    NowPlayingTab {
+    DEFAULT_CSS = f"""
+    NowPlayingTab {{
         height: 1fr;
         padding: 2 4;
         align: center middle;
-    }
-    #np_container {
+    }}
+    #np_container {{
         height: auto;
         align: center middle;
-    }
-    #np_eq {
+    }}
+    #np_eq {{
         text-align: center;
         height: 8;
         margin-bottom: 3;
-    }
-    #np_title {
+    }}
+    #np_title {{
         text-align: center;
         text-style: bold;
-        color: $text;
+        color: {TEXT_PRIMARY};
         margin-bottom: 1;
-    }
-    #np_artist {
+    }}
+    #np_artist {{
         text-align: center;
-        color: $text-muted;
-    }
+        color: {TEXT_MUTED};
+    }}
     """
 
     def compose(self) -> ComposeResult:

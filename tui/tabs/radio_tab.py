@@ -6,46 +6,56 @@ from textual import on
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_SET_MODE, CMD_NEXT, CMD_RADIO_RANDOMIZE
-from tui.theme import TEXT_DIM
+from tui.theme import TEXT_DIM, STATUS_OK, TEXT_PRIMARY, ACCENT_FIRE, BG_ELEVATED, BG_VOID, BORDER
 from tui.components.nav_bar import TabChanged
 
 class RadioTab(Widget):
     """The Radio Tab for infinite playback."""
-    DEFAULT_CSS = """
-    RadioTab {
+    DEFAULT_CSS = f"""
+    RadioTab {{
         height: 1fr;
         padding: 2 4;
-    }
-    #radio_container {
+    }}
+    #radio_container {{
         align: center middle;
         height: 1fr;
-    }
-    #radio_btn {
+        overflow: hidden;
+    }}
+    #radio_btn {{
         width: 100%;
         height: 3;
         margin-bottom: 2;
-    }
-    #radio_btn.-on {
-        background: $success;
-        color: white;
-    }
-    #radio_info {
+        background: transparent;
+        color: {TEXT_PRIMARY};
+        border: tall {BORDER};
+        overflow: hidden;
+    }}
+    #radio_btn.-on {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: tall {ACCENT_FIRE};
+        text-style: bold;
+    }}
+    #radio_info {{
         text-align: center;
         margin-bottom: 2;
-    }
-    #random_radio_btn {
+    }}
+    #random_radio_btn {{
         width: 1fr;
         height: 3;
-    }
-    #radio_skip_btn {
+        overflow: hidden;
+    }}
+    #radio_skip_btn {{
         width: 1fr;
         height: 3;
         margin-left: 1;
-    }
-    #radio_actions {
+        overflow: hidden;
+    }}
+    #radio_actions {{
         height: 3;
         layout: horizontal;
-    }
+        overflow: hidden;
+    }}
     """
 
     def compose(self) -> ComposeResult:

@@ -5,7 +5,7 @@ from textual.containers import Vertical, Horizontal
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
-from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK
+from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK, BORDER
 from textual.binding import Binding
 from textual import work
 
@@ -28,54 +28,55 @@ class QueueTab(Widget):
         Binding("l", "toggle_lyrics", "Toggle Lyrics")
     ]
     
-    DEFAULT_CSS = """
-    QueueTab {
+    DEFAULT_CSS = f"""
+    QueueTab {{
         height: 1fr;
         padding: 1;
-    }
-    #queue_list {
+    }}
+    #queue_list {{
         height: 1fr;
-    }
-    QueueItem {
-        border: round $border;
+    }}
+    QueueItem {{
+        border: round {BORDER};
         margin-bottom: 1;
         padding: 0 1;
         height: auto;
-    }
-    QueueItem.-current {
-        border: round $accent;
-    }
-    QueueItem:hover {
-        border: round $accent;
-    }
-    .queue-text {
+    }}
+    QueueItem.-current {{
+        border: round {ACCENT_FIRE};
+    }}
+    QueueItem:hover {{
+        border: round {ACCENT_FIRE};
+    }}
+    .queue-text {{
         width: 1fr;
-    }
-    #queue_footer {
+    }}
+    #queue_footer {{
         height: 1;
         margin-top: 1;
         text-align: center;
-    }
-    #lyrics_container {
+    }}
+    #lyrics_container {{
         height: 8;
-        border-top: solid $primary;
-        padding: 0 1;
+        border-top: solid {ACCENT_FIRE};
+        padding: 1;
         display: none;
-    }
-    #lyrics_toggle_btn {
+    }}
+    #lyrics_toggle_btn {{
         width: 100%;
         height: 1;
         min-height: 1;
         border: none;
         background: transparent;
-        color: $accent;
+        color: {ACCENT_FIRE};
         padding: 0;
         margin: 1 0;
-    }
-    #lyrics_content {
+    }}
+    #lyrics_content {{
         height: 1fr;
         text-align: center;
-    }
+        content-align: center middle;
+    }}
     """
 
     def compose(self) -> ComposeResult:
@@ -110,21 +111,25 @@ class QueueTab(Widget):
         
         # Selalu update lirik jika container lirik tampil, terlepas dari hash list antrean
         if self.lyrics_container.display:
-            if not state.lyrics_lines:
-                self.lyrics_content.update(f"[{TEXT_DIM}]Tidak ada lirik tersedia[/]")
+            if getattr(state, "lyrics_loading", False):
+                self.lyrics_content.update("[bold yellow]⏳ Memuat lirik...[/bold yellow]")
+            elif not state.lyrics_lines:
+                self.lyrics_content.update("[dim]Tidak ada lirik tersedia[/dim]")
             else:
                 idx = state.lyrics_index
                 lines = state.lyrics_lines
-                start = max(0, idx - 2)
-                end = min(len(lines), idx + 3)
+                start = max(0, idx - 5)
+                end = min(len(lines), idx + 6)
                 
                 content = ""
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
+                        content += f"[bold #00ffff]▶ {escape(text)} ◀[/bold #00ffff]\n"
+                    elif i < idx:
+                        content += f"[dim #666666]{escape(text)}[/dim #666666]\n"
                     else:
-                        content += f"[{TEXT_DIM}]{escape(text)}[/]\n"
+                        content += f"[white]{escape(text)}[/white]\n"
                 self.lyrics_content.update(content.strip())
 
         # Update List View hanya jika ada perubahan lagu atau mode
@@ -144,49 +149,54 @@ class QueueTab(Widget):
         
         if not upcoming and not state.current_track:
             placeholder = "Radio sedang menyiapkan lagu..." if self._is_radio else "Cari lagu atau aktifkan Radio"
-            await self.list_view.append(ListItem(Label(f"[{TEXT_DIM}]{placeholder}[/]")))
+            await self.list_view.append(ListItem(Label(f"[dim]{placeholder}[/dim]")))
         else:
             if state.current_track:
                 title = state.current_track.title
                 if len(title) > max_title:
                     title = title[:max_title - 1] + "…"
-                await self.list_view.append(QueueItem(-1, f"[{ACCENT_FIRE}]> {escape(title)}[/]", is_current=True))
+                await self.list_view.append(QueueItem(-1, f"[bold]> {escape(title)}[/bold]", is_current=True))
                 
             for i, track in enumerate(upcoming):
                 dur = f"{track.duration // 60}:{track.duration % 60:02d}"
                 title = track.title
                 if len(title) > max_title:
                     title = title[:max_title - 1] + "…"
-                await self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [{TEXT_DIM}]{dur}[/]", removable=not self._is_radio))
+                await self.list_view.append(QueueItem(i, f"  {i+1}. {escape(title)} [dim]{dur}[/dim]", removable=not self._is_radio))
 
-        mode_str = f"[{STATUS_OK}]RADIO[/]" if state.playback_mode == PlaybackMode.RADIO else f"[{TEXT_DIM}]QUEUE[/]"
+        mode_str = "[green]RADIO[/green]" if state.playback_mode == PlaybackMode.RADIO else "[dim]QUEUE[/dim]"
         self.footer.update(f"Mode: {mode_str} | 📝 Lirik: Tekan L")
         
         # Update lyrics if visible
         if self.lyrics_container.display:
-            if not state.lyrics_lines:
-                self.lyrics_content.update(f"[{TEXT_DIM}]Tidak ada lirik tersedia[/]")
+            if getattr(state, "lyrics_loading", False):
+                self.lyrics_content.update("[bold yellow]⏳ Memuat lirik...[/bold yellow]")
+            elif not state.lyrics_lines:
+                self.lyrics_content.update("[dim]Tidak ada lirik tersedia[/dim]")
             else:
                 idx = state.lyrics_index
                 lines = state.lyrics_lines
-                start = max(0, idx - 2)
-                end = min(len(lines), idx + 3)
+                start = max(0, idx - 5)
+                end = min(len(lines), idx + 6)
                 
                 content = ""
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
+                        content += f"[bold #00ffff]▶ {escape(text)} ◀[/bold #00ffff]\n"
+                    elif i < idx:
+                        content += f"[dim #666666]{escape(text)}[/dim #666666]\n"
                     else:
-                        content += f"[{TEXT_DIM}]{escape(text)}[/]\n"
+                        content += f"[white]{escape(text)}[/white]\n"
                 self.lyrics_content.update(content.strip())
 
     async def action_toggle_lyrics(self) -> None:
         self.lyrics_container.display = not self.lyrics_container.display
         if self.lyrics_container.display:
-            self.list_view.styles.height = "60%"
-            self.lyrics_container.styles.height = "40%"
+            self.list_view.display = False
+            self.lyrics_container.styles.height = "1fr"
         else:
+            self.list_view.display = True
             self.list_view.styles.height = "1fr"
         # Trigger update explicitly
         self._last_state_hash = None
