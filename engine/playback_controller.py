@@ -200,6 +200,14 @@ class PlaybackController:
         async with self._lock:
             if self.state.playback_mode == PlaybackMode.RADIO:
                 self.state.radio_queue.clear()
+                
+                # Stop playing current track immediately to give instant "reset" feel
+                await self.mpv.pause()
+                self.state.current_track = None
+                self.state.status = PlayerStatus.LOADING
+                self.state.position = 0.0
+                await self.bus.publish(QUEUE_UPDATED)
+                
                 await self.bus.publish(LOG_MESSAGE, "Mengacak ulang stasiun radio...")
                 # Panggil fetch dengan seed=None agar memaksa penggunaan seed acak dari list
                 await self.radio_mode._fetch_and_play_initial(self, seed_artist=None)

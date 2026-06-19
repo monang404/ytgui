@@ -196,9 +196,10 @@ class RadioMode:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.radio_queue:
             track = self.state.radio_queue.popleft()
-            task = asyncio.create_task(self._prefetch_next(controller))
-            self._bg_tasks.add(task)
-            task.add_done_callback(self._bg_tasks.discard)
+            if len(self.state.radio_queue) <= 5:
+                task = asyncio.create_task(self._prefetch_next(controller))
+                self._bg_tasks.add(task)
+                task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
         else:
             seed_artist = random.choice(SEED_ARTISTS)
@@ -215,6 +216,7 @@ class RadioMode:
         try:
             new_tracks = await self._gather_batch()
             if new_tracks:
+                self.state.radio_queue.clear()
                 self.state.radio_queue.extend(new_tracks)
                 await bus.publish(QUEUE_UPDATED)
         except Exception as e:
