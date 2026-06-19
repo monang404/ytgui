@@ -75,6 +75,7 @@ class QueueTab(Widget):
     #lyrics_content {{
         height: 1fr;
         text-align: center;
+        content-align: center middle;
     }}
     """
 
@@ -117,16 +118,18 @@ class QueueTab(Widget):
             else:
                 idx = state.lyrics_index
                 lines = state.lyrics_lines
-                start = max(0, idx - 2)
-                end = min(len(lines), idx + 3)
+                start = max(0, idx - 5)
+                end = min(len(lines), idx + 6)
                 
                 content = ""
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[bold]{escape(text)}[/bold]\n"
+                        content += f"[bold #00ffff]▶ {escape(text)} ◀[/bold #00ffff]\n"
+                    elif i < idx:
+                        content += f"[dim #666666]{escape(text)}[/dim #666666]\n"
                     else:
-                        content += f"[dim]{escape(text)}[/dim]\n"
+                        content += f"[white]{escape(text)}[/white]\n"
                 self.lyrics_content.update(content.strip())
 
         # Update List View hanya jika ada perubahan lagu atau mode
@@ -173,24 +176,27 @@ class QueueTab(Widget):
             else:
                 idx = state.lyrics_index
                 lines = state.lyrics_lines
-                start = max(0, idx - 2)
-                end = min(len(lines), idx + 3)
+                start = max(0, idx - 5)
+                end = min(len(lines), idx + 6)
                 
                 content = ""
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[bold]{escape(text)}[/bold]\n"
+                        content += f"[bold #00ffff]▶ {escape(text)} ◀[/bold #00ffff]\n"
+                    elif i < idx:
+                        content += f"[dim #666666]{escape(text)}[/dim #666666]\n"
                     else:
-                        content += f"[dim]{escape(text)}[/dim]\n"
+                        content += f"[white]{escape(text)}[/white]\n"
                 self.lyrics_content.update(content.strip())
 
     async def action_toggle_lyrics(self) -> None:
         self.lyrics_container.display = not self.lyrics_container.display
         if self.lyrics_container.display:
-            self.list_view.styles.height = "60%"
-            self.lyrics_container.styles.height = "40%"
+            self.list_view.display = False
+            self.lyrics_container.styles.height = "1fr"
         else:
+            self.list_view.display = True
             self.list_view.styles.height = "1fr"
         # Trigger update explicitly
         self._last_state_hash = None
