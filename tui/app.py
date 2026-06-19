@@ -60,6 +60,7 @@ class YTGuiApp(App):
         Binding("u", "vol_up", "Vol+"),
         Binding("d", "vol_down", "Vol-"),
         Binding("m", "download", "Download"),
+        Binding("M", "download", "Download", show=False),
         Binding("r", "switch_radio", "Radio"),
         Binding("l", "toggle_lyrics", "Lyrics"),
         Binding("q", "quit", "Quit"),

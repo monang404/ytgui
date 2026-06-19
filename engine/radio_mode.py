@@ -17,9 +17,9 @@ from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
-# Pool band & penyanyi Indonesia 2000-an-sekarang. 99 nama unik
-# (daftar asli 100, "Nadin Amizah" yang dobel sudah dihapus salah satunya).
+#artis
 SEED_ARTISTS = [
+    "Nadin Amizah",
     "Peterpan",
     "NOAH",
     "Dewa 19",
