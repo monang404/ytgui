@@ -110,7 +110,9 @@ class QueueTab(Widget):
         
         # Selalu update lirik jika container lirik tampil, terlepas dari hash list antrean
         if self.lyrics_container.display:
-            if not state.lyrics_lines:
+            if getattr(state, "lyrics_loading", False):
+                self.lyrics_content.update(f"[{ACCENT_FIRE}]⏳ Memuat lirik...[/]")
+            elif not state.lyrics_lines:
                 self.lyrics_content.update(f"[{TEXT_DIM}]Tidak ada lirik tersedia[/]")
             else:
                 idx = state.lyrics_index
@@ -164,7 +166,9 @@ class QueueTab(Widget):
         
         # Update lyrics if visible
         if self.lyrics_container.display:
-            if not state.lyrics_lines:
+            if getattr(state, "lyrics_loading", False):
+                self.lyrics_content.update(f"[{ACCENT_FIRE}]⏳ Memuat lirik...[/]")
+            elif not state.lyrics_lines:
                 self.lyrics_content.update(f"[{TEXT_DIM}]Tidak ada lirik tersedia[/]")
             else:
                 idx = state.lyrics_index

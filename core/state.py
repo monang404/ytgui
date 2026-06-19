@@ -38,8 +38,8 @@ class AppState:
     playback_mode:   PlaybackMode  = PlaybackMode.QUEUE
     current_track:   Optional[TrackInfo] = None
     position:        float = 0.0
-    duration:        float = 0.0
     volume:          int   = 80
+    sponsorblock_active: bool = False
 
     # Queue (hanya aktif di QUEUE mode)
     queue:           deque = field(default_factory=deque)
@@ -59,6 +59,3 @@ class AppState:
 
     # Download
     download_progress: Optional[float] = None  # 0.0–1.0, None = idle
-
-    # Discover (cache lokal, diisi oleh DiscoverService)
-    discover_items:  list[TrackInfo] = field(default_factory=list)

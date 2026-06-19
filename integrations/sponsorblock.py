@@ -12,8 +12,9 @@ class SponsorBlockHandler:
     HIGH-02 fix: Uses json.dumps for category serialization.
     MED-01 fix: Accepts a shared aiohttp session.
     """
-    def __init__(self, mpv, session: aiohttp.ClientSession = None):
+    def __init__(self, mpv, state=None, session: aiohttp.ClientSession = None):
         self.mpv = mpv
+        self.state = state
         self.segments: list[tuple[float, float]] = []
         self._session = session
         bus.subscribe(TRACK_PROGRESS, self._on_progress)
@@ -24,6 +25,8 @@ class SponsorBlockHandler:
     async def fetch_segments(self, video_id: str):
         """Fetches skip segments and stores them in memory for the current track."""
         self.segments = []
+        if self.state:
+            self.state.sponsorblock_active = False
         
         # HIGH-02 fix: Use json.dumps instead of str().replace()
         params = {
@@ -44,6 +47,8 @@ class SponsorBlockHandler:
                         self.segments = [
                             (seg["segment"][0], seg["segment"][1]) for seg in data
                         ]
+                        if self.state:
+                            self.state.sponsorblock_active = len(self.segments) > 0
                         logger.info(f"SponsorBlock: {len(self.segments)} segments for {video_id}")
                     elif resp.status == 404:
                         pass  # No segments for this video, that's normal

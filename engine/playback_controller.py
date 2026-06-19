@@ -9,7 +9,7 @@ import logging
 from core.event_bus import (
     EventBus, TRACK_ENDED, TRACK_PROGRESS, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT,
-    CMD_QUEUE_REMOVE, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
+    CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
 from engine.mpv_controller import MpvController
@@ -57,6 +57,7 @@ class PlaybackController:
         self.bus.subscribe(CMD_SET_MODE, self._on_set_mode)
         self.bus.subscribe(CMD_QUEUE_SELECT, self._on_queue_select)
         self.bus.subscribe(CMD_QUEUE_REMOVE, self._on_queue_remove)
+        self.bus.subscribe(CMD_QUEUE_ADD, self._on_queue_add)
         self.bus.subscribe(CMD_RADIO_RANDOMIZE, self._on_radio_randomize)
         self.bus.subscribe("track.pause.changed", self._on_pause_changed)
 
@@ -189,6 +190,11 @@ class PlaybackController:
             del self.state.queue[index]
             await self.bus.publish(QUEUE_UPDATED)
             await self.bus.publish(LOG_MESSAGE, f"Dihapus dari antrean: {removed.title}")
+
+    async def _on_queue_add(self, track: TrackInfo):
+        self.state.queue.append(track)
+        await self.bus.publish(QUEUE_UPDATED)
+        await self.bus.publish(LOG_MESSAGE, f"Ditambahkan ke antrean: {track.title}")
 
     async def _on_radio_randomize(self, _data=None):
         async with self._lock:

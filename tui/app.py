@@ -10,6 +10,7 @@ from tui.tabs.now_playing_tab import NowPlayingTab
 from tui.tabs.search_tab import SearchTab
 from tui.tabs.radio_tab import RadioTab
 from tui.tabs.queue_tab import QueueTab
+from tui.screens.help_screen import HelpScreen
 from core.event_bus import (
     bus, LOG_MESSAGE, TRACK_STARTED, QUEUE_UPDATED, LYRICS_UPDATED,
     DOWNLOAD_COMPLETE, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
@@ -62,6 +63,7 @@ class YTGuiApp(App):
         Binding("r", "switch_radio", "Radio"),
         Binding("l", "toggle_lyrics", "Lyrics"),
         Binding("q", "quit", "Quit"),
+        Binding("?", "help", "Help"),
     ]
 
     def __init__(self, state: AppState, ytdlp=None, db=None):
@@ -74,7 +76,7 @@ class YTGuiApp(App):
     def compose(self) -> ComposeResult:
         with Horizontal(id="app_header"):
             self.header_left = Static("yt termux player pro", id="header_left")
-            self.header_right = Static("● online [black on white] baru [/]", id="header_right")
+            self.header_right = Static("● online", id="header_right")
             yield self.header_left
             yield self.header_right
         
@@ -124,7 +126,7 @@ class YTGuiApp(App):
         if hasattr(self.state, 'is_online'):
             indicator = "● online" if self.state.is_online else "● offline"
             color = "$success" if self.state.is_online else "$error"
-            self.header_right.update(f"[{color}]{indicator}[/] [black on white] baru [/]")
+            self.header_right.update(f"[{color}]{indicator}[/]")
             
         self.player_bar.update_state(self.state)
         # Update current active tab
@@ -205,3 +207,6 @@ class YTGuiApp(App):
     async def action_quit(self) -> None:
         await bus.publish(CMD_QUIT)
         self.exit()
+
+    async def action_help(self) -> None:
+        self.push_screen(HelpScreen())

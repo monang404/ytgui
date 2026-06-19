@@ -34,6 +34,7 @@ class LyricsFetcher:
         self.lyrics_data = []
         self.state.lyrics_lines = []
         self.state.lyrics_index = 0
+        self.state.lyrics_loading = True
         await bus.publish(LYRICS_UPDATED)
 
         @asynccontextmanager
@@ -103,6 +104,9 @@ class LyricsFetcher:
                 
         except Exception as e:
             logger.debug(f"Lyrics fetch failed: {e}")
+        finally:
+            self.state.lyrics_loading = False
+            await bus.publish(LYRICS_UPDATED)
 
     def _parse_lrc(self, lrc_text: str) -> list[tuple[float, str]]:
         """Parse LRC format. Strips timestamp tags from text content."""
@@ -136,3 +140,4 @@ class LyricsFetcher:
                 
         if self.state.lyrics_index != active_idx:
             self.state.lyrics_index = active_idx
+            await bus.publish(LYRICS_UPDATED)

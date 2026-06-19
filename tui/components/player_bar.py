@@ -25,6 +25,7 @@ class PlayerBar(Widget):
     }
     #pb_title_row { height: 1; }
     #pb_title_row #pb_info { width: 1fr; }
+    #pb_title_row #pb_seek_hint { width: auto; margin-right: 2; }
     #pb_title_row #pb_badge_mode { width: auto; color: $accent; }
 
     #pb_meta_row { height: 1; margin-top: 1; }
@@ -69,8 +70,10 @@ class PlayerBar(Widget):
     def compose(self) -> ComposeResult:
         with Horizontal(id="pb_title_row"):
             self.info_line = Static("Ketuk Radio untuk mulai ▶", id="pb_info")
+            self.seek_hint = Static("[dim]← klik bar untuk seek →[/]", id="pb_seek_hint")
             self.badge_mode = Static("[bold #555580][○] QUEUE[/]", id="pb_badge_mode")
             yield self.info_line
+            yield self.seek_hint
             yield self.badge_mode
 
         self.progress_bar = ClickableProgressBar(id="pb_progress")
@@ -90,8 +93,10 @@ class PlayerBar(Widget):
                 self.btn_volup = Static("🔊 80%", id="btn_volup", classes="player-btn")
                 yield self.btn_voldown
                 yield self.btn_volup
+            self.badge_sb = Static("", id="pb_badge_sb", classes="meta-center")
             self.badge_cache = Static("", id="pb_badge_cache", classes="meta-center")
             self.btn_download = Static("⬇ unduh", id="btn_download", classes="meta-right player-btn")
+            yield self.badge_sb
             yield self.badge_cache
             yield self.btn_download
 
@@ -125,6 +130,11 @@ class PlayerBar(Widget):
                 self.badge_cache.update("[bold #A0A0C0]☁ stream[/]")
         else:
             self.badge_cache.update("")
+
+        if getattr(state, "sponsorblock_active", False):
+            self.badge_sb.update("[bold #facc15]SB: ON[/]")
+        else:
+            self.badge_sb.update("")
 
         # Update Volume
         self.btn_volup.update(f"🔊 {state.volume}%")

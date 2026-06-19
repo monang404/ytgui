@@ -77,12 +77,10 @@ QUEUE_UPDATED    = "queue.updated"    # data: None
 LYRICS_UPDATED   = "lyrics.updated"   # data: None
 
 # === DOWNLOAD ===
-DOWNLOAD_PROGRESS = "download.progress"  # data: float 0.0–1.0
 DOWNLOAD_COMPLETE = "download.complete"  # data: TrackInfo
 
 # === SYSTEM ===
 LOG_MESSAGE      = "log.message"      # data: str
-APP_SHUTDOWN     = "app.shutdown"     # data: None
 
 # === COMMANDS ===
 CMD_PLAY_TRACK   = "cmd.play.track"       # data: TrackInfo — BARU
@@ -94,9 +92,9 @@ CMD_SEEK         = "cmd.seek"              # data: float
 CMD_VOLUME_UP    = "cmd.volume.up"
 CMD_VOLUME_DOWN  = "cmd.volume.down"
 CMD_DOWNLOAD     = "cmd.download"          # data: TrackInfo | None
-CMD_SEARCH       = "cmd.search"            # data: str
 CMD_SET_MODE     = "cmd.set.mode"          # data: PlaybackMode — BARU
 CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
+CMD_QUEUE_ADD    = "cmd.queue.add"         # data: TrackInfo
 CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index) — BARU
 CMD_RADIO_RANDOMIZE = "cmd.radio.randomize"
 CMD_QUIT         = "cmd.quit"

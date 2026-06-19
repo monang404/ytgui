@@ -64,7 +64,7 @@ async def main():
     
     # 4. Initialize Integrations & Resolver
     resolver = CacheResolver(db, ytdlp)
-    sponsorblock = SponsorBlockHandler(mpv, session=http_session)
+    sponsorblock = SponsorBlockHandler(mpv, state=state, session=http_session)
     lyrics_fetcher = LyricsFetcher(state, session=http_session)
     
     # 5. Engine Modes & Services
