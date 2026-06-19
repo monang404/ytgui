@@ -6,7 +6,7 @@ from textual import on
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_SET_MODE, CMD_NEXT, CMD_RADIO_RANDOMIZE
-from tui.theme import TEXT_DIM, STATUS_OK, TEXT_PRIMARY
+from tui.theme import TEXT_DIM, STATUS_OK, TEXT_PRIMARY, ACCENT_FIRE, BG_ELEVATED, BG_VOID, BORDER
 from tui.components.nav_bar import TabChanged
 
 class RadioTab(Widget):
@@ -24,10 +24,15 @@ class RadioTab(Widget):
         width: 100%;
         height: 3;
         margin-bottom: 2;
+        background: {BG_ELEVATED};
+        color: {TEXT_PRIMARY};
+        border: tall {BORDER};
     }}
     #radio_btn.-on {{
-        background: {STATUS_OK};
-        color: {TEXT_PRIMARY};
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: tall {ACCENT_FIRE};
+        text-style: bold;
     }}
     #radio_info {{
         text-align: center;

@@ -3,7 +3,7 @@ from textual.widget import Widget
 from textual.widgets import Button
 from textual.containers import Horizontal
 from textual.message import Message
-from tui.theme import HEIGHT_NAV_BAR, NAV_ACTIVE_COLOR, NAV_INACTIVE_COLOR, TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE, BG_ELEVATED
+from tui.theme import HEIGHT_NAV_BAR, NAV_ACTIVE_COLOR, NAV_INACTIVE_COLOR, TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE, BG_ELEVATED, BG_PANEL, BORDER, TEXT_PRIMARY
 
 class TabChanged(Message):
     """Event sent when a nav bar tab is clicked."""
@@ -16,6 +16,8 @@ class NavBar(Widget):
     NavBar {{
         height: {HEIGHT_NAV_BAR};
         dock: bottom;
+        background: {BG_ELEVATED};
+        border-top: solid {BORDER};
     }}
     #nav_container {{
         width: 100%;
@@ -31,13 +33,19 @@ class NavBar(Widget):
         background: transparent;
         text-align: center;
         content-align: center middle;
+        text-style: none;
     }}
     Button.nav-btn:hover {{
-        background: {BG_ELEVATED};
+        background: {BG_PANEL};
+        color: {TEXT_PRIMARY};
+        border: none;
     }}
     Button.nav-btn.-active {{
         color: {NAV_ACTIVE_COLOR};
+        background: transparent;
+        border: none;
         border-bottom: solid {NAV_ACTIVE_COLOR};
+        text-style: bold;
     }}
     """
 

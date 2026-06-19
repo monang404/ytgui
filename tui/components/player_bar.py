@@ -30,7 +30,7 @@ class PlayerBar(Widget):
 
     #pb_meta_row {{ height: 1; margin-top: 1; }}
     .meta-left   {{ width: 1fr; text-align: left; color: {TEXT_MUTED}; }}
-    .meta-center {{ width: 1fr; text-align: center; color: {STATUS_OK}; }}
+    .meta-center {{ width: 1fr; text-align: center; color: {TEXT_MUTED}; }}
     .meta-right  {{ width: 1fr; text-align: right; }}
     
     #pb_vol_container {{
@@ -57,13 +57,13 @@ class PlayerBar(Widget):
         width: 11;
         content-align: center middle;
         background: {BG_PANEL};
-        border: solid {ACCENT_FIRE};
+        border: tall {ACCENT_FIRE};
         margin: 0 1;
     }}
     Static.main-btn:hover {{
         background: {ACCENT_FIRE};
         color: {BG_VOID};
-        border: solid white;
+        border: tall {TEXT_PRIMARY};
     }}
     """
 

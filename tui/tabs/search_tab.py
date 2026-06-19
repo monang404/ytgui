@@ -45,7 +45,7 @@ class SearchActionModal(ModalScreen[str]):
             with Center(id="action_buttons"):
                 yield Button("▷ Putar", id="play_now", variant="primary")
                 yield Button("+ Antrean", id="enqueue")
-                yield Button("Batal", id="cancel", variant="error")
+                yield Button("✕ Batal", id="cancel")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(event.button.id)

@@ -7,7 +7,8 @@ from tui.components.player_bar import PlayerBar
 from tui.components.nav_bar import NavBar, TabChanged
 from tui.theme import (
     TAB_HOME, TAB_SEARCH, TAB_RADIO, TAB_QUEUE,
-    BG_VOID, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, STATUS_OK, ACCENT_GOLD
+    BG_VOID, BG_PANEL, BG_ELEVATED, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED,
+    STATUS_OK, STATUS_ERR, ACCENT_GOLD, BORDER
 )
 from tui.tabs.now_playing_tab import NowPlayingTab
 from tui.tabs.search_tab import SearchTab
@@ -47,10 +48,66 @@ class YTGuiApp(App):
         margin-bottom: 1;
     }}
     .badge-baru {{
-        background: white;
-        color: black;
+        background: {TEXT_PRIMARY};
+        color: {BG_VOID};
         text-style: bold;
         padding: 0 1;
+    }}
+
+    /* ── Global Button Overrides ── */
+    Button {{
+        background: {BG_ELEVATED};
+        color: {TEXT_PRIMARY};
+        border: tall {BORDER};
+        text-style: bold;
+    }}
+    Button:hover {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: tall {ACCENT_FIRE};
+    }}
+    Button:focus {{
+        border: tall {ACCENT_FIRE};
+    }}
+    Button.-primary {{
+        background: {ACCENT_FIRE};
+        color: {BG_VOID};
+        border: tall {ACCENT_FIRE};
+    }}
+    Button.-primary:hover {{
+        background: {TEXT_PRIMARY};
+        color: {BG_VOID};
+        border: tall {TEXT_PRIMARY};
+    }}
+    Button.-error {{
+        background: {STATUS_ERR};
+        color: {TEXT_PRIMARY};
+        border: tall {STATUS_ERR};
+    }}
+    Button.-error:hover {{
+        background: {TEXT_PRIMARY};
+        color: {STATUS_ERR};
+        border: tall {TEXT_PRIMARY};
+    }}
+    Button.-success {{
+        background: {STATUS_OK};
+        color: {TEXT_PRIMARY};
+        border: tall {STATUS_OK};
+    }}
+    Button.-success:hover {{
+        background: {TEXT_PRIMARY};
+        color: {STATUS_OK};
+        border: tall {TEXT_PRIMARY};
+    }}
+
+    /* ── Global Input Overrides ── */
+    Input {{
+        background: {BG_ELEVATED};
+        color: {TEXT_PRIMARY};
+        border: tall {BORDER};
+    }}
+    Input:focus {{
+        border: tall {ACCENT_FIRE};
     }}
     """
 
@@ -130,8 +187,8 @@ class YTGuiApp(App):
         # Update header
         if hasattr(self.state, 'is_online'):
             indicator = "● online" if self.state.is_online else "● offline"
-            color = "$success" if self.state.is_online else "$error"
-            self.header_right.update(f"[{color}]{indicator}[/]")
+            color = STATUS_OK if self.state.is_online else STATUS_ERR
+            self.header_right.update(f"[{color}]{indicator}[/{color}]")
             
         self.player_bar.update_state(self.state)
         # Update current active tab
