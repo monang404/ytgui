@@ -73,7 +73,7 @@ class PlayerBar(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="pb_title_row"):
-            self.info_line = Static("Ketuk Radio untuk mulai ▶", id="pb_info")
+            self.info_line = Static("", id="pb_info")
             self.seek_hint = Static("[dim] →[/dim]", id="pb_seek_hint")
             self.badge_mode = Static("[dim]\u2261 queue[/dim]", id="pb_badge_mode")
             yield self.info_line
@@ -151,7 +151,7 @@ class PlayerBar(Widget):
             self.btn_download.update("⬇ unduh")
 
         if state.status == PlayerStatus.IDLE:
-            self.info_line.update("Ketuk Radio untuk mulai ▶")
+            self.info_line.update("")
             self.progress_bar.position = 0
             self.progress_bar.duration = 0
             self.btn_play.update(" ▷ ")
