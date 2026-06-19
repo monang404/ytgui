@@ -129,13 +129,13 @@ class SearchTab(Widget):
 
     @work(exclusive=True)
     async def perform_live_search(self, query: str) -> None:
-        self.app.call_from_thread(self._show_loading)
+        self._show_loading()
         try:
             if hasattr(self.app, 'ytdlp') and self.app.ytdlp:
                 results = await self.app.ytdlp.search(query, max_results=10)
-                self.app.call_from_thread(self._show_results, results)
+                self._show_results(results)
         except Exception as e:
-            self.app.call_from_thread(self._show_error, str(e))
+            self._show_error(str(e))
 
     def _show_loading(self) -> None:
         self.msg_label.update(f"[{ACCENT_GOLD}]⏳ Mencari...[/]")
