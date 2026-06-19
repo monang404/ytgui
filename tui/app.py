@@ -58,56 +58,57 @@ class YTGuiApp(App):
     Button {{
         background: {BG_ELEVATED};
         color: {TEXT_PRIMARY};
-        border: tall {BORDER};
+        border: round {BORDER};
         text-style: bold;
+        overflow: hidden;
     }}
     Button:hover {{
         background: {ACCENT_FIRE};
         color: {BG_VOID};
-        border: tall {ACCENT_FIRE};
+        border: round {ACCENT_FIRE};
     }}
     Button:focus {{
-        border: tall {ACCENT_FIRE};
+        border: round {ACCENT_FIRE};
     }}
     Button.-primary {{
         background: {ACCENT_FIRE};
         color: {BG_VOID};
-        border: tall {ACCENT_FIRE};
+        border: round {ACCENT_FIRE};
     }}
     Button.-primary:hover {{
         background: {TEXT_PRIMARY};
         color: {BG_VOID};
-        border: tall {TEXT_PRIMARY};
+        border: round {TEXT_PRIMARY};
     }}
     Button.-error {{
         background: {STATUS_ERR};
         color: {TEXT_PRIMARY};
-        border: tall {STATUS_ERR};
+        border: round {STATUS_ERR};
     }}
     Button.-error:hover {{
         background: {TEXT_PRIMARY};
         color: {STATUS_ERR};
-        border: tall {TEXT_PRIMARY};
+        border: round {TEXT_PRIMARY};
     }}
     Button.-success {{
         background: {STATUS_OK};
         color: {TEXT_PRIMARY};
-        border: tall {STATUS_OK};
+        border: round {STATUS_OK};
     }}
     Button.-success:hover {{
         background: {TEXT_PRIMARY};
         color: {STATUS_OK};
-        border: tall {TEXT_PRIMARY};
+        border: round {TEXT_PRIMARY};
     }}
 
     /* ── Global Input Overrides ── */
     Input {{
         background: {BG_ELEVATED};
         color: {TEXT_PRIMARY};
-        border: tall {BORDER};
+        border: round {BORDER};
     }}
     Input:focus {{
-        border: tall {ACCENT_FIRE};
+        border: round {ACCENT_FIRE};
     }}
     """
 

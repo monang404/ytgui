@@ -18,10 +18,12 @@ class NavBar(Widget):
         dock: bottom;
         background: {BG_ELEVATED};
         border-top: solid {BORDER};
+        overflow: hidden;
     }}
     #nav_container {{
         width: 100%;
         height: 100%;
+        overflow: hidden;
     }}
     Button.nav-btn {{
         width: 1fr;
@@ -34,6 +36,10 @@ class NavBar(Widget):
         text-align: center;
         content-align: center middle;
         text-style: none;
+        overflow: hidden;
+    }}
+    Button.nav-btn:focus {{
+        border: none;
     }}
     Button.nav-btn:hover {{
         background: {BG_PANEL};

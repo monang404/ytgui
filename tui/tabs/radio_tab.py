@@ -19,6 +19,7 @@ class RadioTab(Widget):
     #radio_container {{
         align: center middle;
         height: 1fr;
+        overflow: hidden;
     }}
     #radio_btn {{
         width: 100%;
@@ -27,6 +28,7 @@ class RadioTab(Widget):
         background: {BG_ELEVATED};
         color: {TEXT_PRIMARY};
         border: tall {BORDER};
+        overflow: hidden;
     }}
     #radio_btn.-on {{
         background: {ACCENT_FIRE};
@@ -41,15 +43,18 @@ class RadioTab(Widget):
     #random_radio_btn {{
         width: 1fr;
         height: 3;
+        overflow: hidden;
     }}
     #radio_skip_btn {{
         width: 1fr;
         height: 3;
         margin-left: 1;
+        overflow: hidden;
     }}
     #radio_actions {{
         height: 3;
         layout: horizontal;
+        overflow: hidden;
     }}
     """
 

@@ -45,6 +45,7 @@ class PlayerBar(Widget):
         background: transparent;
         color: {TEXT_PRIMARY};
         margin: 0;
+        overflow: hidden;
     }}
     Static.player-btn:hover {{
         background: {BG_PANEL};
@@ -56,13 +57,15 @@ class PlayerBar(Widget):
         width: 11;
         content-align: center middle;
         background: {BG_PANEL};
-        border: tall {ACCENT_FIRE};
+        border: round {ACCENT_FIRE};
         margin: 0 1;
+        padding: 0;
+        overflow: hidden;
     }}
     #pb_controls .main-btn:hover {{
         background: {ACCENT_FIRE};
         color: {BG_VOID};
-        border: tall {TEXT_PRIMARY};
+        border: round {TEXT_PRIMARY};
     }}
     """
 
