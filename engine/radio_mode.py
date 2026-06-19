@@ -351,6 +351,6 @@ class RadioMode:
         ids = {t.video_id for t in self.state.radio_queue}
         if self.state.current_track:
             ids.add(self.state.current_track.video_id)
-        for t in self.state.history[-20:]:
+        for t in list(self.state.history)[-20:]:
             ids.add(t.video_id)
         return ids
