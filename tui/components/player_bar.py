@@ -13,7 +13,7 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = f"""
     PlayerBar {{
-        height: 14;
+        height: 16;
         dock: bottom;
         background: transparent;
         border-top: solid {BORDER};
