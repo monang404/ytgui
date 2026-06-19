@@ -5,6 +5,7 @@ from textual import events, on
 from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus, PlaybackMode
 from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID
+from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID, BORDER
 from core.event_bus import bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD
 from tui.components.progress_bar import ClickableProgressBar
 from rich.markup import escape
@@ -14,7 +15,8 @@ class PlayerBar(Widget):
     PlayerBar {{
         height: 14;
         dock: bottom;
-        background: {BG_ELEVATED};
+        background: transparent;
+        border-top: solid {BORDER};
         layout: vertical;
         padding: 1 2;
     }}
@@ -56,7 +58,7 @@ class PlayerBar(Widget):
         height: 3;
         width: 11;
         content-align: center middle;
-        background: {BG_PANEL};
+        background: transparent;
         border: round {ACCENT_FIRE};
         margin: 0 1;
         padding: 0;

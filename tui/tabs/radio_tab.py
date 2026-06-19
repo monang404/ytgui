@@ -25,7 +25,7 @@ class RadioTab(Widget):
         width: 100%;
         height: 3;
         margin-bottom: 2;
-        background: {BG_ELEVATED};
+        background: transparent;
         color: {TEXT_PRIMARY};
         border: tall {BORDER};
         overflow: hidden;

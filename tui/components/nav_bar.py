@@ -16,7 +16,7 @@ class NavBar(Widget):
     NavBar {{
         height: {HEIGHT_NAV_BAR};
         dock: bottom;
-        background: {BG_ELEVATED};
+        background: transparent;
         border-top: solid {BORDER};
         overflow: hidden;
     }}

@@ -32,7 +32,7 @@ class YTGuiApp(App):
     #content_area {{
         height: 1fr;
         width: 100%;
-        background: {BG_PANEL};
+        background: transparent;
     }}
     #app_header {{
         height: 1;
@@ -58,7 +58,7 @@ class YTGuiApp(App):
 
     /* ── Global Button Overrides ── */
     Button {{
-        background: {BG_ELEVATED};
+        background: {BG_PANEL};
         color: {TEXT_PRIMARY};
         border: round {BORDER};
         text-style: bold;
