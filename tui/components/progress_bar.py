@@ -10,7 +10,7 @@ class ClickableProgressBar(Static):
     ClickableProgressBar {
         height: 1;
         margin-top: 0;
-        margin-bottom: 0;
+        margin-bottom: 2;
     }
     """
     
