@@ -13,7 +13,7 @@ from rich.markup import escape
 class PlayerBar(Widget):
     DEFAULT_CSS = f"""
     PlayerBar {{
-        height: 14;
+        height: 15;
         dock: bottom;
         background: transparent;
         border-top: solid {BORDER};
@@ -26,7 +26,7 @@ class PlayerBar(Widget):
     #pb_title_row #pb_badge_mode {{ width: auto; color: {ACCENT_FIRE}; }}
 
     #pb_controls {{
-        height: 3;
+        height: 4;
         align: center middle;
     }}
 
@@ -55,8 +55,8 @@ class PlayerBar(Widget):
         text-style: bold;
     }}
     #pb_controls .main-btn {{
-        height: 3;
-        width: 11;
+        height: 4;
+        width: 15;
         content-align: center middle;
         background: transparent;
         border: round {ACCENT_FIRE};
