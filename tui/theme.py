@@ -1,13 +1,13 @@
 # tui/theme.py
 # Claude/Anthropic Brand Palette
-BG_VOID      = "#53534e"    # Dark
-BG_PANEL     = "#53534e"    # Dark + panel elevation
-BG_ELEVATED  = "#53534e"    # Dark + elevated surface
+BG_VOID      = "#3e3e3a"    # Dark
+BG_PANEL     = "#3e3e3a"    # Dark + panel elevation
+BG_ELEVATED  = "#3e3e3a"    # Dark + elevated surface
 BORDER       = "#b0aea5"    # Mid Gray
 BORDER_FOCUS = "#d97757"    # Orange (aksen utama)
 ACCENT_FIRE  = "#d97757"    # Orange — aksen utama Claude
 ACCENT_GOLD  = "#d97757"    # Orange — alias untuk backward compat
-ACCENT_BLUE  = "#6a9bcc"    # Blue — aksen sekunder
+ACCENT_BLUE  = "#3e3e3a"    # Blue — aksen sekunder
 ACCENT_GREEN = "#788c5d"    # Green — aksen tersier
 TEXT_PRIMARY = "#faf9f5"    # Light
 TEXT_MUTED   = "#b0aea5"    # Mid Gray
