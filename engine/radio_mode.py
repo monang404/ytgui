@@ -243,8 +243,8 @@ class RadioMode:
             if tracks:
                 self.state.radio_queue.clear()
                 self.state.radio_queue.extend(tracks[1:])
-                await controller.play_track(tracks[0])
                 await bus.publish(QUEUE_UPDATED)
+                await controller.play_track(tracks[0])
             else:
                 await bus.publish(LOG_MESSAGE, "Radio: Tidak ada hasil lagu ditemukan.")
         except Exception as e:
