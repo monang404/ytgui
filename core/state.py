@@ -51,6 +51,7 @@ class AppState:
     # Lyrics
     lyrics_lines:    list[tuple[float, str]] = field(default_factory=list)
     lyrics_index:    int = 0
+    lyrics_offset:   float = 0.0
 
     # UI state
     active_tab:      str  = "home"    # "home"|"search"|"radio"|"queue"

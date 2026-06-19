@@ -18,7 +18,8 @@ from tui.screens.help_screen import HelpScreen
 from core.event_bus import (
     bus, LOG_MESSAGE, TRACK_STARTED, QUEUE_UPDATED, LYRICS_UPDATED,
     DOWNLOAD_COMPLETE, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
-    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT
+    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT,
+    TRACK_PROGRESS
 )
 
 class YTGuiApp(App):
@@ -140,6 +141,8 @@ class YTGuiApp(App):
         Binding("M", "download", "Download", show=False),
         Binding("r", "switch_radio", "Radio"),
         Binding("l", "toggle_lyrics", "Lyrics"),
+        Binding("[", "lyrics_offset_dec", "Lirik -0.5s"),
+        Binding("]", "lyrics_offset_inc", "Lirik +0.5s"),
         Binding("q", "quit", "Quit"),
         Binding("?", "help", "Help"),
     ]
@@ -277,6 +280,17 @@ class YTGuiApp(App):
             # If already on queue and displayed, just let it toggle
             if self.state.active_tab == TAB_QUEUE:
                 await self.tab_queue.action_toggle_lyrics()
+
+    async def action_lyrics_offset_inc(self) -> None:
+        self.state.lyrics_offset += 0.5
+        await bus.publish(LOG_MESSAGE, f"Offset Lirik: {self.state.lyrics_offset:+.1f}s")
+        # Immediately re-evaluate lyrics index
+        await bus.publish(TRACK_PROGRESS, self.state.position)
+
+    async def action_lyrics_offset_dec(self) -> None:
+        self.state.lyrics_offset -= 0.5
+        await bus.publish(LOG_MESSAGE, f"Offset Lirik: {self.state.lyrics_offset:+.1f}s")
+        await bus.publish(TRACK_PROGRESS, self.state.position)
 
     async def action_switch_radio(self) -> None:
         new_mode = PlaybackMode.RADIO if self.state.playback_mode == PlaybackMode.QUEUE else PlaybackMode.QUEUE

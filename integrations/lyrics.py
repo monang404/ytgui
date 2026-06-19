@@ -34,6 +34,7 @@ class LyricsFetcher:
         self.lyrics_data = []
         self.state.lyrics_lines = []
         self.state.lyrics_index = 0
+        self.state.lyrics_offset = 0.0
         self.state.lyrics_loading = True
         await bus.publish(LYRICS_UPDATED)
 
@@ -132,7 +133,8 @@ class LyricsFetcher:
             return
 
         timestamps = [t for t, _ in self.lyrics_data]
-        active_idx = bisect.bisect_right(timestamps, position) - 1
+        adjusted_position = position + self.state.lyrics_offset
+        active_idx = bisect.bisect_right(timestamps, adjusted_position) - 1
         active_idx = max(0, active_idx)
                 
         if self.state.lyrics_index != active_idx:
