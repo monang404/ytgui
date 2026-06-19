@@ -15,6 +15,7 @@ class RadioTab(Widget):
     RadioTab {{
         height: 1fr;
         padding: 2 4;
+        overflow-y: auto;
     }}
     #radio_container {{
         align: center middle;
