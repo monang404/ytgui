@@ -75,6 +75,7 @@ class QueueTab(Widget):
     #lyrics_content {
         height: 1fr;
         text-align: center;
+        content-align: center middle;
     }
     """
 
@@ -115,14 +116,16 @@ class QueueTab(Widget):
             else:
                 idx = state.lyrics_index
                 lines = state.lyrics_lines
-                start = max(0, idx - 2)
-                end = min(len(lines), idx + 3)
+                start = max(0, idx - 5)
+                end = min(len(lines), idx + 6)
                 
                 content = ""
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
+                        content += f"[{ACCENT_FIRE}][b]▶ {escape(text)} ◀[/b][/]\n"
+                    elif i < idx:
+                        content += f"[{TEXT_DIM}][dim]{escape(text)}[/dim][/]\n"
                     else:
                         content += f"[{TEXT_DIM}]{escape(text)}[/]\n"
                 self.lyrics_content.update(content.strip())
@@ -169,14 +172,16 @@ class QueueTab(Widget):
             else:
                 idx = state.lyrics_index
                 lines = state.lyrics_lines
-                start = max(0, idx - 2)
-                end = min(len(lines), idx + 3)
+                start = max(0, idx - 5)
+                end = min(len(lines), idx + 6)
                 
                 content = ""
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[{ACCENT_FIRE}][b]{escape(text)}[/b][/]\n"
+                        content += f"[{ACCENT_FIRE}][b]▶ {escape(text)} ◀[/b][/]\n"
+                    elif i < idx:
+                        content += f"[{TEXT_DIM}][dim]{escape(text)}[/dim][/]\n"
                     else:
                         content += f"[{TEXT_DIM}]{escape(text)}[/]\n"
                 self.lyrics_content.update(content.strip())
@@ -184,9 +189,10 @@ class QueueTab(Widget):
     async def action_toggle_lyrics(self) -> None:
         self.lyrics_container.display = not self.lyrics_container.display
         if self.lyrics_container.display:
-            self.list_view.styles.height = "60%"
-            self.lyrics_container.styles.height = "40%"
+            self.list_view.display = False
+            self.lyrics_container.styles.height = "1fr"
         else:
+            self.list_view.display = True
             self.list_view.styles.height = "1fr"
         # Trigger update explicitly
         self._last_state_hash = None
