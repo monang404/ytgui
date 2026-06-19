@@ -74,7 +74,7 @@ class PlayerBar(Widget):
     def compose(self) -> ComposeResult:
         with Horizontal(id="pb_title_row"):
             self.info_line = Static("Ketuk Radio untuk mulai ▶", id="pb_info")
-            self.seek_hint = Static("[dim]← klik bar untuk seek →[/dim]", id="pb_seek_hint")
+            self.seek_hint = Static("[dim] →[/dim]", id="pb_seek_hint")
             self.badge_mode = Static("[dim]\u2261 queue[/dim]", id="pb_badge_mode")
             yield self.info_line
             yield self.seek_hint
