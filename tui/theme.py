@@ -2,7 +2,7 @@
 # Claude/Anthropic Brand Palette
 BG_VOID      = "#53534e"    # Dark
 BG_PANEL     = "#53534e"    # Dark + panel elevation
-BG_ELEVATED  = "#242422"    # Dark + elevated surface
+BG_ELEVATED  = "#53534e"    # Dark + elevated surface
 BORDER       = "#b0aea5"    # Mid Gray
 BORDER_FOCUS = "#d97757"    # Orange (aksen utama)
 ACCENT_FIRE  = "#d97757"    # Orange — aksen utama Claude
