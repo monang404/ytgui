@@ -26,8 +26,6 @@ class YTGuiApp(App):
     Screen {{
         layout: vertical;
         background: {BG_VOID};
-        min-width: 40;
-        min-height: 25;
     }}
     #content_area {{
         height: 1fr;
