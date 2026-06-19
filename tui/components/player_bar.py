@@ -56,7 +56,7 @@ class PlayerBar(Widget):
     }}
     #pb_controls .main-btn {{
         height: 3;
-        width: 15;
+        width: 1fr;
         content-align: center middle;
         background: transparent;
         border: round {ACCENT_FIRE};
