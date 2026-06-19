@@ -6,6 +6,10 @@ Publishes: QUEUE_UPDATED
 
 from core.event_bus import bus, QUEUE_UPDATED
 from core.state import PlayerStatus
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from engine.playback_controller import PlaybackController
 
 class QueueMode:
     """

@@ -10,33 +10,147 @@ Publishes: QUEUE_UPDATED, LOG_MESSAGE
 
 import asyncio
 import random
+import re
 from typing import TYPE_CHECKING, Optional
 from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 
-RANDOM_SEED_QUERIES = [
-    "Taylor Swift official audio",
-    "Ed Sheeran official audio",
-    "The Weeknd official audio",
-    "Bruno Mars official audio",
-    "Adele official audio",
-    "Billie Eilish official audio",
-    "Coldplay official audio",
-    "Imagine Dragons official audio",
-    "Post Malone official audio",
-    "Maroon 5 official audio",
-    "Dua Lipa official audio",
-    "Justin Bieber official audio",
-    "Ariana Grande official audio",
-    "Shawn Mendes official audio",
-    "Charlie Puth official audio",
-    "Sam Smith official audio",
-    "Olivia Rodrigo official audio",
-    "Harry Styles official audio"
+# Pool band & penyanyi Indonesia 2000-an-sekarang. 99 nama unik
+# (daftar asli 100, "Nadin Amizah" yang dobel sudah dihapus salah satunya).
+SEED_ARTISTS = [
+    "Peterpan",
+    "NOAH",
+    "Dewa 19",
+    "Ungu",
+    "Nidji",
+    "Samsons",
+    "ST12",
+    "Setia Band",
+    "Wali",
+    "The Changcuters",
+    "Kotak",
+    "Geisha",
+    "Drive",
+    "d'Masiv",
+    "The Rain",
+    "Letto",
+    "Kerispatih",
+    "Vierra",
+    "Vierratale",
+    "Govinda",
+    "Ada Band",
+    "Radja",
+    "Kangen Band",
+    "J-Rocks",
+    "Andra and The Backbone",
+    "Padi Reborn",
+    "Armada",
+    "Cokelat",
+    "Gigi",
+    "Slank",
+    "Sheila On 7",
+    "Maliq & D'Essentials",
+    "The Groove",
+    "Kahitna",
+    "Juicy Luicy",
+    "Hindia",
+    "Lomba Sihir",
+    "Reality Club",
+    "Fourtwnty",
+    "Nadin Amizah",
+    "Ariel NOAH",
+    "Afgan",
+    "Judika",
+    "Glenn Fredly",
+    "Tompi",
+    "Marcell Siahaan",
+    "Ello",
+    "Virgoun",
+    "Rizky Febian",
+    "Ardhito Pramono",
+    "Tulus",
+    "Pamungkas",
+    "Budi Doremi",
+    "Mahalini",
+    "Tiara Andini",
+    "Lyodra",
+    "Ziva Magnolya",
+    "Sal Priadi",
+    "Fiersa Besari",
+    "Raim Laode",
+    "Bernadya",
+    "Ari Lasso",
+    "Once Mekel",
+    "Anji",
+    "Yovie Widianto",
+    "Rossa",
+    "Krisdayanti",
+    "Ruth Sahanaya",
+    "Bunga Citra Lestari",
+    "Yura Yunita",
+    "Isyana Sarasvati",
+    "Raisa",
+    "Citra Scholastika",
+    "Ghea Indrawari",
+    "Marion Jola",
+    "Brisia Jodie",
+    "Rinni Wulandari",
+    "Melly Goeslaw",
+    "Dewi Sandra",
+    "Beby Romeo",
+    "Maudy Ayunda",
+    "Putri Ariani",
+    "Keisya Levronka",
+    "Titi DJ",
+    "Fabio Asher",
+    "Yotari",
+    "Prince Husein",
+    "Awdella",
+    "Batas Senja",
+    "For Revenge",
+    "Last Child",
+    "Stand Here Alone",
+    "The Panturas",
+    "Feel Koplo",
+    "Stereowall",
+    "Perunggu",
+    "The Lantis",
+    "Coldiac",
+    "Denny Caknan",
 ]
+
 MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
+TRACKS_PER_ARTIST_TARGET = 3  # target track unik per artis dalam satu batch
+ARTISTS_PER_BATCH = 4  # jumlah artis berbeda yang diambil sekaligus per batch (4x3 = 12 lagu/sesi)
+
+# Kata-kata noise yang sering muncul di judul upload YouTube dan tidak
+# relevan untuk membedakan "lagu yang sama" vs "lagu yang berbeda".
+_TITLE_NOISE_WORDS = (
+    "official", "music", "video", "audio", "lyric", "lyrics", "mv",
+    "cover", "live", "performance", "hd", "hq", "remastered", "remaster",
+    "full", "version", "ver", "feat", "ft", "original", "soundtrack",
+    "ost", "karaoke", "instrumental", "acoustic", "akustik", "konser",
+)
+
+
+def _normalize_title(title: str) -> str:
+    """Normalisasi judul track agar varian upload (official video, lyric
+    video, audio only, cover, live, dll) dari lagu yang sama bisa
+    dikenali sebagai duplikat walau video_id-nya berbeda.
+    """
+    if not title:
+        return ""
+    t = title.lower()
+    # Buang isi dalam kurung/bracket, biasanya berisi noise: "(Official Video)", "[Lyrics]"
+    t = re.sub(r"[\(\[\{].*?[\)\]\}]", " ", t)
+    # Buang karakter non alfanumerik (selain spasi)
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    # Buang kata-kata noise umum
+    words = [w for w in t.split() if w not in _TITLE_NOISE_WORDS]
+    return " ".join(words).strip()
+
 
 class RadioMode:
     """
@@ -51,6 +165,11 @@ class RadioMode:
         self.state = state
         self._is_fetching = False
         self._bg_tasks = set()
+        # Rotasi artis tanpa pengulangan: urutan acak dari SEED_ARTISTS yang
+        # "dikonsumsi" dari depan tiap kali batch baru diambil. Begitu deck
+        # ini habis, semua artis sudah pasti kebagian giliran sekali, lalu
+        # deck dikocok ulang dari awal untuk putaran berikutnya.
+        self._artist_rotation: list[str] = []
 
     async def on_activated(self, controller: "PlaybackController") -> None:
         """Dipanggil saat user menyalakan Radio Mode.
@@ -61,7 +180,7 @@ class RadioMode:
         tidak peduli apa yang sebelumnya terjadi di Queue Mode.
         """
         self.state.radio_queue = []
-        seed_artist = self.state.current_track.artist if self.state.current_track else None
+        seed_artist = random.choice(SEED_ARTISTS)
         task = asyncio.create_task(self._fetch_and_play_initial(controller, seed_artist))
         self._bg_tasks.add(task)
         task.add_done_callback(self._bg_tasks.discard)
@@ -81,26 +200,21 @@ class RadioMode:
             task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
         else:
-            seed_artist = self.state.current_track.artist if self.state.current_track else None
+            seed_artist = random.choice(SEED_ARTISTS)
             await self._fetch_and_play_initial(controller, seed_artist)
 
     async def _prefetch_next(self, controller: "PlaybackController") -> None:
-        """Ambil track berikutnya di background, taruh ke radio_queue (bukan queue)."""
+        """Ambil batch track berikutnya di background, taruh ke radio_queue
+        (bukan queue). Sama seperti _fetch_and_play_initial, batch ini
+        diambil dari beberapa artis sekaligus lalu di-interleave supaya
+        tidak monoton satu artis berturut-turut."""
         if self._is_fetching:
             return
         self._is_fetching = True
         try:
-            track = self.state.current_track
-            if not track:
-                return
-            query = f"{track.artist} music"
-            results = await self.ytdlp.search(query, max_results=10)
-            existing = self._build_exclusion_set()
-            # Filter kompilasi: durasi harus < 10 menit (600 detik) dan bukan livestream (0)
-            new_tracks = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION]
-            random.shuffle(new_tracks)
+            new_tracks = await self._gather_batch()
             if new_tracks:
-                self.state.radio_queue.extend(new_tracks[:2])
+                self.state.radio_queue.extend(new_tracks)
                 await bus.publish(QUEUE_UPDATED)
         except Exception as e:
             await bus.publish(LOG_MESSAGE, f"Prefetch Error: {str(e)}")
@@ -109,29 +223,126 @@ class RadioMode:
 
     async def _fetch_and_play_initial(self, controller: "PlaybackController", seed_artist: Optional[str] = None) -> None:
         """Cari & putar lagu radio baru — dipakai saat Radio baru diaktifkan
-        atau saat radio_queue habis. Selalu langsung memutar (tidak menunggu)."""
+        atau saat radio_queue habis. Selalu langsung memutar (tidak menunggu).
+
+        seed_artist dipertahankan demi kompatibilitas signature (dipanggil
+        dari playback_controller.py dengan seed_artist=None saat tombol
+        randomize ditekan), tapi nilainya tidak lagi dipakai langsung
+        sebagai satu-satunya sumber — pengambilan tetap dilakukan sebagai
+        batch dari beberapa artis sekaligus supaya hasil pertama yang
+        diputar pun sudah konsisten dengan strategi anti-bosen yang baru.
+        """
         try:
-            query = f"{seed_artist} music" if seed_artist else random.choice(RANDOM_SEED_QUERIES)
-            results = await self.ytdlp.search(query, max_results=15)
-            existing = self._build_exclusion_set()
-            filtered = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION]
+            tracks = await self._gather_batch(prioritized_artist=seed_artist)
 
-            if not filtered and seed_artist:
-                # Seed artis tidak membuahkan hasil baru (semua duplikat) -> fallback umum
-                query = random.choice(RANDOM_SEED_QUERIES)
-                results = await self.ytdlp.search(query, max_results=15)
-                existing = self._build_exclusion_set()
-                filtered = [t for t in results if t.video_id not in existing and 0 < t.duration < MAX_TRACK_DURATION]
+            if not tracks:
+                # Coba sekali lagi dengan batch artis yang benar-benar baru
+                tracks = await self._gather_batch()
 
-            if filtered:
-                random.shuffle(filtered)
-                self.state.radio_queue = filtered[1:]
-                await controller.play_track(filtered[0])
+            if tracks:
+                self.state.radio_queue = tracks[1:]
+                await controller.play_track(tracks[0])
                 await bus.publish(QUEUE_UPDATED)
             else:
                 await bus.publish(LOG_MESSAGE, "Radio: Tidak ada hasil lagu ditemukan.")
         except Exception as e:
             await bus.publish(LOG_MESSAGE, f"Radio Error: {str(e)}")
+
+    async def _gather_batch(self, prioritized_artist: Optional[str] = None) -> list:
+        """Ambil track dari beberapa artis berbeda (ARTISTS_PER_BATCH) sekaligus,
+        dedup judul per artis, lalu interleave round-robin hasilnya supaya
+        urutan akhir bervariasi (tidak ada 2 lagu artis sama menumpuk
+        berurutan, kecuali memang sudah kehabisan variasi).
+
+        Pemilihan artis memakai mekanisme rotasi tanpa pengulangan
+        (lihat _next_artists_from_rotation): dengan pool besar (99 artis),
+        ini menjamin semua artis kebagian giliran tampil dulu sebelum ada
+        yang diulang, bukan cuma "kemungkinan besar rata" seperti random
+        sample independen.
+
+        Kalau prioritized_artist diberikan, artis itu dipastikan masuk
+        dalam batch (mengisi salah satu slot), sisanya diambil dari deck
+        rotasi.
+        """
+        chosen: list[str] = []
+
+        if prioritized_artist and prioritized_artist in SEED_ARTISTS:
+            chosen.append(prioritized_artist)
+
+        slots_left = ARTISTS_PER_BATCH - len(chosen)
+        if slots_left > 0:
+            chosen.extend(self._next_artists_from_rotation(slots_left, exclude=set(chosen)))
+
+        # Kumpulkan track per artis secara paralel
+        results_per_artist = await asyncio.gather(
+            *[self._search_artist(artist) for artist in chosen],
+            return_exceptions=True,
+        )
+
+        per_artist_tracks: list[list] = []
+        for res in results_per_artist:
+            if isinstance(res, Exception):
+                per_artist_tracks.append([])
+            else:
+                per_artist_tracks.append(res)
+
+        return self._interleave(per_artist_tracks)
+
+    def _next_artists_from_rotation(self, count: int, exclude: set[str]) -> list[str]:
+        """Ambil `count` nama artis dari depan deck rotasi (tanpa pengulangan).
+        Begitu deck kehabisan stok di tengah pengambilan, deck dikocok ulang
+        otomatis dari seluruh SEED_ARTISTS (minus exclude) dan dilanjutkan,
+        supaya satu batch tidak pernah kekurangan slot."""
+        picked: list[str] = []
+        while len(picked) < count:
+            if not self._artist_rotation:
+                self._artist_rotation = list(SEED_ARTISTS)
+                random.shuffle(self._artist_rotation)
+            artist = self._artist_rotation.pop(0)
+            if artist in exclude or artist in picked:
+                continue
+            picked.append(artist)
+        return picked
+
+    async def _search_artist(self, artist: str) -> list:
+        """Cari track untuk satu artis, filter durasi + exclusion, lalu
+        dedup berdasarkan judul yang dinormalisasi (biar 'Rasa Ini' versi
+        official video/lyric/audio tidak terhitung sebagai 3 lagu beda).
+        Mengembalikan sekitar TRACKS_PER_ARTIST_TARGET track unik
+        (bisa kurang kalau memang stoknya tipis)."""
+        query = f"{artist} music"
+        results = await self.ytdlp.search(query, max_results=15)
+        existing = self._build_exclusion_set()
+
+        seen_titles: set[str] = set()
+        unique_tracks = []
+        for t in results:
+            if t.video_id in existing:
+                continue
+            if not (0 < t.duration < MAX_TRACK_DURATION):
+                continue
+            norm = _normalize_title(t.title)
+            if norm and norm in seen_titles:
+                continue
+            seen_titles.add(norm)
+            unique_tracks.append(t)
+
+        random.shuffle(unique_tracks)
+        return unique_tracks[:TRACKS_PER_ARTIST_TARGET]
+
+    @staticmethod
+    def _interleave(per_artist_tracks: list[list]) -> list:
+        """Gabungkan beberapa list track per-artis dengan round-robin:
+        ambil satu-satu giliran dari tiap artis (Artis1, Artis2, Artis3,
+        Artis1, ...). Kalau satu artis sudah habis stoknya, sisanya lanjut
+        gilir dari artis-artis yang masih ada."""
+        result = []
+        max_len = max((len(lst) for lst in per_artist_tracks), default=0)
+        for i in range(max_len):
+            for lst in per_artist_tracks:
+                if i < len(lst):
+                    result.append(lst[i])
+        return result
 
     def _build_exclusion_set(self) -> set[str]:
         ids = {t.video_id for t in self.state.radio_queue}
