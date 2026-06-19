@@ -57,12 +57,22 @@ class LyricsFetcher:
                         data = await resp.json()
                         lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
 
+            # Bersihkan judul secara umum (karena info dari YouTube sering kotor)
+            clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
+            for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
+                clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
+            clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
+            
+            # Buat search query yang lebih bersih
+            if "-" in title:
+                search_query = clean_title
+            else:
+                search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
+
             # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
             if not lrc:
                 url_search = f"{LYRICS_API_BASE}/search"
-                # Format query: Gabungkan title dan artist jika artist bukan 'Unknown'
-                query = f"{title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else title
-                params_search = {"q": query}
+                params_search = {"q": search_query}
                 
                 async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                     if resp.status == 200:
@@ -76,22 +86,9 @@ class LyricsFetcher:
             # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
             if not lrc:
                 logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
-                
-                # Bersihkan judul dari embel-embel (Official Video), [Lyrics], dll.
-                clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
-                for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video']:
-                    clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
-                clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
-                
-                # Jika judul aslinya sudah memiliki format "Artis - Judul", jangan tambahkan nama channel (seperti NAGASWARA)
-                if "-" in title:
-                    query = clean_title
-                else:
-                    query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
-                
-                logger.info(f"syncedlyrics query: {query}")
+                logger.info(f"syncedlyrics query: {search_query}")
                 loop = asyncio.get_running_loop()
-                lrc = await loop.run_in_executor(None, syncedlyrics.search, query)
+                lrc = await loop.run_in_executor(None, syncedlyrics.search, search_query)
             
             if lrc:
                 self.lyrics_data = self._parse_lrc(lrc)
