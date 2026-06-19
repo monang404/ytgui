@@ -5,7 +5,7 @@ import sys
 import aiohttp
 from logging.handlers import RotatingFileHandler
 from core.state import AppState, PlayerStatus
-from core.event_bus import bus, CMD_SEARCH, LOG_MESSAGE, CMD_QUIT
+from core.event_bus import bus, LOG_MESSAGE, CMD_QUIT
 from engine.ytdlp_client import YtDlpClient
 from engine.mpv_controller import MpvController
 from cache.db import Database
