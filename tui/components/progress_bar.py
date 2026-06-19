@@ -10,6 +10,7 @@ class ClickableProgressBar(Static):
     ClickableProgressBar {
         height: 1;
         margin-top: 1;
+        margin-bottom: 1;
     }
     """
     
@@ -17,15 +18,24 @@ class ClickableProgressBar(Static):
     duration = reactive(0.0)
 
     def render(self) -> str:
-        bar_width = max(10, self.size.width - 16)
+        bar_width = max(10, self.size.width - 12)
         
         if self.duration <= 0:
-            bar = "[dim]" + "─" * bar_width + "[/dim]"
+            bar = "[dim]" + "━" * bar_width + "[/dim]"
             return f"[dim]00:00[/dim] {bar} [dim]00:00[/dim]"
             
-        pct = min(1.0, self.position / self.duration)
+        pct = min(1.0, max(0.0, self.position / self.duration))
         filled = int(pct * bar_width)
-        bar = "[yellow]" + "━" * filled + "[/yellow][dim]" + "─" * (bar_width - filled) + "[/dim]"
+        
+        if bar_width > 0:
+            if filled <= 0:
+                bar = "[yellow]●[/yellow][dim]" + "━" * (bar_width - 1) + "[/dim]"
+            elif filled >= bar_width:
+                bar = "[yellow]" + "━" * (bar_width - 1) + "●[/yellow]"
+            else:
+                bar = "[yellow]" + "━" * filled + "●[/yellow][dim]" + "━" * (bar_width - filled - 1) + "[/dim]"
+        else:
+            bar = ""
 
         pos_str = f"{int(self.position//60):02d}:{int(self.position%60):02d}"
         dur_str = f"{int(self.duration//60):02d}:{int(self.duration%60):02d}"
@@ -37,7 +47,7 @@ class ClickableProgressBar(Static):
             return
         
         bar_start_x = 6
-        bar_width = max(10, self.size.width - 16)
+        bar_width = max(10, self.size.width - 12)
         
         click_x = event.x - bar_start_x
         if click_x < 0:
