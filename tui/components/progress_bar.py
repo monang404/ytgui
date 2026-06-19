@@ -9,8 +9,8 @@ class ClickableProgressBar(Static):
     DEFAULT_CSS = """
     ClickableProgressBar {
         height: 1;
-        margin-top: 1;
-        margin-bottom: 1;
+        margin-top: 0;
+        margin-bottom: 0;
     }
     """
     
