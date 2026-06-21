@@ -17,6 +17,7 @@ from engine.radio_mode import RadioMode
 from engine.volume_service import VolumeService
 from engine.download_manager import DownloadManager
 from engine.playback_controller import PlaybackController
+from integrations.termux_notification import TermuxNowPlaying
 from config import BASE_DIR
 
 log_path = BASE_DIR / "ytplayer.log"
@@ -77,6 +78,10 @@ async def main():
     controller = PlaybackController(
         bus, state, mpv, resolver, sponsorblock, lyrics_fetcher, queue_mode, radio_mode
     )
+
+    # 6.5 Termux now-playing notification (no-op outside Termux)
+    nowplaying = TermuxNowPlaying(bus, state)
+    await nowplaying.start()
 
     # 7. Search Handler removed (moved to SearchTab)
 
@@ -144,6 +149,7 @@ async def main():
         # Cleanup resources
         lyrics_fetcher.cleanup()
         sponsorblock.cleanup()
+        await nowplaying.cleanup()
         ytdlp.cancel_download()
         await http_session.close()
         await mpv.close()
