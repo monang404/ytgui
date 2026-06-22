@@ -221,10 +221,10 @@ class YTGuiApp(App):
     async def _on_log_message(self, msg: str) -> None:
         # LOG_MESSAGE displayed in player_bar
         self.state.error_msg = msg
-        self.call_from_thread(self.player_bar.info_line.update, f"ⓘ {msg}")
+        self.player_bar.info_line.update(f"ⓘ {msg}")
 
     async def _on_immediate_refresh(self, _data=None) -> None:
-        self.call_from_thread(self.refresh_ui)
+        self.refresh_ui()
 
     def _sync_tab_visibility(self) -> None:
         self.tab_home.display = (self.state.active_tab == TAB_HOME)
