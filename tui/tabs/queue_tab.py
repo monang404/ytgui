@@ -5,7 +5,7 @@ from textual.containers import Vertical, Horizontal
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
 from core.event_bus import bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
-from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK, BORDER
+from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK, BORDER, TEXT_PRIMARY
 from textual.binding import Binding
 from textual import work
 
@@ -125,11 +125,11 @@ class QueueTab(Widget):
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[bold #00ffff]▶ {escape(text)} ◀[/bold #00ffff]\n"
+                        content += f"[{ACCENT_FIRE}][b]▶ {escape(text)} ◀[/b][/]\n"
                     elif i < idx:
-                        content += f"[dim #666666]{escape(text)}[/dim #666666]\n"
+                        content += f"[{TEXT_DIM}][dim]{escape(text)}[/dim][/]\n"
                     else:
-                        content += f"[white]{escape(text)}[/white]\n"
+                        content += f"[{TEXT_PRIMARY}]{escape(text)}[/]\n"
                 self.lyrics_content.update(content.strip())
 
         # Update List View hanya jika ada perubahan lagu atau mode
@@ -183,11 +183,11 @@ class QueueTab(Widget):
                 for i in range(start, end):
                     text = lines[i]
                     if i == idx:
-                        content += f"[bold #00ffff]▶ {escape(text)} ◀[/bold #00ffff]\n"
+                        content += f"[{ACCENT_FIRE}][b]▶ {escape(text)} ◀[/b][/]\n"
                     elif i < idx:
-                        content += f"[dim #666666]{escape(text)}[/dim #666666]\n"
+                        content += f"[{TEXT_DIM}][dim]{escape(text)}[/dim][/]\n"
                     else:
-                        content += f"[white]{escape(text)}[/white]\n"
+                        content += f"[{TEXT_PRIMARY}]{escape(text)}[/]\n"
                 self.lyrics_content.update(content.strip())
 
     async def action_toggle_lyrics(self) -> None:
