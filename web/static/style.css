@@ -1484,3 +1484,12 @@ html, body {
 .client-mode .queue-item .qi-remove {
     display: none !important;
 }
+
+/* Proteksi Mutlak: Sembunyikan tab lain & modal di mode Client */
+.client-mode #tab-search,
+.client-mode #tab-radio,
+.client-mode #tab-queue,
+.client-mode #action-modal-overlay,
+.client-mode #help-modal-overlay {
+    display: none !important;
+}
