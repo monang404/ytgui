@@ -11,6 +11,9 @@
         status: "IDLE",
         playback_mode: "QUEUE",
         audio_output: "device",
+        userRole: "portal", // "portal" | "client" | "admin"
+        adminUsername: "",
+        adminPassword: "",
         current_track: null,
         position: 0,
         volume: 80,
@@ -30,6 +33,16 @@
     // ── DOM Cache ──
     const $ = (id) => document.getElementById(id);
     const dom = {
+        portalScreen: $("portal-screen"),
+        portalClientBtn: $("portal-client-btn"),
+        portalAdminBtn: $("portal-admin-btn"),
+        portalLoginForm: $("portal-login-form"),
+        adminUsername: $("admin-username"),
+        adminPassword: $("admin-password"),
+        adminSubmitBtn: $("admin-submit-btn"),
+        loginErrorMsg: $("login-error-msg"),
+        logoutBtn: $("logout-btn"),
+        appContainer: $("app"),
         outputToggleBtn: $("output-toggle-btn"),
         statusDot: $("status-dot"),
         statusText: $("status-text"),
@@ -107,6 +120,14 @@
                 wsReconnectTimer = null;
             }
             
+            // Re-authenticate if we are admin
+            if (store.userRole === "admin" && store.adminUsername && store.adminPassword) {
+                wsSend("auth", {
+                    username: store.adminUsername,
+                    password: store.adminPassword
+                });
+            }
+            
             const savedOutput = localStorage.getItem("ytgui_audio_output") || "device";
             wsSend("set_output", { output: savedOutput });
         };
@@ -143,6 +164,24 @@
 
     function handleServerMessage(msg) {
         switch (msg.type) {
+            case "auth_status":
+                if (msg.data.success) {
+                    store.userRole = "admin";
+                    localStorage.setItem("ytgui_user_role", "admin");
+                    localStorage.setItem("ytgui_admin_username", store.adminUsername);
+                    localStorage.setItem("ytgui_admin_password", store.adminPassword);
+                    dom.loginErrorMsg.textContent = "";
+                    dom.portalLoginForm.classList.add("hidden");
+                    applyRoleUI();
+                    showLogToast("Akses Admin Diterima!");
+                    renderFullState();
+                } else {
+                    dom.loginErrorMsg.textContent = msg.data.message || "Login gagal.";
+                    if (store.userRole === "admin") {
+                        logout();
+                    }
+                }
+                break;
             case "state":
                 Object.assign(store, msg.data);
                 renderFullState();
@@ -604,24 +643,110 @@
     }
 
     // ══════════════════════════════════════
-    // Player Controls
+    // Player Controls & Portal UI Logics
     // ══════════════════════════════════════
 
+    function applyRoleUI() {
+        if (store.userRole === "portal") {
+            dom.portalScreen.classList.add("portal-active");
+            dom.appContainer.classList.add("portal-active");
+            document.body.classList.remove("client-mode");
+        } else if (store.userRole === "client") {
+            dom.portalScreen.classList.remove("portal-active");
+            dom.appContainer.classList.remove("portal-active");
+            document.body.classList.add("client-mode");
+            switchTab("home");
+        } else if (store.userRole === "admin") {
+            dom.portalScreen.classList.remove("portal-active");
+            dom.appContainer.classList.remove("portal-active");
+            document.body.classList.remove("client-mode");
+        }
+    }
+
+    function logout() {
+        store.userRole = "portal";
+        store.adminUsername = "";
+        store.adminPassword = "";
+        localStorage.removeItem("ytgui_user_role");
+        localStorage.removeItem("ytgui_admin_username");
+        localStorage.removeItem("ytgui_admin_password");
+        applyRoleUI();
+        if (ws) {
+            ws.close();
+        }
+    }
+
+    // Portal screen event listeners
+    dom.portalClientBtn.addEventListener("click", () => {
+        store.userRole = "client";
+        localStorage.setItem("ytgui_user_role", "client");
+        applyRoleUI();
+        syncBrowserAudio();
+    });
+
+    dom.portalAdminBtn.addEventListener("click", () => {
+        dom.portalLoginForm.classList.toggle("hidden");
+        if (!dom.portalLoginForm.classList.contains("hidden")) {
+            dom.adminUsername.focus();
+        }
+    });
+
+    dom.adminSubmitBtn.addEventListener("click", () => {
+        const user = dom.adminUsername.value.trim();
+        const pass = dom.adminPassword.value;
+        if (!user || !pass) {
+            dom.loginErrorMsg.textContent = "Isi username dan password!";
+            return;
+        }
+        store.adminUsername = user;
+        store.adminPassword = pass;
+        
+        if (wsConnected) {
+            wsSend("auth", { username: user, password: pass });
+        } else {
+            dom.loginErrorMsg.textContent = "Koneksi terputus. Coba lagi nanti.";
+        }
+    });
+
+    dom.adminPassword.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            dom.adminSubmitBtn.click();
+        }
+    });
+
+    dom.logoutBtn.addEventListener("click", () => {
+        logout();
+    });
+
     dom.outputToggleBtn.addEventListener("click", () => {
+        if (store.userRole !== "admin") return;
         const newOutput = store.audio_output === "browser" ? "device" : "browser";
         localStorage.setItem("ytgui_audio_output", newOutput);
         wsSend("set_output", { output: newOutput });
     });
 
-    dom.btnPlay.addEventListener("click", () => wsSend("toggle_pause"));
-    dom.btnNext.addEventListener("click", () => wsSend("next"));
-    dom.btnPrev.addEventListener("click", () => wsSend("prev"));
-    dom.btnVolUp.addEventListener("click", () => wsSend("volume_up"));
-    dom.btnVolDown.addEventListener("click", () => wsSend("volume_down"));
-    dom.btnDownload.addEventListener("click", () => wsSend("download"));
+    dom.btnPlay.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("toggle_pause");
+    });
+    dom.btnNext.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("next");
+    });
+    dom.btnPrev.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("prev");
+    });
+    dom.btnVolUp.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("volume_up");
+    });
+    dom.btnVolDown.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("volume_down");
+    });
+    dom.btnDownload.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("download");
+    });
 
     // Progress bar seek
     dom.pbProgressTrack.addEventListener("click", (e) => {
+        if (store.userRole !== "admin") return;
         const rect = dom.pbProgressTrack.getBoundingClientRect();
         const pct = (e.clientX - rect.left) / rect.width;
         const dur = store.current_track ? store.current_track.duration : 0;
@@ -635,12 +760,17 @@
     // ══════════════════════════════════════
 
     dom.radioToggleBtn.addEventListener("click", () => {
+        if (store.userRole !== "admin") return;
         const newMode = store.playback_mode === "RADIO" ? "QUEUE" : "RADIO";
         wsSend("set_mode", { mode: newMode });
     });
 
-    dom.radioRandomizeBtn.addEventListener("click", () => wsSend("radio_randomize"));
-    dom.radioSkipBtn.addEventListener("click", () => wsSend("next"));
+    dom.radioRandomizeBtn.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("radio_randomize");
+    });
+    dom.radioSkipBtn.addEventListener("click", () => {
+        if (store.userRole === "admin") wsSend("next");
+    });
 
     // ══════════════════════════════════════
     // Lyrics Toggle
@@ -672,6 +802,7 @@
     // ══════════════════════════════════════
 
     document.addEventListener("keydown", (e) => {
+        if (store.userRole !== "admin") return;
         // Don't capture keys when typing in search
         if (document.activeElement === dom.searchInput) {
             if (e.key === "Escape") {
@@ -837,7 +968,7 @@
     }
 
     function syncBrowserAudio() {
-        const isBrowser = store.audio_output === "browser";
+        const isBrowser = store.userRole === "client" || store.audio_output === "browser";
         const audio = getOrInitAudio();
 
         if (!isBrowser) {
@@ -906,6 +1037,14 @@
     // ══════════════════════════════════════
     // Init
     // ══════════════════════════════════════
+
+    const savedRole = localStorage.getItem("ytgui_user_role") || "portal";
+    store.userRole = savedRole;
+    if (savedRole === "admin") {
+        store.adminUsername = localStorage.getItem("ytgui_admin_username") || "";
+        store.adminPassword = localStorage.getItem("ytgui_admin_password") || "";
+    }
+    applyRoleUI();
 
     wsConnect();
 })();

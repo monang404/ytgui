@@ -35,3 +35,7 @@ LYRICS_API_BASE = "https://lrclib.net/api"
 # Web Server
 WEB_HOST = os.environ.get("YTGUI_HOST", "0.0.0.0")
 WEB_PORT = int(os.environ.get("YTGUI_PORT", 8765))
+
+# Web Security
+ADMIN_USERNAME = os.environ.get("YTGUI_ADMIN_USER", "bagasfm")
+ADMIN_PASSWORD = os.environ.get("YTGUI_ADMIN_PASS", "bagasradio2626@")

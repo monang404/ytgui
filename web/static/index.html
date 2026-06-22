@@ -12,13 +12,52 @@
 </head>
 <body>
 
+<!-- ═══ Portal Screen ═══ -->
+<div id="portal-screen" class="portal-active">
+    <div class="portal-card">
+        <h1 class="portal-title">bagas.fm</h1>
+        <p class="portal-subtitle">Silakan pilih mode akses untuk memutar musik</p>
+        
+        <div class="portal-options">
+            <!-- Mode Client -->
+            <button id="portal-client-btn" class="portal-btn client">
+                <span class="portal-icon">🔊</span>
+                <span class="portal-btn-title">Mode Client</span>
+                <span class="portal-btn-desc">Dengarkan audio langsung di browser ini secara real-time.</span>
+            </button>
+            
+            <!-- Mode Admin -->
+            <div class="portal-admin-wrapper">
+                <button id="portal-admin-btn" class="portal-btn admin">
+                    <span class="portal-icon">⚡</span>
+                    <span class="portal-btn-title">Mode Admin</span>
+                    <span class="portal-btn-desc">Akses kontrol penuh (putar, cari, atur antrean & volume).</span>
+                </button>
+                
+                <!-- Form Login Admin -->
+                <div id="portal-login-form" class="portal-login-form hidden">
+                    <div class="login-input-group">
+                        <input type="text" id="admin-username" placeholder="Username" autocomplete="off">
+                    </div>
+                    <div class="login-input-group">
+                        <input type="password" id="admin-password" placeholder="Password">
+                    </div>
+                    <button id="admin-submit-btn">Login Admin</button>
+                    <div id="login-error-msg" class="login-error"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="app">
 
     <!-- ═══ Header ═══ -->
     <header id="app-header">
-        <span class="app-title">yt termux player pro</span>
+        <span class="app-title">bagas.fm</span>
         <div class="header-right">
             <button id="output-toggle-btn" class="output-btn" title="Ubah Output Suara">📱 HP</button>
+            <button id="logout-btn" class="logout-btn" title="Keluar / Ganti Mode">🚪 Keluar</button>
             <span class="status-indicator">
                 <span class="status-dot" id="status-dot"></span>
                 <span id="status-text">online</span>

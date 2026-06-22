@@ -94,6 +94,7 @@ class ConnectionManager:
 
     def __init__(self):
         self.active_connections: list[web.WebSocketResponse] = []
+        self.authenticated_connections: set[web.WebSocketResponse] = set()
 
     async def connect(self, ws: web.WebSocketResponse):
         self.active_connections.append(ws)
@@ -102,6 +103,8 @@ class ConnectionManager:
     def disconnect(self, ws: web.WebSocketResponse):
         if ws in self.active_connections:
             self.active_connections.remove(ws)
+        if ws in self.authenticated_connections:
+            self.authenticated_connections.remove(ws)
         logger.info(f"WebSocket disconnected. Total clients: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
@@ -227,7 +230,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
                         data = json.loads(msg.data)
                     except json.JSONDecodeError:
                         continue
-                    await _handle_ws_message(data, ws, state, ytdlp)
+                    await _handle_ws_message(data, ws, state, ytdlp, manager)
                 elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSE):
                     break
         except Exception as e:
@@ -278,7 +281,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
     return app
 
 
-async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppState, ytdlp):
+async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppState, ytdlp, manager):
     """Process incoming WebSocket commands from browser."""
     msg_type = msg.get("type")
     action = msg.get("action", "")
@@ -287,7 +290,34 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppSta
     if msg_type != "cmd":
         return
 
+    # Check authentication
+    from config import ADMIN_USERNAME, ADMIN_PASSWORD
+    is_authenticated = ws in manager.authenticated_connections
+
     try:
+        if action == "auth":
+            username = data.get("username", "")
+            password = data.get("password", "")
+            if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+                manager.authenticated_connections.add(ws)
+                await ws.send_str(json.dumps({
+                    "type": "auth_status",
+                    "data": {"success": True}
+                }))
+            else:
+                await ws.send_str(json.dumps({
+                    "type": "auth_status",
+                    "data": {"success": False, "message": "Username atau Password salah!"}
+                }))
+            return
+
+        # If not authenticated, reject all other commands
+        if not is_authenticated:
+            await ws.send_str(json.dumps({
+                "type": "error",
+                "data": "Akses ditolak. Silakan login sebagai Admin.",
+            }))
+            return
         if action == "search":
             query = data.get("query", "").strip()
             if query:
