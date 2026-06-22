@@ -2,6 +2,3 @@ yt-dlp
 aiosqlite
 aiohttp
 syncedlyrics
-uvicorn
-fastapi
-websockets

@@ -1,5 +1,7 @@
 """
-Purpose: FastAPI + WebSocket server that bridges the Engine Layer with the Browser UI.
+Purpose: aiohttp web server + WebSocket bridge between Engine Layer and Browser UI.
+Uses aiohttp.web which is already installed — no extra dependencies needed for Termux.
+
 Subscribes to: TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
                DOWNLOAD_COMPLETE, LOG_MESSAGE, "track.pause.changed"
 Publishes: CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP,
@@ -14,9 +16,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+import aiohttp
+from aiohttp import web
 
 from core.event_bus import (
     bus, TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
@@ -68,48 +69,64 @@ def _state_to_dict(state: AppState) -> dict:
     }
 
 
+def _dict_to_track(data: dict) -> Optional[TrackInfo]:
+    """Convert a dict from the browser into a TrackInfo object."""
+    video_id = data.get("video_id")
+    if not video_id:
+        return None
+    return TrackInfo(
+        video_id=video_id,
+        title=data.get("title", "Unknown"),
+        artist=data.get("artist", "Unknown"),
+        duration=int(data.get("duration", 0)),
+        thumbnail=data.get("thumbnail"),
+        local_path=data.get("local_path"),
+        stream_url=data.get("stream_url"),
+        view_count=data.get("view_count"),
+    )
+
+
 class ConnectionManager:
     """Manages WebSocket connections to all browser clients."""
 
     def __init__(self):
-        self.active_connections: list[WebSocket] = []
+        self.active_connections: list[web.WebSocketResponse] = []
 
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
+    async def connect(self, ws: web.WebSocketResponse):
+        self.active_connections.append(ws)
         logger.info(f"WebSocket connected. Total clients: {len(self.active_connections)}")
 
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
+    def disconnect(self, ws: web.WebSocketResponse):
+        if ws in self.active_connections:
+            self.active_connections.remove(ws)
         logger.info(f"WebSocket disconnected. Total clients: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
         """Send message to all connected clients."""
         data = json.dumps(message, ensure_ascii=False)
         dead = []
-        for connection in self.active_connections:
+        for ws in self.active_connections:
             try:
-                await connection.send_text(data)
+                await ws.send_str(data)
             except Exception:
-                dead.append(connection)
-        for conn in dead:
-            self.disconnect(conn)
+                dead.append(ws)
+        for ws in dead:
+            self.disconnect(ws)
 
 
-def create_app(state: AppState, ytdlp, db, controller) -> FastAPI:
-    app = FastAPI(title="YTGUI Web", docs_url=None, redoc_url=None)
+def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
+    app = web.Application()
     manager = ConnectionManager()
 
-    # Store references for route handlers
-    app.state.app_state = state
-    app.state.ytdlp = ytdlp
-    app.state.db = db
-    app.state.controller = controller
-    app.state.manager = manager
+    # Store references
+    app["app_state"] = state
+    app["ytdlp"] = ytdlp
+    app["db"] = db
+    app["controller"] = controller
+    app["manager"] = manager
 
     # --- Progress throttle ---
-    _last_progress_broadcast = {"t": 0.0}
+    last_progress = {"t": 0.0}
 
     # --- EventBus → WebSocket bridge ---
     async def _on_track_started(track):
@@ -120,9 +137,9 @@ def create_app(state: AppState, ytdlp, db, controller) -> FastAPI:
 
     async def _on_track_progress(position: float):
         now = time.monotonic()
-        if now - _last_progress_broadcast["t"] < 0.33:
+        if now - last_progress["t"] < 0.33:
             return  # Throttle: max ~3 updates/sec
-        _last_progress_broadcast["t"] = now
+        last_progress["t"] = now
         state.position = position
         await manager.broadcast({
             "type": "progress",
@@ -180,51 +197,52 @@ def create_app(state: AppState, ytdlp, db, controller) -> FastAPI:
     bus.subscribe(LOG_MESSAGE, _on_log_message)
     bus.subscribe("track.pause.changed", _on_pause_changed)
 
-    # --- Routes ---
+    # --- Route: Serve index.html ---
+    async def handle_index(request):
+        return web.FileResponse(STATIC_DIR / "index.html")
 
-    @app.get("/")
-    async def serve_index():
-        return FileResponse(STATIC_DIR / "index.html")
+    # --- Route: WebSocket ---
+    async def handle_websocket(request):
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        await manager.connect(ws)
 
-    # Mount static files AFTER the root route
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-    # --- WebSocket endpoint ---
-
-    @app.websocket("/ws")
-    async def websocket_endpoint(websocket: WebSocket):
-        await manager.connect(websocket)
-
-        # Send initial state on connect
+        # Send initial state
         try:
-            await websocket.send_text(json.dumps({
+            await ws.send_str(json.dumps({
                 "type": "state",
                 "data": _state_to_dict(state),
             }, ensure_ascii=False))
         except Exception:
-            manager.disconnect(websocket)
-            return
+            manager.disconnect(ws)
+            return ws
 
         try:
-            while True:
-                raw = await websocket.receive_text()
-                try:
-                    msg = json.loads(raw)
-                except json.JSONDecodeError:
-                    continue
-
-                await _handle_ws_message(msg, websocket, state, ytdlp, db)
-
-        except WebSocketDisconnect:
-            manager.disconnect(websocket)
+            async for msg in ws:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    try:
+                        data = json.loads(msg.data)
+                    except json.JSONDecodeError:
+                        continue
+                    await _handle_ws_message(data, ws, state, ytdlp)
+                elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSE):
+                    break
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
-            manager.disconnect(websocket)
+        finally:
+            manager.disconnect(ws)
+
+        return ws
+
+    # --- Register routes ---
+    app.router.add_get("/", handle_index)
+    app.router.add_get("/ws", handle_websocket)
+    app.router.add_static("/static", STATIC_DIR, name="static")
 
     return app
 
 
-async def _handle_ws_message(msg: dict, ws: WebSocket, state: AppState, ytdlp, db):
+async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppState, ytdlp):
     """Process incoming WebSocket commands from browser."""
     msg_type = msg.get("type")
     action = msg.get("action", "")
@@ -238,7 +256,7 @@ async def _handle_ws_message(msg: dict, ws: WebSocket, state: AppState, ytdlp, d
             query = data.get("query", "").strip()
             if query:
                 results = await ytdlp.search(query, max_results=10)
-                await ws.send_text(json.dumps({
+                await ws.send_str(json.dumps({
                     "type": "search_results",
                     "data": [_track_to_dict(t) for t in results],
                 }, ensure_ascii=False))
@@ -296,38 +314,28 @@ async def _handle_ws_message(msg: dict, ws: WebSocket, state: AppState, ytdlp, d
 
     except Exception as e:
         logger.error(f"Error handling WS command '{action}': {e}", exc_info=True)
-        await ws.send_text(json.dumps({
-            "type": "error",
-            "data": str(e),
-        }))
+        try:
+            await ws.send_str(json.dumps({
+                "type": "error",
+                "data": str(e),
+            }))
+        except Exception:
+            pass
 
 
-def _dict_to_track(data: dict) -> Optional[TrackInfo]:
-    """Convert a dict from the browser into a TrackInfo object."""
-    video_id = data.get("video_id")
-    if not video_id:
-        return None
-    return TrackInfo(
-        video_id=video_id,
-        title=data.get("title", "Unknown"),
-        artist=data.get("artist", "Unknown"),
-        duration=int(data.get("duration", 0)),
-        thumbnail=data.get("thumbnail"),
-        local_path=data.get("local_path"),
-        stream_url=data.get("stream_url"),
-        view_count=data.get("view_count"),
-    )
+async def run_server(app: web.Application, host: str = "0.0.0.0", port: int = 8765):
+    """Run the aiohttp web server inside the existing asyncio event loop."""
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+    await site.start()
+    logger.info(f"Web server running on http://{host}:{port}")
 
-
-async def run_server(app: FastAPI, host: str = "0.0.0.0", port: int = 8765):
-    """Run the uvicorn server inside the existing asyncio event loop."""
-    import uvicorn
-    config = uvicorn.Config(
-        app,
-        host=host,
-        port=port,
-        log_level="info",
-        access_log=False,
-    )
-    server = uvicorn.Server(config)
-    await server.serve()
+    # Keep the server running until cancelled
+    try:
+        while True:
+            await asyncio.sleep(3600)
+    except asyncio.CancelledError:
+        pass
+    finally:
+        await runner.cleanup()
