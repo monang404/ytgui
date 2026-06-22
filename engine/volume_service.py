@@ -28,6 +28,9 @@ class VolumeService:
         await self._apply_volume()
         
     async def _apply_volume(self):
-        await self.mpv.set_volume(self.current_volume)
+        if getattr(self.state, "audio_output", "device") == "browser":
+            await self.mpv.set_volume(0)
+        else:
+            await self.mpv.set_volume(self.current_volume)
         self.state.volume = self.current_volume
         await self.bus.publish(LOG_MESSAGE, f"Volume: {self.current_volume}%")

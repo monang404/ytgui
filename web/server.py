@@ -13,18 +13,20 @@ import asyncio
 import json
 import logging
 import time
+import re
 from pathlib import Path
 from typing import Optional
 
 import aiohttp
 from aiohttp import web
 
+from config import CACHE_DIR
 from core.event_bus import (
     bus, TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
     DOWNLOAD_COMPLETE, LOG_MESSAGE, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_VOLUME_UP, CMD_VOLUME_DOWN,
     CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE,
-    CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE
+    CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, CMD_SET_OUTPUT
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
 
@@ -55,6 +57,7 @@ def _state_to_dict(state: AppState) -> dict:
         "current_track": _track_to_dict(state.current_track),
         "position": state.position,
         "volume": state.volume,
+        "audio_output": getattr(state, "audio_output", "device"),
         "sponsorblock_active": state.sponsorblock_active,
         "queue": [_track_to_dict(t) for t in state.queue],
         "radio_queue": [_track_to_dict(t) for t in state.radio_queue],
@@ -234,9 +237,42 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
         return ws
 
+    # --- Route: Stream Endpoint ---
+    async def handle_stream(request):
+        video_id = request.match_info.get("video_id")
+        if not video_id:
+            return web.HTTPBadRequest(text="Missing video_id")
+            
+        safe_id = "".join(c for c in video_id if c.isalnum() or c in "-_")
+        cache_file = CACHE_DIR / f"{safe_id}.mp3"
+        
+        # Jika file MP3 ada di cache, serve secara langsung
+        if cache_file.exists():
+            return web.FileResponse(cache_file)
+            
+        # Jika tidak ada di cache, cari streaming url dari DB / yt-dlp
+        ytdlp = request.app["ytdlp"]
+        db = request.app["db"]
+        
+        row = await db.get_track(video_id)
+        if row and row.get("stream_url") and row.get("stream_url_ts"):
+            ts = row.get("stream_url_ts")
+            if time.time() - ts < 21600:
+                return web.HTTPFound(row["stream_url"])
+                
+        try:
+            url = await ytdlp.get_stream_url(video_id)
+            from core.state import TrackInfo
+            track = TrackInfo(video_id=video_id, title="Temp", artist="Temp", duration=0)
+            await db.upsert_track(track, stream_url=url)
+            return web.HTTPFound(url)
+        except Exception as e:
+            return web.HTTPInternalServerError(text=f"Gagal mencari stream: {e}")
+
     # --- Register routes ---
     app.router.add_get("/", handle_index)
     app.router.add_get("/ws", handle_websocket)
+    app.router.add_get("/api/stream/{video_id}", handle_stream)
     app.router.add_static("/static", STATIC_DIR, name="static")
 
     return app
@@ -311,6 +347,10 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppSta
 
         elif action == "radio_randomize":
             await bus.publish(CMD_RADIO_RANDOMIZE)
+
+        elif action == "set_output":
+            output = data.get("output", "device")
+            await bus.publish(CMD_SET_OUTPUT, output)
 
     except Exception as e:
         logger.error(f"Error handling WS command '{action}': {e}", exc_info=True)

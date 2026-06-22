@@ -10,6 +10,7 @@
     const store = {
         status: "IDLE",
         playback_mode: "QUEUE",
+        audio_output: "device",
         current_track: null,
         position: 0,
         volume: 80,
@@ -29,6 +30,7 @@
     // ── DOM Cache ──
     const $ = (id) => document.getElementById(id);
     const dom = {
+        outputToggleBtn: $("output-toggle-btn"),
         statusDot: $("status-dot"),
         statusText: $("status-text"),
         // Now Playing
@@ -104,6 +106,9 @@
                 clearTimeout(wsReconnectTimer);
                 wsReconnectTimer = null;
             }
+            
+            const savedOutput = localStorage.getItem("ytgui_audio_output") || "device";
+            wsSend("set_output", { output: savedOutput });
         };
 
         ws.onmessage = (event) => {
@@ -141,12 +146,14 @@
             case "state":
                 Object.assign(store, msg.data);
                 renderFullState();
+                syncBrowserAudio();
                 break;
             case "progress":
                 store.position = msg.data.position;
                 store.status = msg.data.status;
                 renderProgress();
                 renderPlayBtn();
+                syncBrowserAudio();
                 break;
             case "lyrics":
                 store.lyrics_lines = msg.data.lyrics_lines || [];
@@ -188,6 +195,15 @@
         } else {
             dom.statusDot.classList.add("offline");
             dom.statusText.textContent = "offline";
+        }
+
+        const out = store.audio_output || "device";
+        if (out === "browser") {
+            dom.outputToggleBtn.textContent = "💻 BROWSER";
+            dom.outputToggleBtn.classList.add("browser");
+        } else {
+            dom.outputToggleBtn.textContent = "📱 HP";
+            dom.outputToggleBtn.classList.remove("browser");
         }
     }
 
@@ -591,6 +607,12 @@
     // Player Controls
     // ══════════════════════════════════════
 
+    dom.outputToggleBtn.addEventListener("click", () => {
+        const newOutput = store.audio_output === "browser" ? "device" : "browser";
+        localStorage.setItem("ytgui_audio_output", newOutput);
+        wsSend("set_output", { output: newOutput });
+    });
+
     dom.btnPlay.addEventListener("click", () => wsSend("toggle_pause"));
     dom.btnNext.addEventListener("click", () => wsSend("next"));
     dom.btnPrev.addEventListener("click", () => wsSend("prev"));
@@ -795,6 +817,72 @@
         logToastTimer = setTimeout(() => {
             dom.logToast.classList.remove("active");
         }, 3000);
+    }
+
+    // ══════════════════════════════════════
+    // Browser Audio Sync
+    // ══════════════════════════════════════
+
+    let localAudio = null;
+
+    function getOrInitAudio() {
+        if (!localAudio) {
+            localAudio = new Audio();
+            localAudio.preload = "auto";
+            localAudio.onerror = (e) => {
+                console.error("Local audio error:", e);
+            };
+        }
+        return localAudio;
+    }
+
+    function syncBrowserAudio() {
+        const isBrowser = store.audio_output === "browser";
+        const audio = getOrInitAudio();
+
+        if (!isBrowser) {
+            if (!audio.paused) {
+                audio.pause();
+            }
+            return;
+        }
+
+        const track = store.current_track;
+        if (!track) {
+            if (!audio.paused) audio.pause();
+            if (audio.src) audio.src = "";
+            return;
+        }
+
+        const expectedSrc = window.location.origin + `/api/stream/${track.video_id}`;
+        if (audio.src !== expectedSrc) {
+            audio.src = expectedSrc;
+            audio.load();
+        }
+
+        audio.volume = (store.volume || 80) / 100;
+
+        if (store.status === "PLAYING") {
+            if (audio.paused) {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(err => console.warn("Autoplay prevented:", err));
+                }
+            }
+            
+            const drift = Math.abs(audio.currentTime - store.position);
+            if (drift > 1.5) {
+                audio.currentTime = store.position;
+            }
+        } else {
+            if (!audio.paused) {
+                audio.pause();
+            }
+            const drift = Math.abs(audio.currentTime - store.position);
+            if (drift > 1.5) {
+                audio.currentTime = store.position;
+            }
+        }
     }
 
     // ══════════════════════════════════════

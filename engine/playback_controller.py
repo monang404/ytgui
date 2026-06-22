@@ -9,7 +9,7 @@ import logging
 from core.event_bus import (
     EventBus, TRACK_ENDED, TRACK_PROGRESS, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT,
-    CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
+    CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED, CMD_SET_OUTPUT
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
 from engine.mpv_controller import MpvController
@@ -59,6 +59,7 @@ class PlaybackController:
         self.bus.subscribe(CMD_QUEUE_REMOVE, self._on_queue_remove)
         self.bus.subscribe(CMD_QUEUE_ADD, self._on_queue_add)
         self.bus.subscribe(CMD_RADIO_RANDOMIZE, self._on_radio_randomize)
+        self.bus.subscribe(CMD_SET_OUTPUT, self._on_set_output)
         self.bus.subscribe("track.pause.changed", self._on_pause_changed)
 
     async def play_track(self, track: TrackInfo):
@@ -79,6 +80,12 @@ class PlaybackController:
             
             # Play
             await self.mpv.play(uri)
+            
+            if getattr(self.state, "audio_output", "device") == "browser":
+                await self.mpv.set_volume(0)
+            else:
+                await self.mpv.set_volume(self.state.volume)
+                
             await self.mpv.resume()
             
             self.state.status = PlayerStatus.PLAYING
@@ -222,3 +229,12 @@ class PlaybackController:
         else:
             if self.state.status == PlayerStatus.PAUSED:
                 self.state.status = PlayerStatus.PLAYING
+
+    async def _on_set_output(self, output: str):
+        self.state.audio_output = output
+        if output == "browser":
+            await self.mpv.set_volume(0)
+        else:
+            await self.mpv.set_volume(self.state.volume)
+        await self.bus.publish(LOG_MESSAGE, f"Output suara diubah ke: {'Browser' if output == 'browser' else 'HP'}")
+        await self.bus.publish(QUEUE_UPDATED)

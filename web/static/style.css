@@ -100,6 +100,43 @@ html, body {
     text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+#app-header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#app-header .output-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#app-header .output-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+#app-header .output-btn.browser {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--status-ok);
+    color: var(--status-ok);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+#app-header .output-btn.browser:hover {
+    background: rgba(16, 185, 129, 0.25);
+}
+
 #app-header .status-indicator {
     display: flex;
     align-items: center;
