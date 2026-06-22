@@ -15,6 +15,11 @@
 - **⏭️ SponsorBlock Integration**: Otomatis melompati iklan/sponsor yang disematkan di dalam video YouTube.
 - **📻 Smart Radio Autoplay**: Antrean kosong? Aplikasi akan otomatis mencari dan memutar lagu yang relevan tanpa henti.
 - **💾 Smart Caching & Download**: Lagu yang pernah diputar atau di-download manual (`[M]`) akan disimpan secara lokal. Pemutaran ulang tidak akan menyedot kuota internet.
+- **🌐 Web UI Server-Client (bagas.fm)**: Dapat dijalankan sebagai backend server di Termux HP, lalu diakses secara nirkabel dari browser Laptop/PC atau HP lain di jaringan WiFi yang sama.
+- **🔒 Portal Akses Ganda (Admin & Client)**:
+  - **Admin Mode (Kontrol Penuh)**: Membutuhkan login username & password. Memiliki akses penuh untuk memutar musik, mencari lagu, mengatur antrean, serta mengatur volume.
+  - **Client Mode (Dengar Saja / Intercom)**: Akses instan tanpa password. Musik akan otomatis dialirkan (streaming) ke browser klien. Hanya menampilkan judul lagu, visualizer, dan daftar antrean statis (tanpa tombol kontrol). Cocok sebagai intercom nirkabel!
+  - **Fitur Logout & Switch Mode**: Memudahkan pengguna keluar dari sesi dan beralih peran.
 - **⚡ Super Ringan**: Dibangun dengan arsitektur *asynchronous event-driven*, menggunakan RAM & CPU seminimal mungkin.
 
 ---
@@ -69,6 +74,15 @@ python main.py
 ```
 
 > **Catatan Windows:** Di Windows, aplikasi akan otomatis membuka koneksi TCP internal ke MPV (via fallback) karena fitur Unix Socket tidak tersedia. Pastikan port lokal tidak terblokir firewall.
+
+### 🌐 Mengakses Antarmuka Web (bagas.fm)
+Saat Anda menjalankan aplikasi, server web otomatis aktif di latar belakang pada port `8765`.
+1. Buka browser di Laptop/PC atau HP lain yang satu jaringan WiFi dengan HP Termux Anda.
+2. Masukkan alamat IP HP Termux Anda dan port `8765` (Contoh: `http://192.168.1.5:8765`).
+3. Anda akan disambut oleh halaman **Portal bagas.fm** untuk memilih mode:
+   - **Mode Client (Dengar Saja)**: Langsung masuk tanpa sandi. Musik dari server akan otomatis dialirkan (streaming) dan berbunyi di browser Laptop/PC ini.
+   - **Mode Admin**: Gunakan username **`bagasfm`** dan password **`bagasradio2626@`** untuk mendapatkan kontrol penuh.
+4. Klik tombol **`🚪 Keluar`** di pojok kanan atas UI Web untuk logout dan kembali ke halaman portal.
 
 ---
 
