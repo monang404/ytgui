@@ -1386,30 +1386,101 @@ html, body {
 }
 
 /* ══════════════════════════════════════
-   CLIENT MODE LAYOUT HIDING
+   CLIENT MODE LAYOUT HIDING & STYLING
    ══════════════════════════════════════ */
+
+.client-mode #app-header {
+    background: transparent !important;
+    border-bottom: none !important;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.client-mode #app-header .app-title,
+.client-mode #app-header .status-indicator,
+.client-mode #app-header #output-toggle-btn {
+    display: none !important;
+}
+
+.client-mode #app-header .logout-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 8px;
+    font-size: 11px;
+    opacity: 0.4;
+    transition: opacity var(--transition-fast);
+}
+
+.client-mode #app-header .logout-btn:hover {
+    opacity: 1;
+    color: var(--status-err);
+}
 
 .client-mode #nav-bar {
     display: none !important;
 }
 
-.client-mode #output-toggle-btn {
+.client-mode #player-bar {
     display: none !important;
 }
 
-.client-mode .pb-controls {
-    display: none !important;
+.client-mode #tab-home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 16px 20px;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
-.client-mode .pb-progress-track {
+.client-mode #eq-canvas {
+    margin-bottom: 20px;
+}
+
+.client-mode #tab-home .np-title {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.client-mode #tab-home .np-artist {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.client-mode #queue-list {
+    width: 100%;
+    max-height: 280px;
+    overflow-y: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.client-mode .queue-item {
     cursor: default !important;
     pointer-events: none !important;
 }
 
-.client-mode .pb-progress-track:hover {
-    height: 6px !important;
+.client-mode .queue-item:hover {
+    background: var(--bg-glass) !important;
+    border-color: var(--border) !important;
 }
 
-.client-mode .pb-progress-track:hover .pb-progress-fill::after {
-    opacity: 0 !important;
+.client-mode .queue-item .qi-remove {
+    display: none !important;
 }

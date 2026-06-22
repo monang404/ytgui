@@ -43,6 +43,8 @@
         loginErrorMsg: $("login-error-msg"),
         logoutBtn: $("logout-btn"),
         appContainer: $("app"),
+        tabHome: $("tab-home"),
+        tabQueue: $("tab-queue"),
         outputToggleBtn: $("output-toggle-btn"),
         statusDot: $("status-dot"),
         statusText: $("status-text"),
@@ -651,15 +653,21 @@
             dom.portalScreen.classList.add("portal-active");
             dom.appContainer.classList.add("portal-active");
             document.body.classList.remove("client-mode");
+            // Kembalikan queue ke tab queue jika dari portal
+            dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
         } else if (store.userRole === "client") {
             dom.portalScreen.classList.remove("portal-active");
             dom.appContainer.classList.remove("portal-active");
             document.body.classList.add("client-mode");
             switchTab("home");
+            // Pindahkan queue list ke tab home untuk mode client
+            dom.tabHome.appendChild(dom.queueList);
         } else if (store.userRole === "admin") {
             dom.portalScreen.classList.remove("portal-active");
             dom.appContainer.classList.remove("portal-active");
             document.body.classList.remove("client-mode");
+            // Kembalikan queue list ke tab queue untuk mode admin
+            dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
         }
     }
 
