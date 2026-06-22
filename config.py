@@ -31,3 +31,7 @@ GAPLESS_PREBUFFER_SEC = 15
 AUTOPLAY_THRESHOLD = 2
 SPONSORBLOCK_CATS = ["sponsor", "intro", "outro", "selfpromo"]
 LYRICS_API_BASE = "https://lrclib.net/api"
+
+# Web Server
+WEB_HOST = os.environ.get("YTGUI_HOST", "0.0.0.0")
+WEB_PORT = int(os.environ.get("YTGUI_PORT", 8765))

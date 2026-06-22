@@ -18,7 +18,7 @@ from engine.volume_service import VolumeService
 from engine.download_manager import DownloadManager
 from engine.playback_controller import PlaybackController
 from integrations.termux_notification import TermuxNowPlaying
-from config import BASE_DIR
+from config import BASE_DIR, WEB_HOST, WEB_PORT
 
 log_path = BASE_DIR / "ytplayer.log"
 _log_handler = RotatingFileHandler(
@@ -41,7 +41,6 @@ except OSError:
 
 async def main():
     state = AppState()
-    no_tui = "--no-tui" in sys.argv
     
     # 1. Initialize DB
     db = Database()
@@ -104,32 +103,23 @@ async def main():
     connectivity_task = asyncio.create_task(check_connectivity())
     tasks = [connectivity_task]
     
-    # 8. Start App
+    # 8. Start Web Server
     try:
-        if no_tui:
-            print(f"Running in --no-tui mode. Logs available at {log_path}")
-            print("To quit, press Ctrl+C")
-            
-            # Send a test search to verify it works
-            async def test_search():
-                try:
-                    res = await ytdlp.search("top hits music", max_results=10)
-                    if res:
-                        state.queue = res[1:]
-                        await controller.play_track(res[0])
-                except Exception as e:
-                    print(f"Test search failed: {e}")
-            asyncio.create_task(test_search())
-            
-            # Run loop for 10 seconds then exit for testing purposes
-            for _ in range(15):
-                await asyncio.sleep(1)
-            print("Test timeout reached, exiting.")
-            return
-        else:
-            from tui.app import YTGuiApp
-            app = YTGuiApp(state, ytdlp, db)
-            await app.run_async()
+        from web.server import create_app, run_server
+        
+        app = create_app(state, ytdlp, db, controller)
+        
+        host = WEB_HOST
+        port = WEB_PORT
+        
+        print(f"╔══════════════════════════════════════╗")
+        print(f"║   YTGUI Web Server                   ║")
+        print(f"║   http://{host}:{port}              ║")
+        print(f"║   Buka di browser untuk menggunakan  ║")
+        print(f"╚══════════════════════════════════════╝")
+        
+        await run_server(app, host=host, port=port)
+
     except asyncio.CancelledError:
         pass
     finally:

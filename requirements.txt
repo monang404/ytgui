@@ -1,6 +1,7 @@
-rich
 yt-dlp
 aiosqlite
 aiohttp
-textual
 syncedlyrics
+uvicorn[standard]
+fastapi
+websockets
