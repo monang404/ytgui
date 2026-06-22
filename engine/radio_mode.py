@@ -165,7 +165,6 @@ class RadioMode:
         self.state = state
         self._is_fetching = False
         self._bg_tasks = set()
-        self._search_lock = asyncio.Semaphore(1)
         # Rotasi artis tanpa pengulangan: urutan acak dari SEED_ARTISTS yang
         # "dikonsumsi" dari depan tiap kali batch baru diambil. Begitu deck
         # ini habis, semua artis sudah pasti kebagian giliran sekali, lalu
@@ -216,8 +215,9 @@ class RadioMode:
         try:
             new_tracks = await self._gather_batch()
             if new_tracks:
-                self.state.radio_queue.clear()
                 self.state.radio_queue.extend(new_tracks)
+                while len(self.state.radio_queue) > 30:
+                    self.state.radio_queue.pop()
                 await bus.publish(QUEUE_UPDATED)
         except Exception as e:
             await bus.publish(LOG_MESSAGE, f"Prefetch Error: {str(e)}")
@@ -315,8 +315,7 @@ class RadioMode:
         Mengembalikan sekitar TRACKS_PER_ARTIST_TARGET track unik
         (bisa kurang kalau memang stoknya tipis)."""
         query = f"{artist} music"
-        async with self._search_lock:
-            results = await self.ytdlp.search(query, max_results=15)
+        results = await self.ytdlp.search(query, max_results=15)
         existing = self._build_exclusion_set()
 
         seen_titles: set[str] = set()

@@ -19,6 +19,7 @@ cache/sockets/
 cache/*.db
 cache/*.db-shm
 cache/*.db-wal
+cache/admin_password.txt
 *.log
 *.mp3
 *.webm
@@ -30,16 +31,23 @@ config.local.py
 agen_konteks.md
 arsitektur.md
 audit.md
+AUDIT.MD
 design.md
 implementasi_plan.md
+implementation_plan.md
+task.md
+walkthrough.md
 AUDIT_PROMPT.md
 refactor.MD
 refactor.md
 refactor.txt
 HASIL_*.md
+LAPORAN_*.md
+ANALISIS_*.md
 FINAL_RELEASE_REPORT.md
 verifikasi.MD
 ui_*.md
+*.zip
 
 # Test artifacts (bukan test code)
 .pytest_cache/

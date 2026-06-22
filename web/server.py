@@ -44,8 +44,7 @@ def _track_to_dict(track: Optional[TrackInfo]) -> Optional[dict]:
         "artist": track.artist,
         "duration": track.duration,
         "thumbnail": track.thumbnail,
-        "local_path": track.local_path,
-        "stream_url": track.stream_url,
+        "is_cached": bool(track.local_path),
         "view_count": track.view_count,
     }
 
@@ -95,6 +94,9 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: list[web.WebSocketResponse] = []
         self.authenticated_connections: set[web.WebSocketResponse] = set()
+        self.session_tokens: dict[str, float] = {}
+        self.login_attempts: dict[str, list[float]] = {}
+        self.command_history: dict[str, list[float]] = {}
 
     async def connect(self, ws: web.WebSocketResponse):
         self.active_connections.append(ws)
@@ -130,12 +132,34 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
     app["db"] = db
     app["controller"] = controller
     app["manager"] = manager
+    app["http_session"] = aiohttp.ClientSession()
+
+    async def on_cleanup(app):
+        await app["http_session"].close()
+    app.on_cleanup.append(on_cleanup)
 
     # --- Progress throttle ---
     last_progress = {"t": 0.0}
 
     # --- EventBus → WebSocket bridge ---
+    async def _prefetch_stream_url(video_id: str):
+        """Resolve dan cache stream URL di background, sebelum client request."""
+        row = await db.get_track(video_id)
+        if row and row.get("stream_url") and row.get("stream_url_ts"):
+            if time.time() - row["stream_url_ts"] < 7200:
+                return  # sudah ada, skip
+        try:
+            url = await ytdlp.get_stream_url(video_id)
+            from core.state import TrackInfo
+            temp_track = TrackInfo(video_id=video_id, title="Temp", artist="Temp", duration=0)
+            await db.upsert_track(temp_track, stream_url=url)
+        except Exception as e:
+            logger.warning(f"Pre-fetch stream URL gagal untuk {video_id}: {e}")
+
     async def _on_track_started(track):
+        if track and track.video_id:
+            asyncio.create_task(_prefetch_stream_url(track.video_id))
+            
         await manager.broadcast({
             "type": "state",
             "data": _state_to_dict(state),
@@ -230,7 +254,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
                         data = json.loads(msg.data)
                     except json.JSONDecodeError:
                         continue
-                    await _handle_ws_message(data, ws, state, ytdlp, manager)
+                    await _handle_ws_message(data, ws, request.remote, state, ytdlp, manager)
                 elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSE):
                     break
         except Exception as e:
@@ -240,48 +264,114 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
         return ws
 
+    # --- Route: Health Check Endpoint ---
+    async def handle_health(request):
+        db = request.app["db"]
+        db_status = "connected" if db.conn else "disconnected"
+        
+        controller = request.app["controller"]
+        mpv_status = "connected" if controller.mpv and getattr(controller.mpv, "is_connected", False) else "disconnected"
+        
+        return web.json_response({
+            "status": "ok" if db_status == "connected" and mpv_status == "connected" else "degraded",
+            "db": db_status,
+            "mpv": mpv_status
+        })
+
     # --- Route: Stream Endpoint ---
     async def handle_stream(request):
         video_id = request.match_info.get("video_id")
-        if not video_id:
-            return web.HTTPBadRequest(text="Missing video_id")
-            
-        safe_id = "".join(c for c in video_id if c.isalnum() or c in "-_")
-        cache_file = CACHE_DIR / f"{safe_id}.mp3"
-        
-        # Jika file MP3 ada di cache, serve secara langsung
+        if not video_id or not re.match(r"^[a-zA-Z0-9_-]{11}$", video_id):
+            return web.HTTPBadRequest(text="Invalid video_id")
+
+        cache_file = CACHE_DIR / f"{video_id}.mp3"
         if cache_file.exists():
-            return web.FileResponse(cache_file)
-            
-        # Jika tidak ada di cache, cari streaming url dari DB / yt-dlp
-        ytdlp = request.app["ytdlp"]
+            return web.FileResponse(
+                cache_file,
+                headers={"Access-Control-Allow-Origin": "*"}
+            )
+
         db = request.app["db"]
-        
+        ytdlp = request.app["ytdlp"]
+        stream_url = None
+
         row = await db.get_track(video_id)
         if row and row.get("stream_url") and row.get("stream_url_ts"):
-            ts = row.get("stream_url_ts")
-            if time.time() - ts < 21600:
-                return web.HTTPFound(row["stream_url"])
-                
-        try:
-            url = await ytdlp.get_stream_url(video_id)
-            from core.state import TrackInfo
-            track = TrackInfo(video_id=video_id, title="Temp", artist="Temp", duration=0)
-            await db.upsert_track(track, stream_url=url)
-            return web.HTTPFound(url)
-        except Exception as e:
-            return web.HTTPInternalServerError(text=f"Gagal mencari stream: {e}")
+            if time.time() - row["stream_url_ts"] < 7200:
+                stream_url = row["stream_url"]
+
+        http_session = request.app.get("http_session")
+        if not http_session:
+            return web.HTTPFound(stream_url or "")
+
+        for attempt in range(2):
+            if not stream_url:
+                try:
+                    stream_url = await ytdlp.get_stream_url(video_id)
+                    from core.state import TrackInfo
+                    track = TrackInfo(video_id=video_id, title="Temp", artist="Temp", duration=0)
+                    await db.upsert_track(track, stream_url=stream_url)
+                except Exception as e:
+                    if attempt == 1:
+                        return web.HTTPInternalServerError(text=f"Gagal mencari stream: {e}")
+                    continue
+
+            try:
+                headers = {}
+                if "Range" in request.headers:
+                    headers["Range"] = request.headers["Range"]
+
+                async with http_session.get(stream_url, headers=headers) as upstream:
+                    if upstream.status in (403, 410) and attempt == 0:
+                        logger.warning(f"YouTube stream URL expired ({upstream.status}), refetching...")
+                        stream_url = None
+                        continue
+
+                    response = web.StreamResponse(
+                        status=upstream.status,
+                        headers={
+                            "Content-Type": upstream.headers.get("Content-Type", "audio/mpeg"),
+                            "Accept-Ranges": "bytes",
+                            "Access-Control-Allow-Origin": "*",
+                            "Cache-Control": "no-store",
+                        }
+                    )
+                    
+                    if "Content-Range" in upstream.headers:
+                        response.headers["Content-Range"] = upstream.headers["Content-Range"]
+                    if "Content-Length" in upstream.headers:
+                        try:
+                            response.content_length = int(upstream.headers["Content-Length"])
+                        except ValueError:
+                            pass
+
+                    await response.prepare(request)
+
+                    async for chunk in upstream.content.iter_chunked(65536):
+                        await response.write(chunk)
+
+                    await response.write_eof()
+                    return response
+
+            except Exception as e:
+                logger.warning(f"Proxy stream error untuk {video_id}: {e}")
+                if attempt == 0:
+                    stream_url = None
+                    continue
+                return web.HTTPInternalServerError(text="Proxy stream error")
 
     # --- Register routes ---
     app.router.add_get("/", handle_index)
+    app.router.add_get("/admin", handle_index)
     app.router.add_get("/ws", handle_websocket)
     app.router.add_get("/api/stream/{video_id}", handle_stream)
+    app.router.add_get("/health", handle_health)
     app.router.add_static("/static", STATIC_DIR, name="static")
 
     return app
 
 
-async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppState, ytdlp, manager):
+async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: str, state: AppState, ytdlp, manager: ConnectionManager):
     """Process incoming WebSocket commands from browser."""
     msg_type = msg.get("type")
     action = msg.get("action", "")
@@ -292,19 +382,51 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppSta
 
     # Check authentication
     from config import ADMIN_USERNAME, ADMIN_PASSWORD
+    import secrets
+    import time
+    
     is_authenticated = ws in manager.authenticated_connections
 
     try:
+        now = time.time()
+        
         if action == "auth":
+            token = data.get("token")
+            if token and token in manager.session_tokens:
+                if now < manager.session_tokens[token]:
+                    manager.authenticated_connections.add(ws)
+                    await ws.send_str(json.dumps({
+                        "type": "auth_status",
+                        "data": {"success": True, "token": token}
+                    }))
+                    return
+                else:
+                    del manager.session_tokens[token]
+
+            attempts = manager.login_attempts.get(client_ip, [])
+            attempts = [t for t in attempts if now - t < 300]
+            if len(attempts) >= 5:
+                await ws.send_str(json.dumps({
+                    "type": "auth_status",
+                    "data": {"success": False, "message": "Terlalu banyak percobaan login. Coba lagi dalam 5 menit."}
+                }))
+                return
+
             username = data.get("username", "")
             password = data.get("password", "")
             if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+                new_token = secrets.token_hex(16)
+                manager.session_tokens[new_token] = now + 86400  # 24 hours expiry
                 manager.authenticated_connections.add(ws)
+                if client_ip in manager.login_attempts:
+                    del manager.login_attempts[client_ip]
                 await ws.send_str(json.dumps({
                     "type": "auth_status",
-                    "data": {"success": True}
+                    "data": {"success": True, "token": new_token}
                 }))
             else:
+                attempts.append(now)
+                manager.login_attempts[client_ip] = attempts
                 await ws.send_str(json.dumps({
                     "type": "auth_status",
                     "data": {"success": False, "message": "Username atau Password salah!"}
@@ -318,6 +440,19 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, state: AppSta
                 "data": "Akses ditolak. Silakan login sebagai Admin.",
             }))
             return
+            
+        # Command Rate Limiting
+        cmd_history = manager.command_history.get(client_ip, [])
+        cmd_history = [t for t in cmd_history if now - t < 60]
+        if len(cmd_history) >= 30:
+            await ws.send_str(json.dumps({
+                "type": "error",
+                "data": "Terlalu banyak permintaan. Mohon tunggu sesaat."
+            }))
+            return
+        cmd_history.append(now)
+        manager.command_history[client_ip] = cmd_history
+        
         if action == "search":
             query = data.get("query", "").strip()
             if query:

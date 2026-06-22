@@ -122,13 +122,19 @@ class PlaybackController:
 
     async def _on_track_ended(self, data: dict):
         reason = data.get("reason")
+        
+        # Build payload for next to prevent double-skip if track changes concurrently
+        next_data = {}
+        if self.state.current_track:
+            next_data["video_id"] = self.state.current_track.video_id
+
         if reason == "eof":
-            await self._on_next()
+            await self._on_next(next_data)
         elif reason == "error":
             self.state.status = PlayerStatus.ERROR
             await self.bus.publish(LOG_MESSAGE, "Terjadi kesalahan pemutaran")
             await asyncio.sleep(2)
-            await self._on_next()
+            await self._on_next(next_data)
 
     async def _on_track_progress(self, position: float):
         self.state.position = position
@@ -137,8 +143,12 @@ class PlaybackController:
         if self.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED):
             await self.mpv.toggle_pause()
 
-    async def _on_next(self, _data=None):
+    async def _on_next(self, data=None):
         async with self._lock:
+            if data and isinstance(data, dict) and "video_id" in data:
+                if not self.state.current_track or self.state.current_track.video_id != data["video_id"]:
+                    logger.info(f"Ignoring skip: requested {data['video_id']} != current {getattr(self.state.current_track, 'video_id', None)}")
+                    return
             await self._advance_to_next()
 
     async def _advance_to_next(self):

@@ -81,8 +81,14 @@ Saat Anda menjalankan aplikasi, server web otomatis aktif di latar belakang pada
 2. Masukkan alamat IP HP Termux Anda dan port `8765` (Contoh: `http://192.168.1.5:8765`).
 3. Anda akan disambut oleh halaman **Portal bagas.fm** untuk memilih mode:
    - **Mode Client (Dengar Saja)**: Langsung masuk tanpa sandi. Musik dari server akan otomatis dialirkan (streaming) dan berbunyi di browser Laptop/PC ini.
-   - **Mode Admin**: Gunakan username **`bagasfm`** dan password **`bagasradio2626@`** untuk mendapatkan kontrol penuh.
+   - **Mode Admin**: Gunakan username **`admin`**. Password akan di-generate otomatis secara acak dan dicetak ke konsol saat server pertama kali berjalan (juga disimpan di file `cache/admin_password.txt`). Anda juga bisa mengaturnya via Environment Variable `YTGUI_ADMIN_USER` dan `YTGUI_ADMIN_PASS`.
 4. Klik tombol **`🚪 Keluar`** di pojok kanan atas UI Web untuk logout dan kembali ke halaman portal.
+
+### 🔒 Deployment Aman (HTTPS / WSS Publik)
+Secara default, bagas.fm berjalan di `http://` (teks biasa). Jika Anda ingin mengakses server ini dari luar jaringan WiFi rumah (Internet), **SANGAT DISARANKAN** untuk mengamankannya dengan HTTPS. Anda dapat menggunakan *Reverse Proxy* seperti Nginx, Caddy, atau layanan tunneling:
+- **Ngrok / Tailscale / Cloudflare Tunnels**: Cara termudah menghubungkan server Termux Anda ke internet menggunakan enkripsi dari ujung ke ujung tanpa perlu setting port-forwarding manual.
+- **Contoh Nginx Reverse Proxy**:
+  Arahkan trafik HTTPS ke port `8765`, dan pastikan Anda me-*proxy* *header* WebSocket (`Upgrade: websocket`) agar *streaming* lirik dan perintah admin tidak terputus.
 
 ---
 

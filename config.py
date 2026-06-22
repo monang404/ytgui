@@ -37,5 +37,22 @@ WEB_HOST = os.environ.get("YTGUI_HOST", "0.0.0.0")
 WEB_PORT = int(os.environ.get("YTGUI_PORT", 8765))
 
 # Web Security
-ADMIN_USERNAME = os.environ.get("YTGUI_ADMIN_USER", "bagasfm")
-ADMIN_PASSWORD = os.environ.get("YTGUI_ADMIN_PASS", "bagasradio2626@")
+ADMIN_USERNAME = os.environ.get("YTGUI_ADMIN_USER", "admin")
+
+IS_PASSWORD_AUTO_GENERATED = False
+_password_file = BASE_DIR / "cache" / "admin_password.txt"
+
+if "YTGUI_ADMIN_PASS" in os.environ:
+    ADMIN_PASSWORD = os.environ["YTGUI_ADMIN_PASS"]
+else:
+    IS_PASSWORD_AUTO_GENERATED = True
+    if _password_file.exists():
+        with open(_password_file, "r", encoding="utf-8") as f:
+            ADMIN_PASSWORD = f.read().strip()
+    else:
+        # Generate random password
+        import secrets
+        ADMIN_PASSWORD = secrets.token_urlsafe(12)
+        _password_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(_password_file, "w", encoding="utf-8") as f:
+            f.write(ADMIN_PASSWORD)

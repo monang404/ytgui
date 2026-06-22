@@ -43,11 +43,15 @@ async def main():
     state = AppState()
     
     # 1. Initialize DB
+    print("  [1/5] Membuka database perpustakaan...")
     db = Database()
     await db.init()
     
     # 2. Initialize Core Engine
+    print("  [2/5] Menginisialisasi YT-DLP Engine...")
     ytdlp = YtDlpClient()
+    
+    print("  [3/5] Menghubungkan ke audio player (MPV)...")
     mpv = MpvController()
     try:
         await mpv.connect()
@@ -63,6 +67,7 @@ async def main():
     http_session = aiohttp.ClientSession()
     
     # 4. Initialize Integrations & Resolver
+    print("  [4/5] Memuat modul SponsorBlock & Lyrics Fetcher...")
     resolver = CacheResolver(db, ytdlp)
     sponsorblock = SponsorBlockHandler(mpv, state=state, session=http_session)
     lyrics_fetcher = LyricsFetcher(state, session=http_session)
@@ -74,6 +79,7 @@ async def main():
     download_manager = DownloadManager(bus, state, ytdlp)
     
     # 6. Initialize Playback Controller
+    print("  [5/5] Menyusun Playback Controller...")
     controller = PlaybackController(
         bus, state, mpv, resolver, sponsorblock, lyrics_fetcher, queue_mode, radio_mode
     )
@@ -103,6 +109,33 @@ async def main():
     connectivity_task = asyncio.create_task(check_connectivity())
     tasks = [connectivity_task]
     
+    # 7.5 MPV auto-reconnect checker
+    async def mpv_reconnect_checker():
+        while True:
+            await asyncio.sleep(5)
+            if not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
+                logging.getLogger(__name__).warning("MPV terputus! Mencoba reconnect...")
+                try:
+                    await mpv.close()
+                except Exception:
+                    pass
+                try:
+                    await mpv.connect()
+                    if state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED) and state.current_track:
+                        uri = await resolver.resolve(state.current_track)
+                        await mpv.play(uri)
+                        await mpv.seek(state.position)
+                        if getattr(state, "audio_output", "device") == "browser":
+                            await mpv.set_volume(0)
+                        else:
+                            await mpv.set_volume(state.volume)
+                        if state.status == PlayerStatus.PLAYING:
+                            await mpv.resume()
+                except Exception as e:
+                    logging.getLogger(__name__).error(f"MPV reconnect failed: {e}")
+
+    tasks.append(asyncio.create_task(mpv_reconnect_checker()))
+    
     # 8. Start Web Server
     try:
         from web.server import create_app, run_server
@@ -112,11 +145,30 @@ async def main():
         host = WEB_HOST
         port = WEB_PORT
         
-        print(f"╔══════════════════════════════════════╗")
-        print(f"║   YTGUI Web Server                   ║")
-        print(f"║   http://{host}:{port}              ║")
-        print(f"║   Buka di browser untuk menggunakan  ║")
-        print(f"╚══════════════════════════════════════╝")
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            display_host = s.getsockname()[0]
+            s.close()
+        except Exception:
+            display_host = host if host != "0.0.0.0" else "127.0.0.1"
+            
+        url_client = f"http://{display_host}:{port}"
+        url_admin = f"http://{display_host}:{port}/admin"
+        print(f"╔══════════════════════════════════════════════════╗")
+        print(f"║   YTGUI Web Server                               ║")
+        print(f"║   Client : {url_client:<37} ║")
+        print(f"║   Admin  : {url_admin:<37} ║")
+        
+        from config import ADMIN_USERNAME, ADMIN_PASSWORD, IS_PASSWORD_AUTO_GENERATED
+        if IS_PASSWORD_AUTO_GENERATED:
+            print(f"║                                                  ║")
+            print(f"║   Kredensial Mode Admin:                         ║")
+            print(f"║   User: {ADMIN_USERNAME:<40} ║")
+            print(f"║   Pass: {ADMIN_PASSWORD:<40} ║")
+            print(f"║   (Tersimpan: cache/admin_password.txt)          ║")
+        print(f"╚══════════════════════════════════════════════════╝")
         
         await run_server(app, host=host, port=port)
 

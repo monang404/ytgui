@@ -18,7 +18,7 @@ class YtDlpClient:
         "quiet": True,
         "no_warnings": True,
         "extract_flat": False,
-        "format": "bestaudio/best",
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "format_sort": ["abr", "asr"],
     }
 

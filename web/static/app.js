@@ -123,15 +123,14 @@
             }
             
             // Re-authenticate if we are admin
-            if (store.userRole === "admin" && store.adminUsername && store.adminPassword) {
-                wsSend("auth", {
-                    username: store.adminUsername,
-                    password: store.adminPassword
-                });
+            if (store.userRole === "admin") {
+                const token = localStorage.getItem("ytgui_session_token");
+                if (token) {
+                    wsSend("auth", { token: token });
+                }
+                const savedOutput = localStorage.getItem("ytgui_audio_output") || "device";
+                wsSend("set_output", { output: savedOutput });
             }
-            
-            const savedOutput = localStorage.getItem("ytgui_audio_output") || "device";
-            wsSend("set_output", { output: savedOutput });
         };
 
         ws.onmessage = (event) => {
@@ -170,8 +169,10 @@
                 if (msg.data.success) {
                     store.userRole = "admin";
                     localStorage.setItem("ytgui_user_role", "admin");
-                    localStorage.setItem("ytgui_admin_username", store.adminUsername);
-                    localStorage.setItem("ytgui_admin_password", store.adminPassword);
+                    if (msg.data.token) {
+                        localStorage.setItem("ytgui_session_token", msg.data.token);
+                    }
+                    localStorage.removeItem("ytgui_admin_password"); // Jangan simpan password
                     dom.loginErrorMsg.textContent = "";
                     dom.portalLoginForm.classList.add("hidden");
                     applyRoleUI();
@@ -251,7 +252,10 @@
     // ── Now Playing ──
     function renderNowPlaying() {
         const t = store.current_track;
-        if (t) {
+        if (store.status === "LOADING") {
+            dom.npTitle.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:8px; vertical-align:-3px; width:20px; height:20px;"></span> ⏳ Memuat...';
+            dom.npArtist.textContent = t ? t.title : "";
+        } else if (t) {
             dom.npTitle.textContent = t.title;
             dom.npArtist.textContent = t.artist;
         } else {
@@ -277,7 +281,7 @@
 
         // Track Info
         if (store.status === "LOADING") {
-            dom.pbTrackInfo.textContent = "⏳ Memuat... " + (t ? t.title : "");
+            dom.pbTrackInfo.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:5px; vertical-align:-2px;"></span> Memuat... ' + escapeHtml(t ? t.title : "");
         } else if (t) {
             dom.pbTrackInfo.textContent = t.title + " — " + t.artist;
         } else {
@@ -655,6 +659,7 @@
             document.body.classList.remove("client-mode");
             // Kembalikan queue ke tab queue jika dari portal
             dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
+            dom.logoutBtn.style.display = "none";
         } else if (store.userRole === "client") {
             dom.portalScreen.classList.remove("portal-active");
             dom.appContainer.classList.remove("portal-active");
@@ -662,12 +667,14 @@
             switchTab("home");
             // Pindahkan queue list ke tab home untuk mode client
             dom.tabHome.appendChild(dom.queueList);
+            dom.logoutBtn.style.display = "none";
         } else if (store.userRole === "admin") {
             dom.portalScreen.classList.remove("portal-active");
             dom.appContainer.classList.remove("portal-active");
             document.body.classList.remove("client-mode");
             // Kembalikan queue list ke tab queue untuk mode admin
             dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
+            dom.logoutBtn.style.display = "inline-flex";
         }
     }
 
@@ -678,17 +685,53 @@
         localStorage.removeItem("ytgui_user_role");
         localStorage.removeItem("ytgui_admin_username");
         localStorage.removeItem("ytgui_admin_password");
-        applyRoleUI();
-        if (ws) {
-            ws.close();
+        localStorage.removeItem("ytgui_session_token");
+        if (window.location.pathname !== "/admin") {
+            window.location.href = "/admin";
+        } else {
+            dom.portalClientBtn.style.display = "none";
+            applyRoleUI();
+            if (ws) {
+                ws.close();
+            }
         }
     }
+
+    let audioUnlocked = false;
+    function unlockBrowserAudio() {
+        if (audioUnlocked) return;
+        const audio = getOrInitAudio();
+        
+        // Force valid silent src to unlock iOS Safari
+        if (!audio.src || audio.src === window.location.href || audio.src === window.location.origin + "/") {
+            audio.src = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+AAAAAExhdmM1OS4zNy4xMDBHAAAAAAAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAATEFN//MUZAMAAAGkAAAAAAAAA0gAAAAARTmZ//MUZAYAAAGkAAAAAAAAA0gAAAAARTmZ//MUZAwAAAGkAAAAAAAAA0gAAAAARTmZ";
+        }
+        
+        audio.volume = 0; // Mute just in case
+        const p = audio.play();
+        if (p !== undefined) {
+            p.catch((err) => {
+                console.warn("Unlock play failed:", err);
+            }).finally(() => {
+                audioUnlocked = true;
+                syncBrowserAudio(); 
+            });
+        } else {
+            audioUnlocked = true;
+            syncBrowserAudio();
+        }
+    }
+
+    // Dengarkan klik pertama di seluruh halaman untuk membuka kunci audio (berguna jika auto-login)
+    document.addEventListener("click", unlockBrowserAudio, { once: true });
+    document.addEventListener("touchstart", unlockBrowserAudio, { once: true });
 
     // Portal screen event listeners
     dom.portalClientBtn.addEventListener("click", () => {
         store.userRole = "client";
         localStorage.setItem("ytgui_user_role", "client");
         applyRoleUI();
+        unlockBrowserAudio();
         syncBrowserAudio();
     });
 
@@ -729,7 +772,7 @@
     dom.outputToggleBtn.addEventListener("click", () => {
         if (store.userRole !== "admin") return;
         const newOutput = store.audio_output === "browser" ? "device" : "browser";
-        localStorage.setItem("ytgui_audio_output", newOutput);
+        if (newOutput === "browser") unlockBrowserAudio();
         wsSend("set_output", { output: newOutput });
     });
 
@@ -737,7 +780,13 @@
         if (store.userRole === "admin") wsSend("toggle_pause");
     });
     dom.btnNext.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("next");
+        if (store.userRole === "admin") {
+            const data = {};
+            if (store.current_track && store.current_track.video_id) {
+                data.video_id = store.current_track.video_id;
+            }
+            wsSend("next", data);
+        }
     });
     dom.btnPrev.addEventListener("click", () => {
         if (store.userRole === "admin") wsSend("prev");
@@ -777,7 +826,13 @@
         if (store.userRole === "admin") wsSend("radio_randomize");
     });
     dom.radioSkipBtn.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("next");
+        if (store.userRole === "admin") {
+            const data = {};
+            if (store.current_track && store.current_track.video_id) {
+                data.video_id = store.current_track.video_id;
+            }
+            wsSend("next", data);
+        }
     });
 
     // ══════════════════════════════════════
@@ -968,58 +1023,69 @@
         if (!localAudio) {
             localAudio = new Audio();
             localAudio.preload = "auto";
+            localAudio.crossOrigin = "anonymous";
             localAudio.onerror = (e) => {
-                console.error("Local audio error:", e);
+                const errMsg = localAudio.error?.message || "unknown";
+                if (errMsg.includes("Empty src") || !localAudio.getAttribute("src")) {
+                    return; // Abaikan error reset src yang disengaja
+                }
+                console.error("Browser audio error:", e, errMsg);
+                showLogToast("⚠️ Error audio: " + errMsg);
             };
         }
         return localAudio;
     }
+
+    let _lastLoadedVideoId = null;
 
     function syncBrowserAudio() {
         const isBrowser = store.userRole === "client" || store.audio_output === "browser";
         const audio = getOrInitAudio();
 
         if (!isBrowser) {
-            if (!audio.paused) {
-                audio.pause();
-            }
+            if (!audio.paused) audio.pause();
             return;
         }
 
         const track = store.current_track;
         if (!track) {
             if (!audio.paused) audio.pause();
-            if (audio.src) audio.src = "";
+            if (audio.hasAttribute("src") && audio.src && !audio.src.startsWith("data:")) {
+                audio.removeAttribute("src");
+                audio.load();
+            }
+            _lastLoadedVideoId = null;
             return;
         }
 
         const expectedSrc = window.location.origin + `/api/stream/${track.video_id}`;
-        if (audio.src !== expectedSrc) {
+
+        if (_lastLoadedVideoId !== track.video_id) {
+            _lastLoadedVideoId = track.video_id;
             audio.src = expectedSrc;
+            
+            audio.oncanplay = () => {
+                if (store.position > 2 && Math.abs(audio.currentTime - store.position) > 2) {
+                    audio.currentTime = store.position;
+                }
+                audio.oncanplay = null;
+            };
+            
             audio.load();
         }
 
-        audio.volume = (store.volume || 80) / 100;
+        audio.volume = Math.max(0, Math.min(1, (store.volume || 80) / 100));
 
         if (store.status === "PLAYING") {
-            if (audio.paused) {
+            if (audio.paused && audio.src) {
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(err => console.warn("Autoplay prevented:", err));
                 }
             }
-            
-            const drift = Math.abs(audio.currentTime - store.position);
-            if (drift > 1.5) {
-                audio.currentTime = store.position;
-            }
         } else {
             if (!audio.paused) {
                 audio.pause();
-            }
-            const drift = Math.abs(audio.currentTime - store.position);
-            if (drift > 1.5) {
-                audio.currentTime = store.position;
             }
         }
     }
@@ -1046,13 +1112,27 @@
     // Init
     // ══════════════════════════════════════
 
-    const savedRole = localStorage.getItem("ytgui_user_role") || "portal";
-    store.userRole = savedRole;
-    if (savedRole === "admin") {
-        store.adminUsername = localStorage.getItem("ytgui_admin_username") || "";
-        store.adminPassword = localStorage.getItem("ytgui_admin_password") || "";
+    const path = window.location.pathname;
+
+    if (path === "/admin") {
+        const savedRole = localStorage.getItem("ytgui_user_role");
+        if (savedRole === "admin") {
+            store.userRole = "admin";
+            applyRoleUI();
+        } else {
+            store.userRole = "portal";
+            applyRoleUI();
+            dom.portalClientBtn.style.display = "none";
+            dom.portalAdminBtn.click();
+        }
+    } else {
+        // Show portal (popup) for Client mode only
+        store.userRole = "portal";
+        localStorage.removeItem("ytgui_user_role"); // Force interaction on reload
+        applyRoleUI();
+        const adminWrapper = document.querySelector(".portal-admin-wrapper");
+        if (adminWrapper) adminWrapper.style.display = "none";
     }
-    applyRoleUI();
 
     wsConnect();
 })();
