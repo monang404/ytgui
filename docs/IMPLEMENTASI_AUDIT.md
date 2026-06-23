@@ -644,7 +644,7 @@ web/server.py subscribe ke room.event_bus per room
 - `[ ]` TASK-3.7 — Hapus global `bus` singleton
 
 ### FASE 4 (Opsional)
-- `[ ]` TASK-4.1 — `ThreadPoolExecutor` untuk yt-dlp
-- `[ ]` TASK-4.2 — Semaphore radio batch search
-- `[ ]` TASK-4.3 — Timeout syncedlyrics
-- `[ ]` TASK-4.4 — Per-room progress throttle
+- `[x]` TASK-4.1 — `ThreadPoolExecutor` untuk yt-dlp
+- `[x]` TASK-4.2 — Semaphore radio batch search
+- `[x]` TASK-4.3 — Timeout syncedlyrics
+- `[x]` TASK-4.4 — Per-room progress throttle

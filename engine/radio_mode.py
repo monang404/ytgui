@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Optional
 from core.event_bus import bus
 from core.events import QueueUpdatedEvent, LogMessageEvent
 
+_RADIO_SEARCH_SEM = asyncio.Semaphore(2)
+
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 from core.state import AppState, PlaybackMode, PlayerStatus
@@ -329,9 +331,10 @@ class RadioMode:
         official video/lyric/audio tidak terhitung sebagai 3 lagu beda).
         Mengembalikan sekitar TRACKS_PER_ARTIST_TARGET track unik
         (bisa kurang kalau memang stoknya tipis)."""
-        query = f"{artist} music"
-        results = await self.ytdlp.search(query, max_results=15)
-        existing = self._build_exclusion_set()
+        async with _RADIO_SEARCH_SEM:
+            query = f"{artist} music"
+            results = await self.ytdlp.search(query, max_results=15)
+            existing = self._build_exclusion_set()
 
         seen_titles: set[str] = set()
         unique_tracks = []

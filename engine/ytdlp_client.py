@@ -1,6 +1,7 @@
 import asyncio
 import yt_dlp
 import re
+from concurrent.futures import ThreadPoolExecutor
 from core.state import TrackInfo
 from config import CACHE_DIR
 
@@ -24,6 +25,7 @@ class YtDlpClient:
 
     def __init__(self):
         self.is_cancelled = False
+        self._executor = ThreadPoolExecutor(max_workers=2)
 
     def cancel_download(self):
         self.is_cancelled = True
@@ -37,7 +39,7 @@ class YtDlpClient:
                 "extract_flat": True}
         url = f"ytsearch10:{query}"
         loop = asyncio.get_running_loop()
-        results = await loop.run_in_executor(None, self._extract_sync, url, opts)
+        results = await loop.run_in_executor(self._executor, self._extract_sync, url, opts)
         
         tracks = []
         for e in results.get("entries", []):
@@ -74,7 +76,7 @@ class YtDlpClient:
         url = f"https://www.youtube.com/watch?v={video_id}"
         loop = asyncio.get_running_loop()
         try:
-            info = await loop.run_in_executor(None, self._extract_sync, url, opts)
+            info = await loop.run_in_executor(self._executor, self._extract_sync, url, opts)
             if info:
                 return self._pick_audio_url(info)
         except Exception:
@@ -105,7 +107,7 @@ class YtDlpClient:
             "progress_hooks": hooks,
         }
         loop = asyncio.get_running_loop()  # HIGH-03 fix
-        await loop.run_in_executor(None, self._download_sync, video_id, opts)
+        await loop.run_in_executor(self._executor, self._download_sync, video_id, opts)
         return str(CACHE_DIR / f"{safe_id}.mp3")
 
     def _extract_sync(self, url, opts):

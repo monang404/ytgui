@@ -176,7 +176,12 @@ class TestTask14RoomIdValidation:
     @pytest.mark.asyncio
     async def test_max_rooms_limit(self, aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
         # Penuhi batas room_manager (MAX_ROOMS = 10)
-        mock_room_manager.rooms = {f"room{i}": True for i in range(10)}
+        def create_mock_room(i):
+            m = MagicMock()
+            m.room_id = f"room{i}"
+            m.event_bus = MagicMock()
+            return m
+        mock_room_manager.rooms = {f"room{i}": create_mock_room(i) for i in range(10)}
         from web.server import create_app
         app = create_app(mock_room_manager, mock_ytdlp, mock_db)
         client = await aiohttp_client(app)

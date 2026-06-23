@@ -100,7 +100,11 @@ class LyricsFetcher:
                 logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
                 logger.info(f"syncedlyrics query: {search_query}")
                 loop = asyncio.get_running_loop()
-                lrc = await loop.run_in_executor(None, syncedlyrics.search, search_query)
+                try:
+                    lrc = await asyncio.wait_for(loop.run_in_executor(None, syncedlyrics.search, search_query), timeout=5.0)
+                except asyncio.TimeoutError:
+                    logger.warning("syncedlyrics timeout (5.0s)")
+                    lrc = None
             
             if self._current_generation == gen:
                 if lrc:
