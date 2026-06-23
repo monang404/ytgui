@@ -7,9 +7,12 @@ Publishes: TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
 import asyncio
 import logging
 from core.event_bus import (
-    EventBus, TRACK_ENDED, TRACK_PROGRESS, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
+    EventBus, TRACK_ENDED, TRACK_PROGRESS, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
+)
+from core.command_bus import (
+    command_bus, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT,
-    CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED, CMD_SET_OUTPUT
+    CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, CMD_SET_OUTPUT
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
 from core.ports import AudioPlayerPort
@@ -47,20 +50,23 @@ class PlaybackController:
         self._retry_count = 0
 
         # Subscribe
+        # Subscribe events
         self.bus.subscribe(TRACK_ENDED, self._on_track_ended)
         self.bus.subscribe(TRACK_PROGRESS, self._on_track_progress)
-        self.bus.subscribe(CMD_PLAY_TRACK, self._on_cmd_play_track)
-        self.bus.subscribe(CMD_TOGGLE_PAUSE, self._on_cmd_toggle_pause)
-        self.bus.subscribe(CMD_NEXT, self._on_next)
-        self.bus.subscribe(CMD_PREV, self._on_prev)
-        self.bus.subscribe(CMD_STOP, self._on_stop)
-        self.bus.subscribe(CMD_SEEK, self._on_seek)
-        self.bus.subscribe(CMD_SET_MODE, self._on_set_mode)
-        self.bus.subscribe(CMD_QUEUE_SELECT, self._on_queue_select)
-        self.bus.subscribe(CMD_QUEUE_REMOVE, self._on_queue_remove)
-        self.bus.subscribe(CMD_QUEUE_ADD, self._on_queue_add)
-        self.bus.subscribe(CMD_RADIO_RANDOMIZE, self._on_radio_randomize)
-        self.bus.subscribe(CMD_SET_OUTPUT, self._on_set_output)
+
+        # Register commands
+        command_bus.register(CMD_PLAY_TRACK, self._on_cmd_play_track)
+        command_bus.register(CMD_TOGGLE_PAUSE, self._on_cmd_toggle_pause)
+        command_bus.register(CMD_NEXT, self._on_next)
+        command_bus.register(CMD_PREV, self._on_prev)
+        command_bus.register(CMD_STOP, self._on_stop)
+        command_bus.register(CMD_SEEK, self._on_seek)
+        command_bus.register(CMD_SET_MODE, self._on_set_mode)
+        command_bus.register(CMD_QUEUE_SELECT, self._on_queue_select)
+        command_bus.register(CMD_QUEUE_REMOVE, self._on_queue_remove)
+        command_bus.register(CMD_QUEUE_ADD, self._on_queue_add)
+        command_bus.register(CMD_RADIO_RANDOMIZE, self._on_radio_randomize)
+        command_bus.register(CMD_SET_OUTPUT, self._on_set_output)
         self.bus.subscribe("track.pause.changed", self._on_pause_changed)
 
     async def play_track(self, track: TrackInfo):

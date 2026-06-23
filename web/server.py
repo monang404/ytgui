@@ -23,7 +23,10 @@ from aiohttp import web
 from config import CACHE_DIR, STREAM_URL_TTL_SEC
 from core.event_bus import (
     bus, TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
-    DOWNLOAD_COMPLETE, LOG_MESSAGE, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
+    DOWNLOAD_COMPLETE, LOG_MESSAGE
+)
+from core.command_bus import (
+    command_bus, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_VOLUME_UP, CMD_VOLUME_DOWN,
     CMD_DOWNLOAD, CMD_SET_MODE, CMD_SET_OUTPUT, CMD_QUEUE_SELECT,
     CMD_QUEUE_ADD, CMD_QUEUE_REMOVE, CMD_RADIO_RANDOMIZE
@@ -498,57 +501,58 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
         elif action == "play_track":
             track = _dict_to_track(data)
             if track:
-                await bus.publish(CMD_PLAY_TRACK, track)
+                await command_bus.execute(CMD_PLAY_TRACK, track)
 
         elif action == "toggle_pause":
-            await bus.publish(CMD_TOGGLE_PAUSE)
+            await command_bus.execute(CMD_TOGGLE_PAUSE)
 
         elif action == "next":
-            await bus.publish(CMD_NEXT)
+            await command_bus.execute(CMD_NEXT)
 
         elif action == "prev":
-            await bus.publish(CMD_PREV)
+            await command_bus.execute(CMD_PREV)
 
         elif action == "stop":
-            await bus.publish(CMD_STOP)
+            await command_bus.execute(CMD_STOP)
 
         elif action == "seek":
             position = data.get("position", 0)
-            await bus.publish(CMD_SEEK, float(position))
+            await command_bus.execute(CMD_SEEK, float(position))
 
         elif action == "volume_up":
-            await bus.publish(CMD_VOLUME_UP)
+            await command_bus.execute(CMD_VOLUME_UP)
 
         elif action == "volume_down":
-            await bus.publish(CMD_VOLUME_DOWN)
+            await command_bus.execute(CMD_VOLUME_DOWN)
 
         elif action == "download":
-            await bus.publish(CMD_DOWNLOAD)
+            await command_bus.execute(CMD_DOWNLOAD)
 
         elif action == "set_mode":
             mode_str = data.get("mode", "queue").upper()
             mode = PlaybackMode.RADIO if mode_str == "RADIO" else PlaybackMode.QUEUE
-            await bus.publish(CMD_SET_MODE, mode)
+            await command_bus.execute(CMD_SET_MODE, mode)
 
         elif action == "queue_select":
             index = data.get("index", 0)
-            await bus.publish(CMD_QUEUE_SELECT, int(index))
+            await command_bus.execute(CMD_QUEUE_SELECT, int(index))
 
         elif action == "queue_remove":
             index = data.get("index", 0)
-            await bus.publish(CMD_QUEUE_REMOVE, int(index))
+            await command_bus.execute(CMD_QUEUE_REMOVE, int(index))
 
         elif action == "queue_add":
             track = _dict_to_track(data)
             if track:
-                await bus.publish(CMD_QUEUE_ADD, track)
+                await command_bus.execute(CMD_QUEUE_ADD, track)
 
         elif action == "radio_randomize":
-            await bus.publish(CMD_RADIO_RANDOMIZE)
+            await command_bus.execute(CMD_RADIO_RANDOMIZE)
 
         elif action == "set_output":
-            output = data.get("output", "device")
-            await bus.publish(CMD_SET_OUTPUT, output)
+            output_str = data.get("output", "device")
+            output_val = AudioOutput.BROWSER if output_str == "browser" else AudioOutput.DEVICE
+            await command_bus.execute(CMD_SET_OUTPUT, output_val)
 
     except Exception as e:
         logger.error(f"Error handling WS command '{action}': {e}", exc_info=True)

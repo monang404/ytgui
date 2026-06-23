@@ -17,9 +17,11 @@ from tui.tabs.queue_tab import QueueTab
 from tui.screens.help_screen import HelpScreen
 from core.event_bus import (
     bus, LOG_MESSAGE, TRACK_STARTED, QUEUE_UPDATED, LYRICS_UPDATED,
-    DOWNLOAD_COMPLETE, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
-    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT,
-    TRACK_PROGRESS
+    DOWNLOAD_COMPLETE, TRACK_PROGRESS
+)
+from core.command_bus import (
+    command_bus, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
+    CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUIT
 )
 
 class YTGuiApp(App):
@@ -250,25 +252,25 @@ class YTGuiApp(App):
         self.set_focus(None)
 
     async def action_pause(self) -> None:
-        await bus.publish(CMD_TOGGLE_PAUSE)
+        await command_bus.execute(CMD_TOGGLE_PAUSE)
 
     async def action_next(self) -> None:
-        await bus.publish(CMD_NEXT)
+        await command_bus.execute(CMD_NEXT)
 
     async def action_prev(self) -> None:
-        await bus.publish(CMD_PREV)
+        await command_bus.execute(CMD_PREV)
 
     async def action_stop(self) -> None:
-        await bus.publish(CMD_STOP)
+        await command_bus.execute(CMD_STOP)
 
     async def action_vol_up(self) -> None:
-        await bus.publish(CMD_VOLUME_UP)
+        await command_bus.execute(CMD_VOLUME_UP)
 
     async def action_vol_down(self) -> None:
-        await bus.publish(CMD_VOLUME_DOWN)
+        await command_bus.execute(CMD_VOLUME_DOWN)
 
     async def action_download(self) -> None:
-        await bus.publish(CMD_DOWNLOAD)
+        await command_bus.execute(CMD_DOWNLOAD)
 
     async def action_toggle_lyrics(self) -> None:
         if self.state.active_tab != TAB_QUEUE:
@@ -294,10 +296,10 @@ class YTGuiApp(App):
 
     async def action_switch_radio(self) -> None:
         new_mode = PlaybackMode.RADIO if self.state.playback_mode == PlaybackMode.QUEUE else PlaybackMode.QUEUE
-        await bus.publish(CMD_SET_MODE, new_mode)
+        await command_bus.execute(CMD_SET_MODE, new_mode)
 
     async def action_quit(self) -> None:
-        await bus.publish(CMD_QUIT)
+        await command_bus.execute(CMD_QUIT)
         self.exit()
 
     async def action_help(self) -> None:

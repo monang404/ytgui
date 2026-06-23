@@ -205,14 +205,14 @@ class QueueTab(Widget):
         if self._is_radio:
             return
         if isinstance(event.item, QueueItem) and not event.item.is_current:
-            await bus.publish(CMD_QUEUE_SELECT, event.item.queue_index)
+            await command_bus.execute(CMD_QUEUE_SELECT, event.item.queue_index)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id and event.button.id.startswith("rm_"):
             if self._is_radio:
                 return
             idx = int(event.button.id.split("_")[1])
-            await bus.publish(CMD_QUEUE_REMOVE, idx)
+            await command_bus.execute(CMD_QUEUE_REMOVE, idx)
             # Prevent list view selection when clicking the remove button
             event.stop()
         elif event.button.id == "lyrics_toggle_btn":

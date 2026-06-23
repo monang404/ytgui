@@ -95,21 +95,3 @@ DOWNLOAD_COMPLETE = "download.complete"  # data: TrackInfo
 
 # === SYSTEM ===
 LOG_MESSAGE      = "log.message"      # data: str
-
-# === COMMANDS ===
-CMD_PLAY_TRACK   = "cmd.play.track"       # data: TrackInfo — BARU
-CMD_TOGGLE_PAUSE = "cmd.toggle.pause"
-CMD_NEXT         = "cmd.next"
-CMD_PREV         = "cmd.prev"
-CMD_STOP         = "cmd.stop"
-CMD_SEEK         = "cmd.seek"              # data: float
-CMD_VOLUME_UP    = "cmd.volume.up"
-CMD_VOLUME_DOWN  = "cmd.volume.down"
-CMD_DOWNLOAD     = "cmd.download"          # data: TrackInfo | None
-CMD_SET_MODE     = "cmd.set.mode"          # data: PlaybackMode — BARU
-CMD_SET_OUTPUT   = "cmd.set.output"        # data: str ("device" or "browser")
-CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
-CMD_QUEUE_ADD    = "cmd.queue.add"         # data: TrackInfo
-CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index) — BARU
-CMD_RADIO_RANDOMIZE = "cmd.radio.randomize"
-CMD_QUIT         = "cmd.quit"

@@ -6,7 +6,8 @@ Publishes: LOG_MESSAGE, DOWNLOAD_COMPLETE
 
 import asyncio
 import logging
-from core.event_bus import EventBus, CMD_DOWNLOAD, DOWNLOAD_COMPLETE, LOG_MESSAGE
+from core.event_bus import EventBus, DOWNLOAD_COMPLETE, LOG_MESSAGE
+from core.command_bus import command_bus, CMD_DOWNLOAD
 from core.state import AppState, TrackInfo
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
@@ -20,7 +21,7 @@ class DownloadManager:
         self.ytdlp = ytdlp
         self._download_lock = asyncio.Lock()
         
-        self.bus.subscribe(CMD_DOWNLOAD, self._on_download)
+        command_bus.register(CMD_DOWNLOAD, self._on_download)
         
     async def _on_download(self, track: TrackInfo | None = None):
         target = track or self.state.current_track

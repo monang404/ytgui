@@ -14,7 +14,8 @@ import shutil
 import threading
 import time
 
-from core.event_bus import EventBus, TRACK_STARTED, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
+from core.event_bus import EventBus, TRACK_STARTED
+from core.command_bus import command_bus, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
 from core.state import TrackInfo
 from config import BASE_DIR
 
@@ -96,7 +97,7 @@ class TermuxNowPlaying:
     async def _handle_token(self, token: str):
         event = _TOKEN_TO_EVENT.get(token)
         if event:
-            await self.bus.publish(event)
+            await command_bus.execute(event)
 
     async def _on_track_started(self, track: TrackInfo):
         self._track = track
