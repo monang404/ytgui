@@ -8,7 +8,9 @@ from textual.containers import Vertical, Center
 from textual import work, on
 from rich.markup import escape
 from core.state import TrackInfo
-from core.event_bus import bus, CMD_PLAY_TRACK, CMD_QUEUE_ADD, LOG_MESSAGE
+from core.event_bus import bus
+from core.command_bus import command_bus, CMD_PLAY_TRACK, CMD_QUEUE_ADD
+from core.task_utils import safe_create_task
 from tui.theme import TEXT_DIM, ACCENT_GOLD, STATUS_OK, STATUS_ERR, BG_PANEL, BG_VOID, BORDER, ACCENT_FIRE
 
 class SearchActionModal(ModalScreen[str]):
@@ -179,9 +181,9 @@ class SearchTab(Widget):
             
             def handle_action(action_id: str | None):
                 if action_id == "play_now":
-                    asyncio.create_task(bus.publish(CMD_PLAY_TRACK, track))
+                    safe_create_task(command_bus.execute(CMD_PLAY_TRACK, track), name="ui_play_track")
                 elif action_id == "enqueue":
-                    asyncio.create_task(bus.publish(CMD_QUEUE_ADD, track))
+                    safe_create_task(command_bus.execute(CMD_QUEUE_ADD, track), name="ui_queue_add")
 
             self.app.push_screen(SearchActionModal(track.title), handle_action)
 

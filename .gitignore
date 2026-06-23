@@ -28,34 +28,22 @@ secrets.json
 config.local.py
 
 # Dokumen internal developer — bukan untuk user
+# (Catatan: docs/ dan tests/ SENGAJA DISERTAKAN ke git)
 agen_konteks.md
 arsitektur.md
-audit.md
-AUDIT.MD
 design.md
-implementasi_plan.md
-implementation_plan.md
-task.md
-walkthrough.md
-AUDIT_PROMPT.md
 refactor.MD
 refactor.md
 refactor.txt
-HASIL_*.md
-LAPORAN_*.md
-ANALISIS_*.md
-FINAL_RELEASE_REPORT.md
-verifikasi.MD
 ui_*.md
 *.zip
 
-# Test artifacts (bukan test code)
+# Test artifacts (bukan test code — hanya output)
 .pytest_cache/
 htmlcov/
 .coverage
 verify_*.py
 debug_*.py
-test_*.py
 
 # File init kosong di widgets (tidak berguna)
 widgets/__init__.py

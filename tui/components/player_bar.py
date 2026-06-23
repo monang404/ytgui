@@ -6,7 +6,8 @@ from textual.containers import Horizontal
 from core.state import AppState, PlayerStatus, PlaybackMode
 from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID
 from tui.theme import STATUS_ERR, BG_ELEVATED, BG_PANEL, ACCENT_FIRE, TEXT_PRIMARY, TEXT_MUTED, STATUS_OK, BG_VOID, BORDER
-from core.event_bus import bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD
+from core.event_bus import bus
+from core.command_bus import command_bus, CMD_PREV, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_DOWNLOAD
 from tui.components.progress_bar import ClickableProgressBar
 from rich.markup import escape
 
@@ -108,17 +109,17 @@ class PlayerBar(Widget):
     async def on_player_btn_click(self, event: events.Click) -> None:
         btn_id = event.control.id
         if btn_id == "btn_prev":
-            await bus.publish(CMD_PREV)
+            await command_bus.execute(CMD_PREV)
         elif btn_id == "btn_play":
-            await bus.publish(CMD_TOGGLE_PAUSE)
+            await command_bus.execute(CMD_TOGGLE_PAUSE)
         elif btn_id == "btn_next":
-            await bus.publish(CMD_NEXT)
+            await command_bus.execute(CMD_NEXT)
         elif btn_id == "btn_download":
-            await bus.publish(CMD_DOWNLOAD)
+            await command_bus.execute(CMD_DOWNLOAD)
         elif btn_id == "btn_voldown":
-            await bus.publish(CMD_VOLUME_DOWN)
+            await command_bus.execute(CMD_VOLUME_DOWN)
         elif btn_id == "btn_volup":
-            await bus.publish(CMD_VOLUME_UP)
+            await command_bus.execute(CMD_VOLUME_UP)
 
     def update_state(self, state: AppState) -> None:
         if state.playback_mode == PlaybackMode.RADIO:

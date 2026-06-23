@@ -1,12 +1,15 @@
 import asyncio
 import json
-import logging
+import structlog
 import os
 from config import MPV_SOCKET
-from core.event_bus import bus, TRACK_PROGRESS, TRACK_ENDED
+from core.event_bus import bus
+from core.events import TrackProgressEvent, TrackEndedEvent, TrackPauseChangedEvent
+from core.state import PlayerStatus
+from core.task_utils import safe_create_task
 from core.exceptions import MpvConnectionError
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class MpvController:
     """
@@ -19,7 +22,7 @@ class MpvController:
     MED-11: Basic reconnection support via is_connected flag.
     """
 
-    def __init__(self):
+    def __init__(self, socket_path: str = None, tcp_port: str = None):
         self._reader = None
         self._writer = None
         self._request_id = 0
@@ -27,6 +30,8 @@ class MpvController:
         self._observer_task = None
         self.is_connected = False
         self._mpv_process = None
+        self.socket_path = socket_path or MPV_SOCKET
+        self.tcp_port = tcp_port or os.environ.get("YT_PLAYER_MPV_PORT", "12345")
 
     async def connect(self):
         import shutil
@@ -42,18 +47,16 @@ class MpvController:
         ]
         
         if os.name == 'nt':
-            tcp_port = os.environ.get("YT_PLAYER_MPV_PORT", "12345")
-            os.environ["YT_PLAYER_MPV_PORT"] = tcp_port
-            cmd = ["mpv"] + common_args + [f"--input-ipc-server=tcp://127.0.0.1:{tcp_port}"]
+            cmd = ["mpv"] + common_args + [f"--input-ipc-server=tcp://127.0.0.1:{self.tcp_port}"]
             if ytdl_arg: cmd.insert(1, ytdl_arg)
         else:
-            os.makedirs(os.path.dirname(MPV_SOCKET), exist_ok=True)
-            if os.path.exists(MPV_SOCKET):
+            os.makedirs(os.path.dirname(self.socket_path), exist_ok=True)
+            if os.path.exists(self.socket_path):
                 try:
-                    os.remove(MPV_SOCKET)
+                    os.remove(self.socket_path)
                 except OSError:
                     pass
-            cmd = ["mpv"] + common_args + [f"--input-ipc-server={MPV_SOCKET}"]
+            cmd = ["mpv"] + common_args + [f"--input-ipc-server={self.socket_path}"]
             if ytdl_arg: cmd.insert(1, ytdl_arg)
             
         try:
@@ -77,30 +80,16 @@ class MpvController:
         for attempt in range(10):
             try:
                 if os.name == 'nt':
-                    # CRITICAL-03: Windows fallback — try TCP first, then Unix
-                    tcp_port = os.environ.get("YT_PLAYER_MPV_PORT", None)
-                    if tcp_port:
-                        self._reader, self._writer = await asyncio.open_connection(
-                            '127.0.0.1', int(tcp_port)
-                        )
-                    else:
-                        try:
-                            self._reader, self._writer = await asyncio.open_unix_connection(MPV_SOCKET)
-                        except (AttributeError, OSError):
-                            raise MpvConnectionError(
-                                "Unix sockets not supported on Windows. "
-                                "Set YT_PLAYER_MPV_PORT env var for TCP, "
-                                "or start mpv with: mpv --input-ipc-server=tcp://127.0.0.1:PORT"
-                            )
+                    self._reader, self._writer = await asyncio.open_connection('127.0.0.1', int(self.tcp_port))
                 else:
-                    self._reader, self._writer = await asyncio.open_unix_connection(MPV_SOCKET)
+                    self._reader, self._writer = await asyncio.open_unix_connection(self.socket_path)
                 
                 self.is_connected = True
-                self._observer_task = asyncio.create_task(self._observe_events())
+                self._observer_task = safe_create_task(self._observe_events(), name="mpv_observer")
                 if os.name != 'nt':
                     try:
                         import stat
-                        os.chmod(MPV_SOCKET, stat.S_IRUSR | stat.S_IWUSR)
+                        os.chmod(self.socket_path, stat.S_IRUSR | stat.S_IWUSR)
                     except OSError:
                         pass  # Bukan fatal jika chmod gagal
                 logger.info(f"Connected to mpv (attempt {attempt + 1})")
@@ -214,13 +203,13 @@ class MpvController:
             name = msg.get("name")
             data = msg.get("data")
             if name == "time-pos" and isinstance(data, (int, float)):
-                await bus.publish(TRACK_PROGRESS, float(data))
+                await bus.publish(TrackProgressEvent(position=float(data)))
             elif name == "pause":
-                await bus.publish("track.pause.changed", bool(data))
+                await bus.publish(TrackPauseChangedEvent(is_paused=bool(data)))
         elif event == "end-file":
             reason = msg.get("reason", "")
             if reason in ("eof", "stop", "error"):
-                await bus.publish(TRACK_ENDED, {"reason": reason})
+                await bus.publish(TrackEndedEvent(reason=reason))
 
     async def _command(self, cmd: list) -> int:
         if not self.is_connected or not self._writer:

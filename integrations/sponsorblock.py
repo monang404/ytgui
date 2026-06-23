@@ -1,10 +1,15 @@
 import json
 import aiohttp
-import logging
+import structlog
+from typing import Optional
 from config import SPONSORBLOCK_CATS
-from core.event_bus import bus, TRACK_PROGRESS, LOG_MESSAGE
+from core.event_bus import bus
+from core.events import TrackProgressEvent, LogMessageEvent
+from core.state import AppState
+from core.ports import AudioPlayerPort
+from core.task_utils import safe_create_task
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 SPONSORBLOCK_API = "https://sponsor.ajay.app/api/skipSegments"
 
 class SponsorBlockHandler:
@@ -12,15 +17,15 @@ class SponsorBlockHandler:
     HIGH-02 fix: Uses json.dumps for category serialization.
     MED-01 fix: Accepts a shared aiohttp session.
     """
-    def __init__(self, mpv, state=None, session: aiohttp.ClientSession = None):
+    def __init__(self, mpv: AudioPlayerPort, state: AppState, session: Optional[aiohttp.ClientSession] = None):
         self.mpv = mpv
         self.state = state
         self.segments: list[tuple[float, float]] = []
         self._session = session
-        bus.subscribe(TRACK_PROGRESS, self._on_progress)
+        bus.subscribe(TrackProgressEvent, self._on_progress)
 
     def cleanup(self):
-        bus.unsubscribe(TRACK_PROGRESS, self._on_progress)
+        bus.unsubscribe(TrackProgressEvent, self._on_progress)
 
     async def fetch_segments(self, video_id: str):
         """Fetches skip segments and stores them in memory for the current track."""
@@ -58,13 +63,14 @@ class SponsorBlockHandler:
         except Exception as e:
             logger.debug(f"SponsorBlock fetch failed: {e}")
 
-    async def _on_progress(self, current_pos: float):
+    async def _on_progress(self, event: TrackProgressEvent):
         """Called every ~0.5s by MpvController. Seeks past sponsored segments."""
+        current_pos = event.position
         if not self.segments or not isinstance(current_pos, (int, float)):
             return
 
         for start, end in self.segments:
             if start <= current_pos <= start + 0.6:
                 await self.mpv.seek(end)
-                await bus.publish(LOG_MESSAGE, f"Melewati sponsor ({int(start)}s - {int(end)}s)")
+                await bus.publish(LogMessageEvent(message=f"Melewati sponsor ({int(start)}s - {int(end)}s)"))
                 break

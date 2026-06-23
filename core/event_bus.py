@@ -4,98 +4,83 @@ Subscribes to: (tidak ada)
 Publishes: (tidak ada)
 """
 
-import weakref
-from typing import Callable, Any
+from typing import Callable, Type, TypeVar, Any
 from collections import defaultdict
 import asyncio
-import logging
+import structlog
 import inspect
+import weakref
 
-logger = logging.getLogger(__name__)
+from core.task_utils import safe_create_task
+from core.events import DomainEvent
+from core.observability import EVENT_COUNT
+
+logger = structlog.get_logger(__name__)
+
+E = TypeVar("E", bound=DomainEvent)
 
 class EventBus:
     """
-    Lightweight pub/sub. Modules do not import each other directly —
+    Lightweight pub/sub using typed DomainEvents.
+    Modules do not import each other directly —
     all communication goes through events to prevent circular imports.
     """
     def __init__(self):
         self._subscribers = defaultdict(list)
 
-    def subscribe(self, event: str, handler: Callable):
+    def subscribe(self, event_type: Type[E], handler: Callable[[E], Any]):
         # Gunakan weakref untuk method agar tidak memory leak
         if inspect.ismethod(handler):
             ref = weakref.WeakMethod(handler)
         else:
             ref = handler # Fallback strong reference untuk fungsi biasa/lambda
-        self._subscribers[event].append(ref)
+        self._subscribers[event_type].append(ref)
 
-    def unsubscribe(self, event: str, handler: Callable):
+    def unsubscribe(self, event_type: Type[E], handler: Callable[[E], Any]):
         """Remove a handler from an event."""
-        if event in self._subscribers:
-            self._subscribers[event] = [
-                r for r in self._subscribers[event]
+        if event_type in self._subscribers:
+            self._subscribers[event_type] = [
+                r for r in self._subscribers[event_type]
                 if (r() if isinstance(r, weakref.ref) else r) != handler
             ]
 
-    async def publish(self, event: str, data: Any = None):
+    async def publish(self, event: DomainEvent):
         """Publish event to all subscribers. Exceptions in one handler
         do NOT prevent subsequent handlers from executing (CRITICAL-01 fix)."""
+        event_type = type(event)
+        
+        # Record Metric
+        EVENT_COUNT.labels(event_type=event_type.__name__, room_id=event.room_id).inc()
+        
         active_handlers = []
-        for ref in list(self._subscribers[event]):
+        for ref in list(self._subscribers[event_type]):
             if isinstance(ref, weakref.ref):
                 handler = ref()
                 if handler is None:
-                    self._subscribers[event].remove(ref) # Cleanup dead reference
+                    self._subscribers[event_type].remove(ref) # Cleanup dead reference
                     continue
             else:
                 handler = ref
             active_handlers.append(handler)
 
+        # Concurrent dispatch with error boundary
+        tasks = []
         for handler in active_handlers:
-            try:
-                if asyncio.iscoroutinefunction(handler):
-                    await handler(data)
-                else:
-                    handler(data)
-            except Exception as e:
-                logger.error(f"Handler {getattr(handler, '__name__', handler)} error on '{event}': {e}", exc_info=True)
+            if asyncio.iscoroutinefunction(handler):
+                async def _wrap_handler(h=handler):
+                    try:
+                        await h(event)
+                    except Exception as e:
+                        logger.error(f"Async Handler {getattr(h, '__name__', h)} error on '{event_type.__name__}': {e}", exc_info=True)
+                tasks.append(safe_create_task(_wrap_handler(), name=f"event_{event_type.__name__}"))
+            else:
+                try:
+                    handler(event)
+                except Exception as e:
+                    logger.error(f"Handler {getattr(handler, '__name__', handler)} error on '{event_type.__name__}': {e}", exc_info=True)
+        
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
 
 # Singleton
 bus = EventBus()
-
-# Event names constants
-
-# === TRACK ===
-TRACK_STARTED    = "track.started"    # data: TrackInfo
-TRACK_ENDED      = "track.ended"      # data: {"reason": str}
-TRACK_PROGRESS   = "track.progress"   # data: float (seconds)
-
-# === QUEUE ===
-QUEUE_UPDATED    = "queue.updated"    # data: None
-
-# === LYRICS ===
-LYRICS_UPDATED   = "lyrics.updated"   # data: None
-
-# === DOWNLOAD ===
-DOWNLOAD_COMPLETE = "download.complete"  # data: TrackInfo
-
-# === SYSTEM ===
-LOG_MESSAGE      = "log.message"      # data: str
-
-# === COMMANDS ===
-CMD_PLAY_TRACK   = "cmd.play.track"       # data: TrackInfo — BARU
-CMD_TOGGLE_PAUSE = "cmd.toggle.pause"
-CMD_NEXT         = "cmd.next"
-CMD_PREV         = "cmd.prev"
-CMD_STOP         = "cmd.stop"
-CMD_SEEK         = "cmd.seek"              # data: float
-CMD_VOLUME_UP    = "cmd.volume.up"
-CMD_VOLUME_DOWN  = "cmd.volume.down"
-CMD_DOWNLOAD     = "cmd.download"          # data: TrackInfo | None
-CMD_SET_MODE     = "cmd.set.mode"          # data: PlaybackMode — BARU
-CMD_SET_OUTPUT   = "cmd.set.output"        # data: str ("device" or "browser")
-CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
-CMD_QUEUE_ADD    = "cmd.queue.add"         # data: TrackInfo
-CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index) — BARU
-CMD_RADIO_RANDOMIZE = "cmd.radio.randomize"
-CMD_QUIT         = "cmd.quit"

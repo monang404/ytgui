@@ -2,7 +2,8 @@ from textual.widgets import Static
 from textual.reactive import reactive
 from textual import events
 
-from core.event_bus import bus, CMD_SEEK
+from core.event_bus import bus
+from core.command_bus import command_bus, CMD_SEEK
 from tui.theme import TEXT_DIM
 
 class ClickableProgressBar(Static):
@@ -57,4 +58,4 @@ class ClickableProgressBar(Static):
             
         pct = click_x / bar_width
         seek_to = pct * self.duration
-        await bus.publish(CMD_SEEK, seek_to)
+        await command_bus.execute(CMD_SEEK, seek_to)

@@ -8,17 +8,19 @@ Publishes: CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
 """
 
 import asyncio
-import logging
+import structlog
 import os
 import shutil
 import threading
 import time
 
-from core.event_bus import EventBus, TRACK_STARTED, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
+from core.event_bus import EventBus
+from core.events import TrackStartedEvent, TrackPauseChangedEvent
+from core.command_bus import command_bus, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
 from core.state import TrackInfo
 from config import BASE_DIR
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 NOTIFICATION_ID = "ytgui_nowplaying"
 _SOCK_DIR = BASE_DIR / "cache" / "sockets"
@@ -44,8 +46,8 @@ class TermuxNowPlaying:
         self._fifo_path = _FIFO_PATH
         self._action_paths = {}
 
-        self.bus.subscribe(TRACK_STARTED, self._on_track_started)
-        self.bus.subscribe("track.pause.changed", self._on_pause_changed)
+        self.bus.subscribe(TrackStartedEvent, self._on_track_started)
+        self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
 
     async def start(self):
         if not shutil.which("termux-notification"):
@@ -96,15 +98,15 @@ class TermuxNowPlaying:
     async def _handle_token(self, token: str):
         event = _TOKEN_TO_EVENT.get(token)
         if event:
-            await self.bus.publish(event)
+            await command_bus.execute(event)
 
-    async def _on_track_started(self, track: TrackInfo):
-        self._track = track
+    async def _on_track_started(self, event: TrackStartedEvent):
+        self._track = event.track
         self._paused = False
         await self._render()
 
-    async def _on_pause_changed(self, paused: bool):
-        self._paused = bool(paused)
+    async def _on_pause_changed(self, event: TrackPauseChangedEvent):
+        self._paused = bool(event.is_paused)
         if self._track:
             await self._render()
 

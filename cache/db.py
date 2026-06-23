@@ -1,11 +1,11 @@
 import aiosqlite
 import time
-import logging
+import structlog
 from pathlib import Path
 from core.state import TrackInfo
 from config import DB_PATH
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class Database:
     """
@@ -44,13 +44,27 @@ class Database:
             await self._conn.close()
             self._conn = None
 
-    async def get_track(self, video_id: str) -> dict | None:
-        """Retrieves track metadata from the database as a dictionary."""
+    async def get_track(self, video_id: str) -> TrackInfo | None:
+        """Retrieves track metadata from the database as a TrackInfo entity."""
         async with self._conn.execute(
             "SELECT * FROM tracks WHERE video_id = ?", (video_id,)
         ) as cursor:
             row = await cursor.fetchone()
-            return dict(row) if row else None
+            if not row:
+                return None
+            return TrackInfo(
+                video_id=row["video_id"],
+                title=row["title"],
+                artist=row["artist"],
+                duration=row["duration"],
+                thumbnail=row["thumbnail"],
+                local_path=row["local_path"],
+                stream_url=row["stream_url"],
+                view_count=row["view_count"],
+                stream_url_ts=row["stream_url_ts"],
+                play_count=row["play_count"],
+                last_played=row["last_played"],
+            )
 
     async def upsert_track(self, track: TrackInfo, stream_url: str = None, local_path: str = None):
         """Inserts or updates a track record (metadata + cache URLs only)."""
@@ -94,4 +108,32 @@ class Database:
             "UPDATE tracks SET play_count = play_count + 1, last_played = ? WHERE video_id = ?",
             (ts, video_id)
         )
+        await self._conn.commit()
+
+    async def create_session(self, token: str, expires_at: int):
+        await self._conn.execute(
+            "INSERT INTO sessions (token, expires_at) VALUES (?, ?)",
+            (token, expires_at)
+        )
+        await self._conn.commit()
+
+    async def verify_session(self, token: str) -> bool:
+        now = int(time.time())
+        async with self._conn.execute(
+            "SELECT expires_at FROM sessions WHERE token = ?", (token,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row and row["expires_at"] > now:
+                return True
+            if row:
+                await self.delete_session(token)
+            return False
+
+    async def delete_session(self, token: str):
+        await self._conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+        await self._conn.commit()
+        
+    async def cleanup_sessions(self):
+        now = int(time.time())
+        await self._conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
         await self._conn.commit()

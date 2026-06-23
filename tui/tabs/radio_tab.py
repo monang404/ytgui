@@ -5,7 +5,8 @@ from textual.containers import Vertical, Horizontal
 from textual import on
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
-from core.event_bus import bus, CMD_SET_MODE, CMD_NEXT, CMD_RADIO_RANDOMIZE
+from core.event_bus import bus
+from core.command_bus import command_bus, CMD_SET_MODE, CMD_NEXT, CMD_RADIO_RANDOMIZE
 from tui.theme import TEXT_DIM, STATUS_OK, TEXT_PRIMARY, ACCENT_FIRE, BG_ELEVATED, BG_VOID, BORDER
 from tui.components.nav_bar import TabChanged
 
@@ -88,12 +89,12 @@ class RadioTab(Widget):
     @on(Button.Pressed, "#radio_btn")
     async def toggle_radio(self, event: Button.Pressed) -> None:
         mode = PlaybackMode.QUEUE if self.app.state.playback_mode == PlaybackMode.RADIO else PlaybackMode.RADIO
-        await bus.publish(CMD_SET_MODE, mode)
+        await command_bus.execute(CMD_SET_MODE, mode)
 
     @on(Button.Pressed, "#random_radio_btn")
     async def on_randomize_radio(self, event: Button.Pressed) -> None:
-        await bus.publish(CMD_RADIO_RANDOMIZE)
+        await command_bus.execute(CMD_RADIO_RANDOMIZE)
 
     @on(Button.Pressed, "#radio_skip_btn")
     async def on_skip(self, event: Button.Pressed) -> None:
-        await bus.publish(CMD_NEXT)
+        await command_bus.execute(CMD_NEXT)

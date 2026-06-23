@@ -10,12 +10,13 @@ set YTGUI_HOST=0.0.0.0
 set YTGUI_PORT=8765
 
 :: Hilangkan tanda "::" di bawah ini untuk mengunci kredensial admin
+:: Jika dibiarkan terkunci, sistem akan men-generate password otomatis secara aman (di-hash)
 :: set YTGUI_ADMIN_USER=admin
 :: set YTGUI_ADMIN_PASS=password_rahasia_anda
 timeout /t 1 >nul
 
 echo [2/3] Memeriksa dependensi Python...
-python -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics" >nul 2>&1
+python -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics, structlog" >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo       [Peringatan] Dependensi belum lengkap! Pastikan Anda sudah menjalankan 'pip install -r requirements.txt'.
     timeout /t 2 >nul

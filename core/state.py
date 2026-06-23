@@ -16,6 +16,10 @@ class PlayerStatus(Enum):
     PAUSED   = auto()
     ERROR    = auto()
 
+class AudioOutput(str, Enum):
+    DEVICE = "device"
+    BROWSER = "browser"
+
 class PlaybackMode(Enum):
     QUEUE = auto()   # user-directed
     RADIO = auto()   # autonomous, self-sustaining
@@ -30,13 +34,19 @@ class TrackInfo:
     local_path: Optional[str] = None
     stream_url: Optional[str] = None
     view_count: Optional[int] = None
+    stream_url_ts: Optional[int] = None
+    play_count: Optional[int] = None
+    last_played: Optional[int] = None
 
 @dataclass
 class AppState:
+    # Room Identifier
+    room_id:         str = "default"
+
     # Playback
     status:          PlayerStatus  = PlayerStatus.IDLE
     playback_mode:   PlaybackMode  = PlaybackMode.QUEUE
-    audio_output:    str           = "device"
+    audio_output:    AudioOutput   = AudioOutput.DEVICE
     current_track:   Optional[TrackInfo] = None
     position:        float = 0.0
     duration:        float = 0.0

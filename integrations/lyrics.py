@@ -1,14 +1,15 @@
 import re
-import logging
+import structlog
 import aiohttp
 import bisect
 import asyncio
 import syncedlyrics
 from contextlib import asynccontextmanager
 from config import LYRICS_API_BASE
-from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
+from core.event_bus import bus
+from core.events import LyricsUpdatedEvent, TrackProgressEvent
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 from core.state import TrackInfo
 
@@ -21,10 +22,11 @@ class LyricsFetcher:
         self.state = state
         self.lyrics_data: list[tuple[float, str]] = []
         self._session = session
-        bus.subscribe(TRACK_PROGRESS, self._on_progress)
+        self._current_generation = 0
+        bus.subscribe(TrackProgressEvent, self._on_progress)
 
     def cleanup(self):
-        bus.unsubscribe(TRACK_PROGRESS, self._on_progress)
+        bus.unsubscribe(TrackProgressEvent, self._on_progress)
 
     async def fetch(self, track: TrackInfo):
         """Fetches synchronized lyrics from lrclib.net and parses them."""
@@ -36,7 +38,11 @@ class LyricsFetcher:
         self.state.lyrics_index = 0
         self.state.lyrics_offset = 0.0
         self.state.lyrics_loading = True
-        await bus.publish(LYRICS_UPDATED)
+        
+        self._current_generation += 1
+        gen = self._current_generation
+        
+        await bus.publish(LyricsUpdatedEvent())
 
         @asynccontextmanager
         async def get_session():
@@ -58,31 +64,31 @@ class LyricsFetcher:
                         data = await resp.json()
                         lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
 
-            # Bersihkan judul secara umum (karena info dari YouTube sering kotor)
-            clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
-            for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
-                clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
-            clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
-            
-            # Buat search query yang lebih bersih
-            if "-" in title:
-                search_query = clean_title
-            else:
-                search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
-
-            # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
-            if not lrc:
-                url_search = f"{LYRICS_API_BASE}/search"
-                params_search = {"q": search_query}
+                # Bersihkan judul secara umum (karena info dari YouTube sering kotor)
+                clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
+                for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
+                    clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
+                clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
                 
-                async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                    if resp.status == 200:
-                        results = await resp.json()
-                        if isinstance(results, list):
-                            for res in results:
-                                lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
-                                if lrc:
-                                    break
+                # Buat search query yang lebih bersih
+                if "-" in title:
+                    search_query = clean_title
+                else:
+                    search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
+
+                # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
+                if not lrc:
+                    url_search = f"{LYRICS_API_BASE}/search"
+                    params_search = {"q": search_query}
+                    
+                    async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                        if resp.status == 200:
+                            results = await resp.json()
+                            if isinstance(results, list):
+                                for res in results:
+                                    lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
+                                    if lrc:
+                                        break
             
             # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
             if not lrc:
@@ -91,20 +97,23 @@ class LyricsFetcher:
                 loop = asyncio.get_running_loop()
                 lrc = await loop.run_in_executor(None, syncedlyrics.search, search_query)
             
-            if lrc:
-                self.lyrics_data = self._parse_lrc(lrc)
-                # LOW-07 fix: Store CLEAN lines (no timestamps) for display
-                self.state.lyrics_lines = [text for _, text in self.lyrics_data]
-                await bus.publish(LYRICS_UPDATED)
-                logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
-            else:
-                logger.info("Lyrics: No lyrics found anywhere")
+            if self._current_generation == gen:
+                if lrc:
+                    self.lyrics_data = self._parse_lrc(lrc)
+                    # LOW-07 fix: Store CLEAN lines (no timestamps) for display
+                    self.state.lyrics_lines = [text for _, text in self.lyrics_data]
+                    await bus.publish(LyricsUpdatedEvent())
+                    logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
+                else:
+                    logger.info("Lyrics: No lyrics found anywhere")
                 
         except Exception as e:
-            logger.debug(f"Lyrics fetch failed: {e}")
+            if self._current_generation == gen:
+                logger.debug(f"Lyrics fetch failed: {e}")
         finally:
-            self.state.lyrics_loading = False
-            await bus.publish(LYRICS_UPDATED)
+            if self._current_generation == gen:
+                self.state.lyrics_loading = False
+                await bus.publish(LyricsUpdatedEvent())
 
     def _parse_lrc(self, lrc_text: str) -> list[tuple[float, str]]:
         """Parse LRC format. Strips timestamp tags from text content."""
@@ -127,8 +136,9 @@ class LyricsFetcher:
         
         return sorted(result, key=lambda x: x[0])
 
-    async def _on_progress(self, position: float):
+    async def _on_progress(self, event: TrackProgressEvent):
         """Find the active lyric index based on current playback position."""
+        position = event.position
         if not self.lyrics_data or not isinstance(position, (int, float)):
             return
 
@@ -139,4 +149,4 @@ class LyricsFetcher:
                 
         if self.state.lyrics_index != active_idx:
             self.state.lyrics_index = active_idx
-            await bus.publish(LYRICS_UPDATED)
+            await bus.publish(LyricsUpdatedEvent())

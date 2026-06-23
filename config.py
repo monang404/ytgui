@@ -53,7 +53,15 @@ else:
     else:
         # Generate random password
         import secrets
-        ADMIN_PASSWORD = secrets.token_urlsafe(12)
+        from core.security import hash_password
+        
+        raw_password = secrets.token_urlsafe(12)
+        ADMIN_PASSWORD = hash_password(raw_password)
         _password_file.parent.mkdir(parents=True, exist_ok=True)
         with open(_password_file, "w", encoding="utf-8") as f:
             f.write(ADMIN_PASSWORD)
+        
+        print(f"\\n==========================================")
+        print(f"PASSWORD ADMIN GENERATED: {raw_password}")
+        print(f"Harap simpan password ini! Tidak akan ditampilkan lagi.")
+        print(f"==========================================\\n")

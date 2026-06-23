@@ -4,7 +4,8 @@
 export YTGUI_HOST="0.0.0.0"
 export YTGUI_PORT=8765
 
-# Uncomment baris di bawah ini untuk mengunci kredensial admin (agar tidak digenerate otomatis)
+# Uncomment baris di bawah ini untuk mengunci kredensial admin
+# Jika dibiarkan terkunci, sistem akan men-generate password otomatis secara aman (di-hash)
 # export YTGUI_ADMIN_USER="admin"
 # export YTGUI_ADMIN_PASS="password_rahasia_anda"
 
@@ -16,7 +17,7 @@ echo "[1/3] Menyiapkan environment variables..."
 sleep 1
 
 echo "[2/3] Memeriksa dependensi Python..."
-if python3 -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics" &> /dev/null; then
+if python3 -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics, structlog" &> /dev/null; then
     echo -e "      \033[1;32m[OK]\033[0m Dependensi lengkap."
 else
     echo -e "      \033[1;33m[Peringatan]\033[0m Dependensi belum lengkap! Sebaiknya jalankan 'pip install -r requirements.txt'."
