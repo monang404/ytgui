@@ -21,6 +21,7 @@ class LyricsFetcher:
         self.state = state
         self.lyrics_data: list[tuple[float, str]] = []
         self._session = session
+        self._current_generation = 0
         bus.subscribe(TRACK_PROGRESS, self._on_progress)
 
     def cleanup(self):
@@ -36,6 +37,10 @@ class LyricsFetcher:
         self.state.lyrics_index = 0
         self.state.lyrics_offset = 0.0
         self.state.lyrics_loading = True
+        
+        self._current_generation += 1
+        gen = self._current_generation
+        
         await bus.publish(LYRICS_UPDATED)
 
         @asynccontextmanager
@@ -91,20 +96,23 @@ class LyricsFetcher:
                 loop = asyncio.get_running_loop()
                 lrc = await loop.run_in_executor(None, syncedlyrics.search, search_query)
             
-            if lrc:
-                self.lyrics_data = self._parse_lrc(lrc)
-                # LOW-07 fix: Store CLEAN lines (no timestamps) for display
-                self.state.lyrics_lines = [text for _, text in self.lyrics_data]
-                await bus.publish(LYRICS_UPDATED)
-                logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
-            else:
-                logger.info("Lyrics: No lyrics found anywhere")
+            if self._current_generation == gen:
+                if lrc:
+                    self.lyrics_data = self._parse_lrc(lrc)
+                    # LOW-07 fix: Store CLEAN lines (no timestamps) for display
+                    self.state.lyrics_lines = [text for _, text in self.lyrics_data]
+                    await bus.publish(LYRICS_UPDATED)
+                    logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
+                else:
+                    logger.info("Lyrics: No lyrics found anywhere")
                 
         except Exception as e:
-            logger.debug(f"Lyrics fetch failed: {e}")
+            if self._current_generation == gen:
+                logger.debug(f"Lyrics fetch failed: {e}")
         finally:
-            self.state.lyrics_loading = False
-            await bus.publish(LYRICS_UPDATED)
+            if self._current_generation == gen:
+                self.state.lyrics_loading = False
+                await bus.publish(LYRICS_UPDATED)
 
     def _parse_lrc(self, lrc_text: str) -> list[tuple[float, str]]:
         """Parse LRC format. Strips timestamp tags from text content."""

@@ -18,6 +18,7 @@ from integrations.sponsorblock import SponsorBlockHandler
 from integrations.lyrics import LyricsFetcher
 from engine.queue_mode import QueueMode
 from engine.radio_mode import RadioMode
+from core.task_utils import safe_create_task
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +97,8 @@ class PlaybackController:
             await self.resolver.db.increment_play_count(track.video_id)
             
             # Fetch sponsorblock and lyrics
-            asyncio.create_task(self.sponsorblock.fetch_segments(track.video_id))
-            asyncio.create_task(self.lyrics_fetcher.fetch(track))
+            safe_create_task(self.sponsorblock.fetch_segments(track.video_id), name="fetch_sponsorblock")
+            safe_create_task(self.lyrics_fetcher.fetch(track), name="fetch_lyrics")
             
         except Exception as e:
             logger.error(f"Failed to play track {track.title}: {e}", exc_info=True)
@@ -203,11 +204,12 @@ class PlaybackController:
                 await self.play_track(track)
 
     async def _on_queue_remove(self, index: int):
-        if 0 <= index < len(self.state.queue):
-            removed = self.state.queue[index]
-            del self.state.queue[index]
-            await self.bus.publish(QUEUE_UPDATED)
-            await self.bus.publish(LOG_MESSAGE, f"Dihapus dari antrean: {removed.title}")
+        async with self._lock:
+            if 0 <= index < len(self.state.queue):
+                removed = self.state.queue[index]
+                del self.state.queue[index]
+                await self.bus.publish(QUEUE_UPDATED)
+                await self.bus.publish(LOG_MESSAGE, f"Dihapus dari antrean: {removed.title}")
 
     async def _on_queue_add(self, track: TrackInfo):
         self.state.queue.append(track)

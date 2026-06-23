@@ -18,6 +18,7 @@ from engine.volume_service import VolumeService
 from engine.download_manager import DownloadManager
 from engine.playback_controller import PlaybackController
 from integrations.termux_notification import TermuxNowPlaying
+from core.task_utils import safe_create_task
 from config import BASE_DIR, WEB_HOST, WEB_PORT
 
 log_path = BASE_DIR / "ytplayer.log"
@@ -106,7 +107,7 @@ async def main():
                 state.is_online = False
             await asyncio.sleep(30)
 
-    connectivity_task = asyncio.create_task(check_connectivity())
+    connectivity_task = safe_create_task(check_connectivity(), name="connectivity_checker")
     tasks = [connectivity_task]
     
     # 7.5 MPV auto-reconnect checker
@@ -134,7 +135,7 @@ async def main():
                 except Exception as e:
                     logging.getLogger(__name__).error(f"MPV reconnect failed: {e}")
 
-    tasks.append(asyncio.create_task(mpv_reconnect_checker()))
+    tasks.append(safe_create_task(mpv_reconnect_checker(), name="mpv_reconnect_checker"))
     
     # 8. Start Web Server
     try:

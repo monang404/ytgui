@@ -193,6 +193,22 @@
             case "progress":
                 store.position = msg.data.position;
                 store.status = msg.data.status;
+                if (msg.data.server_ts) {
+                    store.server_ts = msg.data.server_ts;
+                }
+
+                // PATCH-1-07: Audio drift correction
+                if (store.audio_output === "browser" && store.status === "PLAYING") {
+                    const audio = getOrInitAudio();
+                    if (!audio.paused && audio.src) {
+                        const diff = Math.abs(audio.currentTime - store.position);
+                        if (diff > 0.5 && store.position > 2) {
+                            console.log("Audio drift corrected by", diff.toFixed(3), "s");
+                            audio.currentTime = store.position;
+                        }
+                    }
+                }
+
                 renderProgress();
                 renderPlayBtn();
                 syncBrowserAudio();

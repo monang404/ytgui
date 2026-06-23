@@ -25,9 +25,10 @@ from core.event_bus import (
     bus, TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
     DOWNLOAD_COMPLETE, LOG_MESSAGE, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_VOLUME_UP, CMD_VOLUME_DOWN,
-    CMD_DOWNLOAD, CMD_SET_MODE, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE,
-    CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, CMD_SET_OUTPUT
+    CMD_DOWNLOAD, CMD_SET_MODE, CMD_SET_OUTPUT, CMD_QUEUE_SELECT,
+    CMD_QUEUE_ADD, CMD_QUEUE_REMOVE, CMD_RADIO_RANDOMIZE
 )
+from core.task_utils import safe_create_task
 from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
 
 logger = logging.getLogger(__name__)
@@ -158,7 +159,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
     async def _on_track_started(track):
         if track and track.video_id:
-            asyncio.create_task(_prefetch_stream_url(track.video_id))
+            safe_create_task(_prefetch_stream_url(track.video_id), name=f"prefetch_{track.video_id}")
             
         await manager.broadcast({
             "type": "state",
@@ -176,6 +177,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
             "data": {
                 "position": position,
                 "status": state.status.name,
+                "server_ts": time.time(),
             },
         })
 
@@ -215,6 +217,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
             "data": {
                 "position": state.position,
                 "status": state.status.name,
+                "server_ts": time.time(),
             },
         })
 

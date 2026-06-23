@@ -9,6 +9,7 @@ import logging
 from core.event_bus import EventBus, CMD_DOWNLOAD, DOWNLOAD_COMPLETE, LOG_MESSAGE
 from core.state import AppState, TrackInfo
 from engine.ytdlp_client import YtDlpClient
+from core.task_utils import safe_create_task
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class DownloadManager:
             await self.bus.publish(LOG_MESSAGE, "Download sedang berjalan, tunggu selesai.")
             return
             
-        asyncio.create_task(self._do_download(target))
+        safe_create_task(self._do_download(target), name=f"download_{target.video_id}")
         
     async def _do_download(self, track: TrackInfo):
         async with self._download_lock:

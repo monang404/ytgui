@@ -4,6 +4,8 @@ import logging
 import os
 from config import MPV_SOCKET
 from core.event_bus import bus, TRACK_PROGRESS, TRACK_ENDED
+from core.state import PlayerStatus
+from core.task_utils import safe_create_task
 from core.exceptions import MpvConnectionError
 
 logger = logging.getLogger(__name__)
@@ -96,7 +98,7 @@ class MpvController:
                     self._reader, self._writer = await asyncio.open_unix_connection(MPV_SOCKET)
                 
                 self.is_connected = True
-                self._observer_task = asyncio.create_task(self._observe_events())
+                self._observer_task = safe_create_task(self._observe_events(), name="mpv_observer")
                 if os.name != 'nt':
                     try:
                         import stat

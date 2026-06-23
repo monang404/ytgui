@@ -11,6 +11,8 @@ import asyncio
 import logging
 import inspect
 
+from core.task_utils import safe_create_task
+
 logger = logging.getLogger(__name__)
 
 class EventBus:
@@ -51,14 +53,19 @@ class EventBus:
                 handler = ref
             active_handlers.append(handler)
 
+        # PATCH-1-03: Concurrent dispatch instead of sequential blocking
+        tasks = []
         for handler in active_handlers:
-            try:
-                if asyncio.iscoroutinefunction(handler):
-                    await handler(data)
-                else:
+            if asyncio.iscoroutinefunction(handler):
+                tasks.append(safe_create_task(handler(data), name=f"event_{event}"))
+            else:
+                try:
                     handler(data)
-            except Exception as e:
-                logger.error(f"Handler {getattr(handler, '__name__', handler)} error on '{event}': {e}", exc_info=True)
+                except Exception as e:
+                    logger.error(f"Handler {getattr(handler, '__name__', handler)} error on '{event}': {e}", exc_info=True)
+        
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
 
 # Singleton
 bus = EventBus()

@@ -16,6 +16,8 @@ from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
+from core.state import AppState, PlaybackMode, PlayerStatus
+from core.task_utils import safe_create_task
 
 #artis
 SEED_ARTISTS = [
@@ -181,7 +183,7 @@ class RadioMode:
         """
         self.state.radio_queue.clear()
         seed_artist = random.choice(SEED_ARTISTS)
-        task = asyncio.create_task(self._fetch_and_play_initial(controller, seed_artist))
+        task = safe_create_task(self._fetch_and_play_initial(controller, seed_artist), name="radio_initial")
         self._bg_tasks.add(task)
         task.add_done_callback(self._bg_tasks.discard)
 
@@ -196,7 +198,7 @@ class RadioMode:
         if self.state.radio_queue:
             track = self.state.radio_queue.popleft()
             if len(self.state.radio_queue) <= 5:
-                task = asyncio.create_task(self._prefetch_next(controller))
+                task = safe_create_task(self._prefetch_next(controller), name="radio_prefetch")
                 self._bg_tasks.add(task)
                 task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
@@ -213,7 +215,7 @@ class RadioMode:
             return
         self._is_fetching = True
         try:
-            new_tracks = await self._gather_batch()
+            new_tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
             if new_tracks:
                 self.state.radio_queue.extend(new_tracks)
                 while len(self.state.radio_queue) > 30:
@@ -236,11 +238,19 @@ class RadioMode:
         diputar pun sudah konsisten dengan strategi anti-bosen yang baru.
         """
         try:
-            tracks = await self._gather_batch(prioritized_artist=seed_artist)
+            try:
+                tracks = await asyncio.wait_for(self._gather_batch(prioritized_artist=seed_artist), timeout=30.0)
+            except asyncio.TimeoutError:
+                await bus.publish(LOG_MESSAGE, "Pencarian radio timeout (30s), mencoba artis lain...")
+                tracks = []
 
             if not tracks:
                 # Coba sekali lagi dengan batch artis yang benar-benar baru
-                tracks = await self._gather_batch()
+                try:
+                    tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
+                except asyncio.TimeoutError:
+                    await bus.publish(LOG_MESSAGE, "Pencarian radio kembali timeout, coba lagi nanti.")
+                    tracks = []
 
             if tracks:
                 self.state.radio_queue.clear()
