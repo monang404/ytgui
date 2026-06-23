@@ -93,6 +93,7 @@ CMD_VOLUME_UP    = "cmd.volume.up"
 CMD_VOLUME_DOWN  = "cmd.volume.down"
 CMD_DOWNLOAD     = "cmd.download"          # data: TrackInfo | None
 CMD_SET_MODE     = "cmd.set.mode"          # data: PlaybackMode — BARU
+CMD_SET_OUTPUT   = "cmd.set.output"        # data: str ("device" or "browser")
 CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
 CMD_QUEUE_ADD    = "cmd.queue.add"         # data: TrackInfo
 CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index) — BARU

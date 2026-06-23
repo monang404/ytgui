@@ -18,7 +18,7 @@ from engine.volume_service import VolumeService
 from engine.download_manager import DownloadManager
 from engine.playback_controller import PlaybackController
 from integrations.termux_notification import TermuxNowPlaying
-from config import BASE_DIR
+from config import BASE_DIR, WEB_HOST, WEB_PORT
 
 log_path = BASE_DIR / "ytplayer.log"
 _log_handler = RotatingFileHandler(
@@ -41,14 +41,17 @@ except OSError:
 
 async def main():
     state = AppState()
-    no_tui = "--no-tui" in sys.argv
     
     # 1. Initialize DB
+    print("  [1/5] Membuka database perpustakaan...")
     db = Database()
     await db.init()
     
     # 2. Initialize Core Engine
+    print("  [2/5] Menginisialisasi YT-DLP Engine...")
     ytdlp = YtDlpClient()
+    
+    print("  [3/5] Menghubungkan ke audio player (MPV)...")
     mpv = MpvController()
     try:
         await mpv.connect()
@@ -64,6 +67,7 @@ async def main():
     http_session = aiohttp.ClientSession()
     
     # 4. Initialize Integrations & Resolver
+    print("  [4/5] Memuat modul SponsorBlock & Lyrics Fetcher...")
     resolver = CacheResolver(db, ytdlp)
     sponsorblock = SponsorBlockHandler(mpv, state=state, session=http_session)
     lyrics_fetcher = LyricsFetcher(state, session=http_session)
@@ -75,6 +79,7 @@ async def main():
     download_manager = DownloadManager(bus, state, ytdlp)
     
     # 6. Initialize Playback Controller
+    print("  [5/5] Menyusun Playback Controller...")
     controller = PlaybackController(
         bus, state, mpv, resolver, sponsorblock, lyrics_fetcher, queue_mode, radio_mode
     )
@@ -104,32 +109,69 @@ async def main():
     connectivity_task = asyncio.create_task(check_connectivity())
     tasks = [connectivity_task]
     
-    # 8. Start App
-    try:
-        if no_tui:
-            print(f"Running in --no-tui mode. Logs available at {log_path}")
-            print("To quit, press Ctrl+C")
-            
-            # Send a test search to verify it works
-            async def test_search():
+    # 7.5 MPV auto-reconnect checker
+    async def mpv_reconnect_checker():
+        while True:
+            await asyncio.sleep(5)
+            if not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
+                logging.getLogger(__name__).warning("MPV terputus! Mencoba reconnect...")
                 try:
-                    res = await ytdlp.search("top hits music", max_results=10)
-                    if res:
-                        state.queue = res[1:]
-                        await controller.play_track(res[0])
+                    await mpv.close()
+                except Exception:
+                    pass
+                try:
+                    await mpv.connect()
+                    if state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED) and state.current_track:
+                        uri = await resolver.resolve(state.current_track)
+                        await mpv.play(uri)
+                        await mpv.seek(state.position)
+                        if getattr(state, "audio_output", "device") == "browser":
+                            await mpv.set_volume(0)
+                        else:
+                            await mpv.set_volume(state.volume)
+                        if state.status == PlayerStatus.PLAYING:
+                            await mpv.resume()
                 except Exception as e:
-                    print(f"Test search failed: {e}")
-            asyncio.create_task(test_search())
+                    logging.getLogger(__name__).error(f"MPV reconnect failed: {e}")
+
+    tasks.append(asyncio.create_task(mpv_reconnect_checker()))
+    
+    # 8. Start Web Server
+    try:
+        from web.server import create_app, run_server
+        
+        app = create_app(state, ytdlp, db, controller)
+        
+        host = WEB_HOST
+        port = WEB_PORT
+        
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            display_host = s.getsockname()[0]
+            s.close()
+        except Exception:
+            display_host = host if host != "0.0.0.0" else "127.0.0.1"
             
-            # Run loop for 10 seconds then exit for testing purposes
-            for _ in range(15):
-                await asyncio.sleep(1)
-            print("Test timeout reached, exiting.")
-            return
-        else:
-            from tui.app import YTGuiApp
-            app = YTGuiApp(state, ytdlp, db)
-            await app.run_async()
+        url_client = f"http://{display_host}:{port}"
+        url_admin = f"http://{display_host}:{port}/admin"
+        print(f"╔══════════════════════════════════════════════════╗")
+        print(f"║   YTGUI Web Server                               ║")
+        print(f"║   Client : {url_client:<37} ║")
+        print(f"║   Admin  : {url_admin:<37} ║")
+        
+        from config import ADMIN_USERNAME, ADMIN_PASSWORD, IS_PASSWORD_AUTO_GENERATED
+        if IS_PASSWORD_AUTO_GENERATED:
+            print(f"║                                                  ║")
+            print(f"║   Kredensial Mode Admin:                         ║")
+            print(f"║   User: {ADMIN_USERNAME:<40} ║")
+            print(f"║   Pass: {ADMIN_PASSWORD:<40} ║")
+            print(f"║   (Tersimpan: cache/admin_password.txt)          ║")
+        print(f"╚══════════════════════════════════════════════════╝")
+        
+        await run_server(app, host=host, port=port)
+
     except asyncio.CancelledError:
         pass
     finally:

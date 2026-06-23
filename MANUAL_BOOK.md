@@ -88,3 +88,36 @@ pip install -r requirements.txt --upgrade
 
 **Masalah:** Pencarian selalu gagal (No results found).
 **Solusi:** Berarti YouTube mengubah sistem mereka. Segera update mesin intinya (`yt-dlp`) dengan cara menjalankan `pip install yt-dlp --upgrade`.
+
+---
+
+## 🌐 6. Panduan Web UI & Mode Portal (bagas.fm)
+
+YT Termux Player Pro V2 kini dilengkapi dengan Web Server bawaan yang berjalan otomatis ketika aplikasi dijalankan. Fitur ini memungkinkan Anda untuk mengontrol atau melakukan streaming lagu langsung dari browser Laptop, PC, atau perangkat lainnya.
+
+### A. Halaman Portal Awal
+Saat pertama kali mengakses web `http://[IP_HP]:8765`, Anda akan disambut oleh halaman dashboard **bagas.fm** untuk memilih peran akses:
+1. **Mode Client (Dengar Saja)**: Didesain murni untuk mendengarkan. Tanpa membutuhkan password.
+2. **Mode Admin**: Untuk mengendalikan server. Memerlukan:
+   - **Username:** `bagasfm`
+   - **Password:** `bagasradio2626@`
+
+### B. Penggunaan Mode Client (Intercom / Party Mode)
+Ketika masuk sebagai **Client**, tampilan pemutar akan berubah menjadi minimalis secara total:
+- **Hanya Menampilkan:** Equalizer visualizer aktif, judul dan artis lagu yang sedang berjalan, serta daftar antrean lagu (Queue) di bawahnya.
+- **Tanpa Tombol Kontrol:** Seluruh tombol kontrol player, pengaturan volume, dan tombol pencarian disembunyikan. Klik progress bar (seek) dan keyboard shortcut juga dinonaktifkan demi keamanan.
+- **Auto-Streaming Suara**: Musik yang diputar di server akan otomatis dialirkan (streaming) dan berbunyi di browser klien Anda. Cocok digunakan sebagai receiver audio nirkabel di ruangan lain.
+
+### C. Penggunaan Mode Admin (Akses Kontrol Penuh)
+Ketika masuk sebagai **Admin**, Anda akan disuguhkan antarmuka kontrol penuh yang canggih:
+- **DJ Control**: Anda bebas memutar, menjeda, melewati lagu (skip), memajukan posisi (seek), mengatur antrean, serta mencari lagu lewat kolom pencarian.
+- **Audio Output Toggle**: Terdapat tombol di kanan atas header untuk beralih jalur suara:
+  - **📱 HP (Default)**: Lagu dimainkan dan berbunyi langsung di HP Termux Anda (sebagai speaker utama).
+  - **💻 BROWSER**: HP Termux akan secara otomatis di-mute (volume 0), dan aliran suara dialihkan sepenuhnya ke browser Laptop/PC mana saja yang sedang mengakses web dalam mode dengar.
+
+### D. Fitur Logout (Keluar / Ganti Peran)
+Di sudut kanan atas antarmuka (baik mode Admin maupun Client), terdapat tombol **`Keluar`** (🚪 Keluar). 
+Mengklik tombol ini akan:
+- Menghapus riwayat login & peran browser dari penyimpanan lokal (`localStorage`).
+- Memutuskan sesi WebSocket secara aman untuk mencegah penyalahgunaan kontrol.
+- Mengembalikan Anda ke Halaman Portal secara instan.

@@ -105,13 +105,11 @@ class MpvController:
                         pass  # Bukan fatal jika chmod gagal
                 logger.info(f"Connected to mpv (attempt {attempt + 1})")
                 return
-            except (FileNotFoundError, ConnectionRefusedError):
-                await asyncio.sleep(0.5)
             except MpvConnectionError:
                 raise
-            except (ConnectionError, OSError) as e:
-                raise MpvConnectionError(f"Failed to connect to mpv: {e}")
-        raise MpvConnectionError(f"Cannot connect to mpv socket after 10 attempts: {MPV_SOCKET}")
+            except (ConnectionError, OSError, FileNotFoundError):
+                await asyncio.sleep(0.5)
+        raise MpvConnectionError(f"Cannot connect to mpv socket after 10 attempts (TCP: {os.environ.get('YT_PLAYER_MPV_PORT', 'N/A')}, Unix: {MPV_SOCKET})")
 
     async def play(self, url_or_path: str):
         if not self.is_connected:
