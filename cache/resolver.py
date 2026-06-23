@@ -1,12 +1,12 @@
 import os
 import time
-import logging
+import structlog
 from cache.db import Database
 from config import STREAM_URL_TTL_SEC
 from core.state import TrackInfo
 from core.ports import MediaExtractorPort, TrackRepositoryPort
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class CacheResolver:
     """

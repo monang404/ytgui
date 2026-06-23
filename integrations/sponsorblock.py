@@ -1,6 +1,6 @@
 import json
 import aiohttp
-import logging
+import structlog
 from typing import Optional
 from config import SPONSORBLOCK_CATS
 from core.event_bus import bus, TRACK_PROGRESS, LOG_MESSAGE
@@ -8,7 +8,7 @@ from core.state import AppState
 from core.ports import AudioPlayerPort
 from core.task_utils import safe_create_task
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 SPONSORBLOCK_API = "https://sponsor.ajay.app/api/skipSegments"
 
 class SponsorBlockHandler:

@@ -1,5 +1,5 @@
 import re
-import logging
+import structlog
 import aiohttp
 import bisect
 import asyncio
@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from config import LYRICS_API_BASE
 from core.event_bus import bus, LYRICS_UPDATED, TRACK_PROGRESS
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 from core.state import TrackInfo
 

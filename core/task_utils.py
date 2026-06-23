@@ -1,8 +1,8 @@
 import asyncio
-import logging
+import structlog
 from typing import Coroutine, Optional, Callable, Any
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 def safe_create_task(coro: Coroutine[Any, Any, Any], name: str = "", on_error: Optional[Callable[[Exception], Any]] = None) -> asyncio.Task:
     """

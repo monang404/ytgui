@@ -5,10 +5,10 @@ hanya ada SATU handler untuk setiap command.
 """
 
 import asyncio
-import logging
+import structlog
 from typing import Callable, Any, Dict
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class CommandBus:
     def __init__(self):

@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import structlog
 import stat
 import sys
 import aiohttp
 from logging.handlers import RotatingFileHandler
+from core.log_config import setup_logging
 from core.state import AppState, PlayerStatus, AudioOutput
 from core.event_bus import bus, LOG_MESSAGE
 from engine.ytdlp_client import YtDlpClient
@@ -21,21 +23,10 @@ from integrations.termux_notification import TermuxNowPlaying
 from core.task_utils import safe_create_task
 from config import BASE_DIR, WEB_HOST, WEB_PORT
 
-log_path = BASE_DIR / "ytplayer.log"
-_log_handler = RotatingFileHandler(
-    log_path,
-    maxBytes=1 * 1024 * 1024,
-    backupCount=2,
-    encoding="utf-8"
-)
-_log_handler.setFormatter(logging.Formatter(
-    "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
-))
-logging.getLogger().setLevel(logging.WARNING)
-logging.getLogger().addHandler(_log_handler)
+setup_logging()
 
 try:
-    log_path.touch(exist_ok=True)
+    log_path = BASE_DIR / "ytplayer.log"
     log_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
 except OSError:
     pass
@@ -57,7 +48,7 @@ async def main():
     try:
         await mpv.connect()
     except Exception as e:
-        logging.getLogger(__name__).error(f"mpv not available: {e}")
+        structlog.get_logger(__name__).error(f"mpv not available: {e}")
         state.error_msg = (
             "MPV tidak ditemukan. Jalankan: pkg install mpv (Termux) "
             "atau install MPV dan tambahkan ke PATH (Windows/Linux)."
@@ -103,7 +94,7 @@ async def main():
             except (aiohttp.ClientError, asyncio.TimeoutError):
                 state.is_online = False
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Connectivity check unexpected error: {e}")
+                structlog.get_logger(__name__).warning(f"Connectivity check unexpected error: {e}")
                 state.is_online = False
             await asyncio.sleep(30)
 
@@ -115,7 +106,7 @@ async def main():
         while True:
             await asyncio.sleep(5)
             if not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
-                logging.getLogger(__name__).warning("MPV terputus! Mencoba reconnect...")
+                structlog.get_logger(__name__).warning("MPV terputus! Mencoba reconnect...")
                 try:
                     await mpv.close()
                 except Exception:
@@ -133,7 +124,7 @@ async def main():
                         if state.status == PlayerStatus.PLAYING:
                             await mpv.resume()
                 except Exception as e:
-                    logging.getLogger(__name__).error(f"MPV reconnect failed: {e}")
+                    structlog.get_logger(__name__).error(f"MPV reconnect failed: {e}")
 
     tasks.append(safe_create_task(mpv_reconnect_checker(), name="mpv_reconnect_checker"))
     
@@ -181,7 +172,7 @@ async def main():
             if t.done() and not t.cancelled():
                 e = t.exception()
                 if e:
-                    logging.getLogger(__name__).error(f"Task {t.get_coro().__name__} crashed: {e}")
+                    structlog.get_logger(__name__).error(f"Task {t.get_coro().__name__} crashed: {e}")
                     print(f"\n[FATAL ERROR] App crashed due to task failure: {e}")
                     traceback.print_exception(type(e), e, e.__traceback__)
 
@@ -198,7 +189,7 @@ async def main():
         await mpv.close()
         await db.close()
         
-        logging.getLogger(__name__).info("Shutdown complete.")
+        structlog.get_logger(__name__).info("Shutdown complete.")
 
 if __name__ == "__main__":
     try:

@@ -5,14 +5,14 @@ Publishes: LOG_MESSAGE, DOWNLOAD_COMPLETE
 """
 
 import asyncio
-import logging
+import structlog
 from core.event_bus import EventBus, DOWNLOAD_COMPLETE, LOG_MESSAGE
 from core.command_bus import command_bus, CMD_DOWNLOAD
 from core.state import AppState, TrackInfo
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class DownloadManager:
     def __init__(self, bus: EventBus, state: AppState, ytdlp: MediaExtractorPort):

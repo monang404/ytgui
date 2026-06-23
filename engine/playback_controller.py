@@ -5,7 +5,7 @@ Publishes: TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
 """
 
 import asyncio
-import logging
+import structlog
 from core.event_bus import (
     EventBus, TRACK_ENDED, TRACK_PROGRESS, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
 )
@@ -23,7 +23,7 @@ from engine.queue_mode import QueueMode
 from engine.radio_mode import RadioMode
 from core.task_utils import safe_create_task
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class PlaybackController:
     def __init__(

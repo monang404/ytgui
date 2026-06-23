@@ -8,12 +8,12 @@ import weakref
 from typing import Callable, Any
 from collections import defaultdict
 import asyncio
-import logging
+import structlog
 import inspect
 
 from core.task_utils import safe_create_task
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class EventBus:
     """

@@ -8,7 +8,7 @@ Publishes: CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
 """
 
 import asyncio
-import logging
+import structlog
 import os
 import shutil
 import threading
@@ -19,7 +19,7 @@ from core.command_bus import command_bus, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
 from core.state import TrackInfo
 from config import BASE_DIR
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 NOTIFICATION_ID = "ytgui_nowplaying"
 _SOCK_DIR = BASE_DIR / "cache" / "sockets"

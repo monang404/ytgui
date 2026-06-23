@@ -1,6 +1,6 @@
 import asyncio
 import json
-import logging
+import structlog
 import os
 from config import MPV_SOCKET
 from core.event_bus import bus, TRACK_PROGRESS, TRACK_ENDED
@@ -8,7 +8,7 @@ from core.state import PlayerStatus
 from core.task_utils import safe_create_task
 from core.exceptions import MpvConnectionError
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class MpvController:
     """

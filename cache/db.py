@@ -1,11 +1,11 @@
 import aiosqlite
 import time
-import logging
+import structlog
 from pathlib import Path
 from core.state import TrackInfo
 from config import DB_PATH
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class Database:
     """

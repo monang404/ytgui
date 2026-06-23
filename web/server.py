@@ -11,7 +11,7 @@ Publishes: CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP,
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 import re
 from pathlib import Path
@@ -34,7 +34,7 @@ from core.command_bus import (
 from core.task_utils import safe_create_task
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 STATIC_DIR = Path(__file__).parent / "static"
 
