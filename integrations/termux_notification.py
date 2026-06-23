@@ -14,7 +14,8 @@ import shutil
 import threading
 import time
 
-from core.event_bus import EventBus, TRACK_STARTED
+from core.event_bus import EventBus
+from core.events import TrackStartedEvent, TrackPauseChangedEvent
 from core.command_bus import command_bus, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE
 from core.state import TrackInfo
 from config import BASE_DIR
@@ -45,8 +46,8 @@ class TermuxNowPlaying:
         self._fifo_path = _FIFO_PATH
         self._action_paths = {}
 
-        self.bus.subscribe(TRACK_STARTED, self._on_track_started)
-        self.bus.subscribe("track.pause.changed", self._on_pause_changed)
+        self.bus.subscribe(TrackStartedEvent, self._on_track_started)
+        self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
 
     async def start(self):
         if not shutil.which("termux-notification"):
@@ -99,13 +100,13 @@ class TermuxNowPlaying:
         if event:
             await command_bus.execute(event)
 
-    async def _on_track_started(self, track: TrackInfo):
-        self._track = track
+    async def _on_track_started(self, event: TrackStartedEvent):
+        self._track = event.track
         self._paused = False
         await self._render()
 
-    async def _on_pause_changed(self, paused: bool):
-        self._paused = bool(paused)
+    async def _on_pause_changed(self, event: TrackPauseChangedEvent):
+        self._paused = bool(event.is_paused)
         if self._track:
             await self._render()
 

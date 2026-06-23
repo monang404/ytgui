@@ -8,7 +8,7 @@ from textual.containers import Vertical, Center
 from textual import work, on
 from rich.markup import escape
 from core.state import TrackInfo
-from core.event_bus import bus, LOG_MESSAGE
+from core.event_bus import bus
 from core.command_bus import command_bus, CMD_PLAY_TRACK, CMD_QUEUE_ADD
 from core.task_utils import safe_create_task
 from tui.theme import TEXT_DIM, ACCENT_GOLD, STATUS_OK, STATUS_ERR, BG_PANEL, BG_VOID, BORDER, ACCENT_FIRE

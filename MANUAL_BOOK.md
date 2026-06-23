@@ -10,6 +10,7 @@ Berbeda dengan aplikasi YouTube biasa, YT Termux Player Pro dirancang dengan kon
 - **Audio Langsung Jalan:** Saat Anda memilih lagu, mesin pemutar (`mpv`) langsung menarik aliran (stream) suaranya secara instan.
 - **Lirik Diambil di Latar Belakang:** Mesin pencari lirik berlapis kita akan berburu teks lirik dari seluruh dunia tanpa menjeda jalannya lagu. Begitu dapat (biasanya 1-3 detik), lirik akan meluncur otomatis!
 - **Auto-Filter Kompilasi:** Anda tidak perlu khawatir terjebak memutar video kompilasi/mix 1 jam. Sistem otomatis membuang hasil pencarian berdurasi di atas 15 menit atau yang mengandung judul 'compilation/mix'.
+- **Multi-room Ready:** Arsitektur terbaru telah mendukung beberapa ruangan (*rooms*) terpisah. Walau saat ini UI masih berfokus pada ruang "default", sistem mesin telah terdesain menggunakan *Hexagonal Architecture* untuk mendukung pemutaran paralel independen!
 
 ---
 
@@ -101,9 +102,7 @@ YT Termux Player Pro V2 kini dilengkapi dengan Web Server bawaan yang berjalan o
 ### A. Halaman Portal Awal
 Saat pertama kali mengakses web `http://[IP_HP]:8765`, Anda akan disambut oleh halaman dashboard **bagas.fm** untuk memilih peran akses:
 1. **Mode Client (Dengar Saja)**: Didesain murni untuk mendengarkan. Tanpa membutuhkan password.
-2. **Mode Admin**: Untuk mengendalikan server. Memerlukan:
-   - **Username:** `bagasfm`
-   - **Password:** `bagasradio2626@`
+2. **Mode Admin**: Untuk mengendalikan server. Jika Anda belum menyetel kredensial, periksa *log* di Terminal saat server baru dinyalakan. Password akan di-*generate* acak secara aman (di-hash) dan dicetak SEKALI SAJA di layar Anda. Jika lupa, Anda harus menghapus file `cache/admin_password.txt` untuk men-generate ulang.
 
 ### B. Penggunaan Mode Client (Intercom / Party Mode)
 Ketika masuk sebagai **Client**, tampilan pemutar akan berubah menjadi minimalis secara total:

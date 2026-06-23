@@ -6,13 +6,10 @@ Publishes: TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
 
 import asyncio
 import structlog
-from core.event_bus import (
-    EventBus, TRACK_ENDED, TRACK_PROGRESS, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED
-)
-from core.command_bus import (
-    command_bus, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
-    CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT,
-    CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, CMD_SET_OUTPUT
+from core.event_bus import EventBus
+from core.events import (
+    TrackEndedEvent, TrackProgressEvent, TrackStartedEvent, 
+    LogMessageEvent, QueueUpdatedEvent, TrackPauseChangedEvent
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
 from core.ports import AudioPlayerPort
@@ -28,6 +25,7 @@ logger = structlog.get_logger(__name__)
 class PlaybackController:
     def __init__(
         self,
+        room_id: str,
         bus: EventBus,
         state: AppState,
         mpv: AudioPlayerPort,
@@ -37,6 +35,7 @@ class PlaybackController:
         queue_mode: QueueMode,
         radio_mode: RadioMode
     ):
+        self.room_id = room_id
         self.bus = bus
         self.state = state
         self.mpv = mpv
@@ -51,23 +50,10 @@ class PlaybackController:
 
         # Subscribe
         # Subscribe events
-        self.bus.subscribe(TRACK_ENDED, self._on_track_ended)
-        self.bus.subscribe(TRACK_PROGRESS, self._on_track_progress)
+        self.bus.subscribe(TrackEndedEvent, self._on_track_ended)
+        self.bus.subscribe(TrackProgressEvent, self._on_track_progress)
 
-        # Register commands
-        command_bus.register(CMD_PLAY_TRACK, self._on_cmd_play_track)
-        command_bus.register(CMD_TOGGLE_PAUSE, self._on_cmd_toggle_pause)
-        command_bus.register(CMD_NEXT, self._on_next)
-        command_bus.register(CMD_PREV, self._on_prev)
-        command_bus.register(CMD_STOP, self._on_stop)
-        command_bus.register(CMD_SEEK, self._on_seek)
-        command_bus.register(CMD_SET_MODE, self._on_set_mode)
-        command_bus.register(CMD_QUEUE_SELECT, self._on_queue_select)
-        command_bus.register(CMD_QUEUE_REMOVE, self._on_queue_remove)
-        command_bus.register(CMD_QUEUE_ADD, self._on_queue_add)
-        command_bus.register(CMD_RADIO_RANDOMIZE, self._on_radio_randomize)
-        command_bus.register(CMD_SET_OUTPUT, self._on_set_output)
-        self.bus.subscribe("track.pause.changed", self._on_pause_changed)
+        self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
 
     async def play_track(self, track: TrackInfo):
         # Push current to history if it exists
@@ -89,7 +75,7 @@ class PlaybackController:
             await self.mpv.play(uri)
             
             if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
-                await self.bus.publish(LOG_MESSAGE, "Audio output is browser, skipping mpv local playback.")
+                await self.bus.publish(LogMessageEvent(message="Audio output is browser, skipping mpv local playback."))
             else:
                 await self.mpv.set_volume(self.state.volume)
                 
@@ -97,7 +83,7 @@ class PlaybackController:
             
             self.state.status = PlayerStatus.PLAYING
             self._retry_count = 0  # Reset retry count on success
-            await self.bus.publish(TRACK_STARTED, track)
+            await self.bus.publish(TrackStartedEvent(track=track))
             
             # C-02: Increment play count for favorites
             await self.resolver.db.increment_play_count(track.video_id)
@@ -110,11 +96,11 @@ class PlaybackController:
             logger.error(f"Failed to play track {track.title}: {e}", exc_info=True)
             self.state.status = PlayerStatus.ERROR
             self.state.error_msg = f"Error: {e}"
-            await self.bus.publish(LOG_MESSAGE, f"Gagal memutar lagu: {track.title} | {type(e).__name__}: {str(e)}")
+            await self.bus.publish(LogMessageEvent(message=f"Gagal memutar lagu: {track.title} | {type(e).__name__}: {str(e)}"))
             
             self._retry_count += 1
             if self._retry_count >= 3:
-                await self.bus.publish(LOG_MESSAGE, "Terlalu banyak kegagalan beruntun. Pemutaran dihentikan.")
+                await self.bus.publish(LogMessageEvent(message="Terlalu banyak kegagalan beruntun. Pemutaran dihentikan."))
                 self._retry_count = 0
             else:
                 backoff = 2 ** self._retry_count
@@ -127,8 +113,8 @@ class PlaybackController:
         async with self._lock:
             await self.play_track(track)
 
-    async def _on_track_ended(self, data: dict):
-        reason = data.get("reason")
+    async def _on_track_ended(self, event: TrackEndedEvent):
+        reason = event.reason
         
         # Build payload for next to prevent double-skip if track changes concurrently
         next_data = {}
@@ -139,12 +125,12 @@ class PlaybackController:
             await self._on_next(next_data)
         elif reason == "error":
             self.state.status = PlayerStatus.ERROR
-            await self.bus.publish(LOG_MESSAGE, "Terjadi kesalahan pemutaran")
+            await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran"))
             await asyncio.sleep(2)
             await self._on_next(next_data)
 
-    async def _on_track_progress(self, position: float):
-        self.state.position = position
+    async def _on_track_progress(self, event: TrackProgressEvent):
+        self.state.position = event.position
 
     async def _on_cmd_toggle_pause(self, _data=None):
         if self.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED):
@@ -171,7 +157,7 @@ class PlaybackController:
                 self.state.current_track = None 
                 await self.play_track(track)
             else:
-                await self.bus.publish(LOG_MESSAGE, "Tidak ada lagu sebelumnya")
+                await self.bus.publish(LogMessageEvent(message="Tidak ada lagu sebelumnya"))
 
     async def _on_stop(self, _data=None):
         await self.mpv.pause()
@@ -182,8 +168,8 @@ class PlaybackController:
         self.state.position = 0.0
         self.state.lyrics_lines = []
         self.state.lyrics_index = 0
-        await self.bus.publish(LOG_MESSAGE, "Pemutaran dihentikan")
-        await self.bus.publish(QUEUE_UPDATED)
+        await self.bus.publish(LogMessageEvent(message="Pemutaran dihentikan"))
+        await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_seek(self, position: float):
         if self.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED):
@@ -198,8 +184,8 @@ class PlaybackController:
                 await self.radio_mode.on_deactivated()
             if mode == PlaybackMode.RADIO:
                 await self.radio_mode.on_activated(self)
-            await self.bus.publish(LOG_MESSAGE, f"Mode diubah ke {mode.name}")
-            await self.bus.publish(QUEUE_UPDATED)
+            await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
+            await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_queue_select(self, index: int):
         async with self._lock:
@@ -214,13 +200,13 @@ class PlaybackController:
             if 0 <= index < len(self.state.queue):
                 removed = self.state.queue[index]
                 del self.state.queue[index]
-                await self.bus.publish(QUEUE_UPDATED)
-                await self.bus.publish(LOG_MESSAGE, f"Dihapus dari antrean: {removed.title}")
+                await self.bus.publish(QueueUpdatedEvent())
+                await self.bus.publish(LogMessageEvent(message=f"Dihapus dari antrean: {removed.title}"))
 
     async def _on_queue_add(self, track: TrackInfo):
         self.state.queue.append(track)
-        await self.bus.publish(QUEUE_UPDATED)
-        await self.bus.publish(LOG_MESSAGE, f"Ditambahkan ke antrean: {track.title}")
+        await self.bus.publish(QueueUpdatedEvent())
+        await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}"))
 
     async def _on_radio_randomize(self, _data=None):
         async with self._lock:
@@ -232,16 +218,16 @@ class PlaybackController:
                 self.state.current_track = None
                 self.state.status = PlayerStatus.LOADING
                 self.state.position = 0.0
-                await self.bus.publish(QUEUE_UPDATED)
+                await self.bus.publish(QueueUpdatedEvent())
                 
-                await self.bus.publish(LOG_MESSAGE, "Mengacak ulang stasiun radio...")
+                await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio..."))
                 # Panggil fetch dengan seed=None agar memaksa penggunaan seed acak dari list
                 await self.radio_mode._fetch_and_play_initial(self, seed_artist=None)
             else:
-                await self.bus.publish(LOG_MESSAGE, "Radio tidak aktif")
+                await self.bus.publish(LogMessageEvent(message="Radio tidak aktif"))
 
-    async def _on_pause_changed(self, paused: bool):
-        if paused:
+    async def _on_pause_changed(self, event: TrackPauseChangedEvent):
+        if event.is_paused:
             if self.state.status == PlayerStatus.PLAYING:
                 self.state.status = PlayerStatus.PAUSED
         else:
@@ -255,5 +241,5 @@ class PlaybackController:
             await self.mpv.set_volume(0)
         else:
             await self.mpv.set_volume(self.state.volume)
-        await self.bus.publish(LOG_MESSAGE, f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}")
-        await self.bus.publish(QUEUE_UPDATED)
+        await self.bus.publish(LogMessageEvent(message=f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}"))
+        await self.bus.publish(QueueUpdatedEvent())

@@ -4,7 +4,8 @@
 export YTGUI_HOST="0.0.0.0"
 export YTGUI_PORT=8765
 
-# Uncomment baris di bawah ini untuk mengunci kredensial admin (agar tidak digenerate otomatis)
+# Uncomment baris di bawah ini untuk mengunci kredensial admin
+# Jika dibiarkan terkunci, sistem akan men-generate password otomatis secara aman (di-hash)
 # export YTGUI_ADMIN_USER="admin"
 # export YTGUI_ADMIN_PASS="password_rahasia_anda"
 

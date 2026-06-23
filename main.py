@@ -7,20 +7,15 @@ import aiohttp
 from logging.handlers import RotatingFileHandler
 from core.log_config import setup_logging
 from core.state import AppState, PlayerStatus, AudioOutput
-from core.event_bus import bus, LOG_MESSAGE
+from core.event_bus import bus
 from engine.ytdlp_client import YtDlpClient
 from engine.mpv_controller import MpvController
 from cache.db import Database
-from cache.resolver import CacheResolver
-from integrations.sponsorblock import SponsorBlockHandler
-from integrations.lyrics import LyricsFetcher
-from engine.queue_mode import QueueMode
-from engine.radio_mode import RadioMode
-from engine.volume_service import VolumeService
 from engine.download_manager import DownloadManager
-from engine.playback_controller import PlaybackController
+from engine.command_router import CommandRouter
 from integrations.termux_notification import TermuxNowPlaying
 from core.task_utils import safe_create_task
+from core.room_manager import RoomManager
 from config import BASE_DIR, WEB_HOST, WEB_PORT
 
 setup_logging()
@@ -58,29 +53,20 @@ async def main():
     # 3. Shared HTTP session
     http_session = aiohttp.ClientSession()
     
-    # 4. Initialize Integrations & Resolver
-    print("  [4/5] Memuat modul SponsorBlock & Lyrics Fetcher...")
-    resolver = CacheResolver(db, ytdlp)
-    sponsorblock = SponsorBlockHandler(mpv, state=state, session=http_session)
-    lyrics_fetcher = LyricsFetcher(state, session=http_session)
+    # 4. Initialize Room Manager
+    print("  [4/5] Menyusun Room Manager (Multi-room)...")
+    room_manager = RoomManager(db, ytdlp, http_session)
     
-    # 5. Engine Modes & Services
-    queue_mode = QueueMode()
-    radio_mode = RadioMode(ytdlp, state)
-    volume_service = VolumeService(bus, mpv, state)
-    download_manager = DownloadManager(bus, state, ytdlp)
+    # Pre-create default room
+    default_room = await room_manager.get_or_create_room("default")
     
-    # 6. Initialize Playback Controller
-    print("  [5/5] Menyusun Playback Controller...")
-    controller = PlaybackController(
-        bus, state, mpv, resolver, sponsorblock, lyrics_fetcher, queue_mode, radio_mode
-    )
-
-    # 6.5 Termux now-playing notification (no-op outside Termux)
-    nowplaying = TermuxNowPlaying(bus, state)
+    # 5. Global Services
+    download_manager = DownloadManager(bus, default_room.state, ytdlp)
+    command_router = CommandRouter(room_manager)
+    
+    # Termux now-playing notification (no-op outside Termux)
+    nowplaying = TermuxNowPlaying(default_room.event_bus, default_room.state)
     await nowplaying.start()
-
-    # 7. Search Handler removed (moved to SearchTab)
 
     # Connectivity Check
     async def check_connectivity():
@@ -90,41 +76,46 @@ async def main():
                     "https://connectivitycheck.gstatic.com/generate_204",
                     timeout=aiohttp.ClientTimeout(total=3)
                 ) as r:
-                    state.is_online = (r.status == 204)
+                    is_online = (r.status == 204)
             except (aiohttp.ClientError, asyncio.TimeoutError):
-                state.is_online = False
+                is_online = False
             except Exception as e:
                 structlog.get_logger(__name__).warning(f"Connectivity check unexpected error: {e}")
-                state.is_online = False
+                is_online = False
+            
+            for room in room_manager.rooms.values():
+                room.state.is_online = is_online
+                
             await asyncio.sleep(30)
 
     connectivity_task = safe_create_task(check_connectivity(), name="connectivity_checker")
     tasks = [connectivity_task]
     
-    # 7.5 MPV auto-reconnect checker
+    # 7.5 MPV auto-reconnect checker (Per room)
     async def mpv_reconnect_checker():
         while True:
             await asyncio.sleep(5)
-            if not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
-                structlog.get_logger(__name__).warning("MPV terputus! Mencoba reconnect...")
-                try:
-                    await mpv.close()
-                except Exception:
-                    pass
-                try:
-                    await mpv.connect()
-                    if state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED) and state.current_track:
-                        uri = await resolver.resolve(state.current_track)
-                        await mpv.play(uri)
-                        await mpv.seek(state.position)
-                        if getattr(state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
-                            await mpv.set_volume(0)
-                        else:
-                            await mpv.set_volume(state.volume)
-                        if state.status == PlayerStatus.PLAYING:
-                            await mpv.resume()
-                except Exception as e:
-                    structlog.get_logger(__name__).error(f"MPV reconnect failed: {e}")
+            for room in list(room_manager.rooms.values()):
+                if not getattr(room.mpv, "is_connected", False) and room.state.status != PlayerStatus.ERROR:
+                    structlog.get_logger(__name__).warning(f"MPV terputus di room {room.room_id}! Mencoba reconnect...")
+                    try:
+                        await room.mpv.close()
+                    except Exception:
+                        pass
+                    try:
+                        await room.mpv.connect()
+                        if room.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED) and room.state.current_track:
+                            uri = await room.resolver.resolve(room.state.current_track)
+                            await room.mpv.play(uri)
+                            await room.mpv.seek(room.state.position)
+                            if getattr(room.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
+                                await room.mpv.set_volume(0)
+                            else:
+                                await room.mpv.set_volume(room.state.volume)
+                            if room.state.status == PlayerStatus.PLAYING:
+                                await room.mpv.resume()
+                    except Exception as e:
+                        structlog.get_logger(__name__).error(f"MPV reconnect failed for room {room.room_id}: {e}")
 
     tasks.append(safe_create_task(mpv_reconnect_checker(), name="mpv_reconnect_checker"))
     
@@ -132,7 +123,7 @@ async def main():
     try:
         from web.server import create_app, run_server
         
-        app = create_app(state, ytdlp, db, controller)
+        app = create_app(room_manager, ytdlp, db)
         
         host = WEB_HOST
         port = WEB_PORT
@@ -181,12 +172,10 @@ async def main():
             t.cancel()
         
         # Cleanup resources
-        lyrics_fetcher.cleanup()
-        sponsorblock.cleanup()
         await nowplaying.cleanup()
+        await room_manager.shutdown()
         ytdlp.cancel_download()
         await http_session.close()
-        await mpv.close()
         await db.close()
         
         structlog.get_logger(__name__).info("Shutdown complete.")

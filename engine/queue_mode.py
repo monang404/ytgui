@@ -4,7 +4,8 @@ Subscribes to: (tidak ada — dipanggil oleh PlaybackController)
 Publishes: QUEUE_UPDATED
 """
 
-from core.event_bus import bus, QUEUE_UPDATED
+from core.event_bus import bus
+from core.events import QueueUpdatedEvent
 from core.state import PlayerStatus
 from typing import TYPE_CHECKING
 
@@ -15,14 +16,14 @@ class QueueMode:
     """
     Purpose: Mengelola playback dari user queue.
     Subscribes to: (tidak ada — dipanggil oleh PlaybackController)
-    Publishes: QUEUE_UPDATED
+    Publishes: QueueUpdatedEvent
     """
     async def next(self, controller: "PlaybackController") -> None:
         """Dipanggil PlaybackController saat track berakhir di QUEUE mode."""
         if not controller.state.queue:
             controller.state.status = PlayerStatus.IDLE
             controller.state.current_track = None
-            await bus.publish(QUEUE_UPDATED)
+            await bus.publish(QueueUpdatedEvent())
             return
 
         track = controller.state.queue.popleft()

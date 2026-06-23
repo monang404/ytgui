@@ -21,9 +21,10 @@ import aiohttp
 from aiohttp import web
 
 from config import CACHE_DIR, STREAM_URL_TTL_SEC
-from core.event_bus import (
-    bus, TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
-    DOWNLOAD_COMPLETE, LOG_MESSAGE
+from core.event_bus import bus
+from core.events import (
+    TrackStartedEvent, TrackProgressEvent, QueueUpdatedEvent, LyricsUpdatedEvent,
+    DownloadCompleteEvent, LogMessageEvent, TrackPauseChangedEvent
 )
 from core.command_bus import (
     command_bus, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
@@ -93,52 +94,59 @@ def _dict_to_track(data: dict) -> Optional[TrackInfo]:
     )
 
 
+from core.observability import ACTIVE_WEBSOCKETS, get_metrics_content
+
 class ConnectionManager:
     """Manages WebSocket connections to all browser clients."""
 
     def __init__(self):
-        self.active_connections: list[web.WebSocketResponse] = []
+        self.active_connections: list[tuple[web.WebSocketResponse, str]] = []
         self.authenticated_connections: set[web.WebSocketResponse] = set()
         self.session_tokens: dict[str, float] = {}
         self.login_attempts: dict[str, list[float]] = {}
         self.command_history: dict[str, list[float]] = {}
 
-    async def connect(self, ws: web.WebSocketResponse):
-        self.active_connections.append(ws)
-        logger.info(f"WebSocket connected. Total clients: {len(self.active_connections)}")
+    async def connect(self, ws: web.WebSocketResponse, room_id: str):
+        self.active_connections.append((ws, room_id))
+        ACTIVE_WEBSOCKETS.labels(room_id=room_id).inc()
+        logger.info(f"WebSocket connected to room {room_id}. Total clients: {len(self.active_connections)}")
 
     def disconnect(self, ws: web.WebSocketResponse):
-        if ws in self.active_connections:
-            self.active_connections.remove(ws)
+        disconnected_rooms = [r for w, r in self.active_connections if w == ws]
+        for r in disconnected_rooms:
+            ACTIVE_WEBSOCKETS.labels(room_id=r).dec()
+            
+        self.active_connections = [(w, r) for w, r in self.active_connections if w != ws]
         if ws in self.authenticated_connections:
             self.authenticated_connections.remove(ws)
         logger.info(f"WebSocket disconnected. Total clients: {len(self.active_connections)}")
 
-    async def broadcast(self, message: dict):
-        """Send message to all connected clients."""
+    async def broadcast(self, message: dict, room_id: str = None):
+        """Send message to connected clients. If room_id is set, only broadcast to that room."""
         data = json.dumps(message, ensure_ascii=False)
         dead = []
-        for ws in self.active_connections:
-            try:
-                await ws.send_str(data)
-            except Exception:
-                dead.append(ws)
+        for ws, r_id in self.active_connections:
+            if room_id is None or r_id == room_id:
+                try:
+                    await ws.send_str(data)
+                except Exception:
+                    dead.append(ws)
         for ws in dead:
             self.disconnect(ws)
 
 
 from typing import Any
-from core.ports import MediaExtractorPort, TrackRepositoryPort
+from core.ports import MediaExtractorPort, DatabasePort
+from core.room_manager import RoomManager
 
-def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPort, controller: Any) -> web.Application:
+def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: DatabasePort) -> web.Application:
     app = web.Application()
     manager = ConnectionManager()
 
     # Store references
-    app["app_state"] = state
+    app["room_manager"] = room_manager
     app["ytdlp"] = ytdlp
     app["db"] = db
-    app["controller"] = controller
     app["manager"] = manager
     app["http_session"] = aiohttp.ClientSession()
 
@@ -153,8 +161,8 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
     async def _prefetch_stream_url(video_id: str):
         """Resolve dan cache stream URL di background, sebelum client request."""
         row = await db.get_track(video_id)
-        if row and row.get("stream_url") and row.get("stream_url_ts"):
-            if time.time() - row["stream_url_ts"] < STREAM_URL_TTL_SEC:
+        if row and row.stream_url and row.stream_url_ts:
+            if time.time() - row.stream_url_ts < STREAM_URL_TTL_SEC:
                 return  # sudah ada, skip
         try:
             url = await ytdlp.get_stream_url(video_id)
@@ -162,78 +170,94 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
         except Exception as e:
             logger.warning(f"Pre-fetch stream URL gagal untuk {video_id}: {e}")
 
-    async def _on_track_started(track):
+    async def _on_track_started(event: TrackStartedEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
+        track = event.track
         if track and track.video_id:
             safe_create_task(_prefetch_stream_url(track.video_id), name=f"prefetch_{track.video_id}")
             
         await manager.broadcast({
             "type": "state",
-            "data": _state_to_dict(state),
-        })
+            "data": _state_to_dict(room.state),
+        }, room_id=event.room_id)
 
-    async def _on_track_progress(position: float):
+    async def _on_track_progress(event: TrackProgressEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
+        position = event.position
         now = time.monotonic()
         if now - last_progress["t"] < 0.33:
             return  # Throttle: max ~3 updates/sec
         last_progress["t"] = now
-        state.position = position
         await manager.broadcast({
             "type": "progress",
             "data": {
                 "position": position,
-                "status": state.status.name,
+                "status": room.state.status.name,
                 "server_ts": time.time(),
             },
-        })
+        }, room_id=event.room_id)
 
-    async def _on_queue_updated(_data=None):
+    async def _on_queue_updated(event: QueueUpdatedEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
         await manager.broadcast({
             "type": "state",
-            "data": _state_to_dict(state),
-        })
+            "data": _state_to_dict(room.state),
+        }, room_id=event.room_id)
 
-    async def _on_lyrics_updated(_data=None):
+    async def _on_lyrics_updated(event: LyricsUpdatedEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
         await manager.broadcast({
             "type": "lyrics",
             "data": {
-                "lyrics_lines": list(state.lyrics_lines),
-                "lyrics_index": state.lyrics_index,
-                "lyrics_offset": state.lyrics_offset,
-                "lyrics_loading": getattr(state, "lyrics_loading", False),
+                "lyrics_lines": list(room.state.lyrics_lines),
+                "lyrics_index": room.state.lyrics_index,
+                "lyrics_offset": room.state.lyrics_offset,
+                "lyrics_loading": getattr(room.state, "lyrics_loading", False),
             },
-        })
+        }, room_id=event.room_id)
 
-    async def _on_download_complete(track):
+    async def _on_download_complete(event: DownloadCompleteEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
         await manager.broadcast({
             "type": "state",
-            "data": _state_to_dict(state),
-        })
+            "data": _state_to_dict(room.state),
+        }, room_id=event.room_id)
 
-    async def _on_log_message(msg: str):
-        state.error_msg = msg
+    async def _on_log_message(event: LogMessageEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
+        msg = event.message
+        room.state.error_msg = msg
         await manager.broadcast({
             "type": "log",
             "data": msg,
-        })
+        }, room_id=event.room_id)
 
-    async def _on_pause_changed(paused: bool):
+    async def _on_pause_changed(event: TrackPauseChangedEvent):
+        room = room_manager.rooms.get(event.room_id)
+        if not room: return
         await manager.broadcast({
             "type": "progress",
             "data": {
-                "position": state.position,
-                "status": state.status.name,
+                "position": room.state.position,
+                "status": room.state.status.name,
                 "server_ts": time.time(),
             },
-        })
+        }, room_id=event.room_id)
 
     # Subscribe to EventBus
-    bus.subscribe(TRACK_STARTED, _on_track_started)
-    bus.subscribe(TRACK_PROGRESS, _on_track_progress)
-    bus.subscribe(QUEUE_UPDATED, _on_queue_updated)
-    bus.subscribe(LYRICS_UPDATED, _on_lyrics_updated)
-    bus.subscribe(DOWNLOAD_COMPLETE, _on_download_complete)
-    bus.subscribe(LOG_MESSAGE, _on_log_message)
-    bus.subscribe("track.pause.changed", _on_pause_changed)
+    bus.subscribe(TrackStartedEvent, _on_track_started)
+    bus.subscribe(TrackProgressEvent, _on_track_progress)
+    bus.subscribe(QueueUpdatedEvent, _on_queue_updated)
+    bus.subscribe(LyricsUpdatedEvent, _on_lyrics_updated)
+    bus.subscribe(DownloadCompleteEvent, _on_download_complete)
+    bus.subscribe(LogMessageEvent, _on_log_message)
+    bus.subscribe(TrackPauseChangedEvent, _on_pause_changed)
 
     # --- Route: Serve index.html ---
     async def handle_index(request):
@@ -243,15 +267,18 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
 
     # --- Route: WebSocket ---
     async def handle_websocket(request):
+        room_id = request.query.get("room", "default")
+        room = await room_manager.get_or_create_room(room_id)
+        
         ws = web.WebSocketResponse()
         await ws.prepare(request)
-        await manager.connect(ws)
+        await manager.connect(ws, room_id)
 
         # Send initial state
         try:
             await ws.send_str(json.dumps({
                 "type": "state",
-                "data": _state_to_dict(state),
+                "data": _state_to_dict(room.state),
             }, ensure_ascii=False))
         except Exception:
             manager.disconnect(ws)
@@ -264,7 +291,7 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
                         data = json.loads(msg.data)
                     except json.JSONDecodeError:
                         continue
-                    await _handle_ws_message(data, ws, request.remote, state, ytdlp, manager, db)
+                    await _handle_ws_message(data, ws, request.remote, room.state, ytdlp, manager, db, room_id)
                 elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSE):
                     break
         except Exception as e:
@@ -279,11 +306,21 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
         db = request.app["db"]
         db_status = "connected" if db.conn else "disconnected"
         
-        controller = request.app["controller"]
-        mpv_status = "connected" if controller.mpv and getattr(controller.mpv, "is_connected", False) else "disconnected"
+        rm = request.app["room_manager"]
+        # Check default room if exists, otherwise assume OK
+        try:
+            rooms = getattr(rm, "_rooms", {})
+            if rooms:
+                first_room = next(iter(rooms.values()))
+                mpv_ok = getattr(getattr(first_room, "mpv", None), "is_connected", False)
+            else:
+                mpv_ok = True  # No room yet = not degraded
+        except Exception:
+            mpv_ok = False
+        mpv_status = "connected" if mpv_ok else "not_started"
         
         return web.json_response({
-            "status": "ok" if db_status == "connected" and mpv_status == "connected" else "degraded",
+            "status": "ok" if db_status == "connected" else "degraded",
             "db": db_status,
             "mpv": mpv_status
         })
@@ -314,9 +351,9 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
         stream_url = None
 
         row = await db.get_track(video_id)
-        if row and row.get("stream_url") and row.get("stream_url_ts"):
-            if time.time() - row["stream_url_ts"] < STREAM_URL_TTL_SEC:
-                stream_url = row["stream_url"]
+        if row and row.stream_url and row.stream_url_ts:
+            if time.time() - row.stream_url_ts < STREAM_URL_TTL_SEC:
+                stream_url = row.stream_url
 
         http_session = request.app.get("http_session")
         if not http_session:
@@ -389,18 +426,26 @@ def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPo
                     continue
                 return web.HTTPInternalServerError(text="Proxy stream error")
 
+    # --- Route: Metrics Endpoint ---
+    async def handle_metrics(request):
+        content, content_type = get_metrics_content()
+        # Prometheus content_type contains charset — strip it for aiohttp compatibility
+        ct = content_type.split(";")[0].strip()
+        return web.Response(body=content, content_type=ct)
+
     # --- Register routes ---
     app.router.add_get("/", handle_index)
     app.router.add_get("/admin", handle_index)
     app.router.add_get("/ws", handle_websocket)
     app.router.add_get("/api/stream/{video_id}", handle_stream)
     app.router.add_get("/health", handle_health)
+    app.router.add_get("/metrics", handle_metrics)
     app.router.add_static("/static", STATIC_DIR, name="static")
 
     return app
 
 
-async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: str, state: AppState, ytdlp, manager: ConnectionManager, db=None):
+async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: str, state: AppState, ytdlp, manager: ConnectionManager, db, room_id: str):
     """Process incoming WebSocket commands from browser."""
     msg_type = msg.get("type")
     action = msg.get("action", "")
@@ -501,58 +546,58 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
         elif action == "play_track":
             track = _dict_to_track(data)
             if track:
-                await command_bus.execute(CMD_PLAY_TRACK, track)
+                await command_bus.execute(CMD_PLAY_TRACK, room_id, track)
 
         elif action == "toggle_pause":
-            await command_bus.execute(CMD_TOGGLE_PAUSE)
+            await command_bus.execute(CMD_TOGGLE_PAUSE, room_id)
 
         elif action == "next":
-            await command_bus.execute(CMD_NEXT)
+            await command_bus.execute(CMD_NEXT, room_id)
 
         elif action == "prev":
-            await command_bus.execute(CMD_PREV)
+            await command_bus.execute(CMD_PREV, room_id)
 
         elif action == "stop":
-            await command_bus.execute(CMD_STOP)
+            await command_bus.execute(CMD_STOP, room_id)
 
         elif action == "seek":
             position = data.get("position", 0)
-            await command_bus.execute(CMD_SEEK, float(position))
+            await command_bus.execute(CMD_SEEK, room_id, float(position))
 
         elif action == "volume_up":
-            await command_bus.execute(CMD_VOLUME_UP)
+            await command_bus.execute(CMD_VOLUME_UP, room_id)
 
         elif action == "volume_down":
-            await command_bus.execute(CMD_VOLUME_DOWN)
+            await command_bus.execute(CMD_VOLUME_DOWN, room_id)
 
         elif action == "download":
-            await command_bus.execute(CMD_DOWNLOAD)
+            await command_bus.execute(CMD_DOWNLOAD, room_id)
 
         elif action == "set_mode":
             mode_str = data.get("mode", "queue").upper()
             mode = PlaybackMode.RADIO if mode_str == "RADIO" else PlaybackMode.QUEUE
-            await command_bus.execute(CMD_SET_MODE, mode)
+            await command_bus.execute(CMD_SET_MODE, room_id, mode)
 
         elif action == "queue_select":
             index = data.get("index", 0)
-            await command_bus.execute(CMD_QUEUE_SELECT, int(index))
+            await command_bus.execute(CMD_QUEUE_SELECT, room_id, int(index))
 
         elif action == "queue_remove":
             index = data.get("index", 0)
-            await command_bus.execute(CMD_QUEUE_REMOVE, int(index))
+            await command_bus.execute(CMD_QUEUE_REMOVE, room_id, int(index))
 
         elif action == "queue_add":
             track = _dict_to_track(data)
             if track:
-                await command_bus.execute(CMD_QUEUE_ADD, track)
+                await command_bus.execute(CMD_QUEUE_ADD, room_id, track)
 
         elif action == "radio_randomize":
-            await command_bus.execute(CMD_RADIO_RANDOMIZE)
+            await command_bus.execute(CMD_RADIO_RANDOMIZE, room_id)
 
         elif action == "set_output":
             output_str = data.get("output", "device")
             output_val = AudioOutput.BROWSER if output_str == "browser" else AudioOutput.DEVICE
-            await command_bus.execute(CMD_SET_OUTPUT, output_val)
+            await command_bus.execute(CMD_SET_OUTPUT, room_id, output_val)
 
     except Exception as e:
         logger.error(f"Error handling WS command '{action}': {e}", exc_info=True)

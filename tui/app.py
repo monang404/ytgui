@@ -15,9 +15,10 @@ from tui.tabs.search_tab import SearchTab
 from tui.tabs.radio_tab import RadioTab
 from tui.tabs.queue_tab import QueueTab
 from tui.screens.help_screen import HelpScreen
-from core.event_bus import (
-    bus, LOG_MESSAGE, TRACK_STARTED, QUEUE_UPDATED, LYRICS_UPDATED,
-    DOWNLOAD_COMPLETE, TRACK_PROGRESS
+from core.event_bus import bus
+from core.events import (
+    LogMessageEvent, TrackStartedEvent, QueueUpdatedEvent, LyricsUpdatedEvent,
+    DownloadCompleteEvent, TrackProgressEvent
 )
 from core.command_bus import (
     command_bus, CMD_PREV, CMD_NEXT, CMD_TOGGLE_PAUSE, CMD_STOP,
@@ -183,11 +184,11 @@ class YTGuiApp(App):
 
     async def on_mount(self) -> None:
         # Subscribe to domain events that require immediate UI updates
-        bus.subscribe(LOG_MESSAGE, self._on_log_message)
-        bus.subscribe(TRACK_STARTED, self._on_immediate_refresh)
-        bus.subscribe(QUEUE_UPDATED, self._on_immediate_refresh)
-        bus.subscribe(LYRICS_UPDATED, self._on_immediate_refresh)
-        bus.subscribe(DOWNLOAD_COMPLETE, self._on_immediate_refresh)
+        bus.subscribe(LogMessageEvent, self._on_log_message)
+        bus.subscribe(TrackStartedEvent, self._on_immediate_refresh)
+        bus.subscribe(QueueUpdatedEvent, self._on_immediate_refresh)
+        bus.subscribe(LyricsUpdatedEvent, self._on_immediate_refresh)
+        bus.subscribe(DownloadCompleteEvent, self._on_immediate_refresh)
 
         # Periodic refresh for progress bar
         self._refresh_timer = self.set_interval(0.3, self.refresh_ui)
@@ -198,11 +199,11 @@ class YTGuiApp(App):
     async def on_unmount(self) -> None:
         if self._refresh_timer:
             self._refresh_timer.stop()
-        bus.unsubscribe(LOG_MESSAGE, self._on_log_message)
-        bus.unsubscribe(TRACK_STARTED, self._on_immediate_refresh)
-        bus.unsubscribe(QUEUE_UPDATED, self._on_immediate_refresh)
-        bus.unsubscribe(LYRICS_UPDATED, self._on_immediate_refresh)
-        bus.unsubscribe(DOWNLOAD_COMPLETE, self._on_immediate_refresh)
+        bus.unsubscribe(LogMessageEvent, self._on_log_message)
+        bus.unsubscribe(TrackStartedEvent, self._on_immediate_refresh)
+        bus.unsubscribe(QueueUpdatedEvent, self._on_immediate_refresh)
+        bus.unsubscribe(LyricsUpdatedEvent, self._on_immediate_refresh)
+        bus.unsubscribe(DownloadCompleteEvent, self._on_immediate_refresh)
 
     def refresh_ui(self) -> None:
         # Update header
@@ -220,12 +221,12 @@ class YTGuiApp(App):
         elif self.state.active_tab == TAB_QUEUE:
             self.tab_queue.update_state(self.state)
 
-    async def _on_log_message(self, msg: str) -> None:
+    async def _on_log_message(self, event: LogMessageEvent) -> None:
         # LOG_MESSAGE displayed in player_bar
-        self.state.error_msg = msg
-        self.player_bar.info_line.update(f"ⓘ {msg}")
+        self.state.error_msg = event.message
+        self.player_bar.info_line.update(f"ⓘ {event.message}")
 
-    async def _on_immediate_refresh(self, _data=None) -> None:
+    async def _on_immediate_refresh(self, _event=None) -> None:
         self.refresh_ui()
 
     def _sync_tab_visibility(self) -> None:
@@ -285,14 +286,14 @@ class YTGuiApp(App):
 
     async def action_lyrics_offset_inc(self) -> None:
         self.state.lyrics_offset += 0.5
-        await bus.publish(LOG_MESSAGE, f"Offset Lirik: {self.state.lyrics_offset:+.1f}s")
+        await bus.publish(LogMessageEvent(message=f"Offset Lirik: {self.state.lyrics_offset:+.1f}s"))
         # Immediately re-evaluate lyrics index
-        await bus.publish(TRACK_PROGRESS, self.state.position)
+        await bus.publish(TrackProgressEvent(position=self.state.position))
 
     async def action_lyrics_offset_dec(self) -> None:
         self.state.lyrics_offset -= 0.5
-        await bus.publish(LOG_MESSAGE, f"Offset Lirik: {self.state.lyrics_offset:+.1f}s")
-        await bus.publish(TRACK_PROGRESS, self.state.position)
+        await bus.publish(LogMessageEvent(message=f"Offset Lirik: {self.state.lyrics_offset:+.1f}s"))
+        await bus.publish(TrackProgressEvent(position=self.state.position))
 
     async def action_switch_radio(self) -> None:
         new_mode = PlaybackMode.RADIO if self.state.playback_mode == PlaybackMode.QUEUE else PlaybackMode.QUEUE

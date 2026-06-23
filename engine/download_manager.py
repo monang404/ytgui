@@ -6,7 +6,8 @@ Publishes: LOG_MESSAGE, DOWNLOAD_COMPLETE
 
 import asyncio
 import structlog
-from core.event_bus import EventBus, DOWNLOAD_COMPLETE, LOG_MESSAGE
+from core.event_bus import EventBus
+from core.events import LogMessageEvent, DownloadCompleteEvent
 from core.command_bus import command_bus, CMD_DOWNLOAD
 from core.state import AppState, TrackInfo
 from core.ports import MediaExtractorPort
@@ -26,15 +27,15 @@ class DownloadManager:
     async def _on_download(self, track: TrackInfo | None = None):
         target = track or self.state.current_track
         if not target:
-            await self.bus.publish(LOG_MESSAGE, "Tidak ada lagu yang dipilih untuk di-download")
+            await self.bus.publish(LogMessageEvent(message="Tidak ada lagu yang dipilih untuk di-download"))
             return
             
         if target.local_path:
-            await self.bus.publish(LOG_MESSAGE, "Lagu sudah tersimpan lokal")
+            await self.bus.publish(LogMessageEvent(message="Lagu sudah tersimpan lokal"))
             return
             
         if self._download_lock.locked():
-            await self.bus.publish(LOG_MESSAGE, "Download sedang berjalan, tunggu selesai.")
+            await self.bus.publish(LogMessageEvent(message="Download sedang berjalan, tunggu selesai."))
             return
             
         safe_create_task(self._do_download(target), name=f"download_{target.video_id}")
@@ -43,7 +44,7 @@ class DownloadManager:
         async with self._download_lock:
             try:
                 self.state.download_progress = 0.0
-                await self.bus.publish(LOG_MESSAGE, f"Memulai download: {track.title}")
+                await self.bus.publish(LogMessageEvent(message=f"Memulai download: {track.title}"))
                 
                 loop = asyncio.get_running_loop()
                 
@@ -59,13 +60,13 @@ class DownloadManager:
                 track.local_path = local_path
                 self.state.download_progress = None
                 
-                await self.bus.publish(LOG_MESSAGE, f"Download selesai: {track.title}")
-                await self.bus.publish(DOWNLOAD_COMPLETE, track)
+                await self.bus.publish(LogMessageEvent(message=f"Download selesai: {track.title}"))
+                await self.bus.publish(DownloadCompleteEvent(track=track))
                 
             except Exception as e:
                 self.state.download_progress = None
                 logger.error(f"Download error: {e}", exc_info=True)
-                await self.bus.publish(LOG_MESSAGE, f"Download gagal: {str(e)}")
+                await self.bus.publish(LogMessageEvent(message=f"Download gagal: {str(e)}"))
 
     def _update_progress(self, percent: float):
         self.state.download_progress = percent

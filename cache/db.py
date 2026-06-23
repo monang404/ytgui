@@ -44,13 +44,27 @@ class Database:
             await self._conn.close()
             self._conn = None
 
-    async def get_track(self, video_id: str) -> dict | None:
-        """Retrieves track metadata from the database as a dictionary."""
+    async def get_track(self, video_id: str) -> TrackInfo | None:
+        """Retrieves track metadata from the database as a TrackInfo entity."""
         async with self._conn.execute(
             "SELECT * FROM tracks WHERE video_id = ?", (video_id,)
         ) as cursor:
             row = await cursor.fetchone()
-            return dict(row) if row else None
+            if not row:
+                return None
+            return TrackInfo(
+                video_id=row["video_id"],
+                title=row["title"],
+                artist=row["artist"],
+                duration=row["duration"],
+                thumbnail=row["thumbnail"],
+                local_path=row["local_path"],
+                stream_url=row["stream_url"],
+                view_count=row["view_count"],
+                stream_url_ts=row["stream_url_ts"],
+                play_count=row["play_count"],
+                last_played=row["last_played"],
+            )
 
     async def upsert_track(self, track: TrackInfo, stream_url: str = None, local_path: str = None):
         """Inserts or updates a track record (metadata + cache URLs only)."""

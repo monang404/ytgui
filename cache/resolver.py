@@ -25,8 +25,8 @@ class CacheResolver:
         row = await self.db.get_track(track.video_id)
         
         # Rule 1: Local file — ini yang benar-benar berguna
-        if row and row.get("local_path"):
-            path = row["local_path"]
+        if row and row.local_path:
+            path = row.local_path
             if os.path.isfile(path):
                 track.local_path = path
                 return path
@@ -34,10 +34,10 @@ class CacheResolver:
         import time
         from config import STREAM_URL_TTL_SEC
         # Rule 2: Gunakan stream_url dari cache jika belum kadaluwarsa
-        if row and row.get("stream_url") and row.get("stream_url_ts"):
-            ts = row.get("stream_url_ts")
+        if row and row.stream_url and row.stream_url_ts:
+            ts = row.stream_url_ts
             if time.time() - ts < STREAM_URL_TTL_SEC:
-                track.stream_url = row["stream_url"]
+                track.stream_url = row.stream_url
                 return track.stream_url
 
         # Rule 3: Ambil direct URL dari yt-dlp

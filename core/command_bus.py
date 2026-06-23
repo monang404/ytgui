@@ -6,7 +6,9 @@ hanya ada SATU handler untuk setiap command.
 
 import asyncio
 import structlog
+import time
 from typing import Callable, Any, Dict
+from core.observability import COMMAND_COUNT, COMMAND_LATENCY, tracer
 
 logger = structlog.get_logger(__name__)
 
@@ -23,19 +25,31 @@ class CommandBus:
         if command in self._handlers:
             del self._handlers[command]
 
-    async def execute(self, command: str, data: Any = None) -> Any:
+    async def execute(self, command: str, room_id: str = "default", data: Any = None) -> Any:
         if command not in self._handlers:
             raise RuntimeError(f"No handler registered for command '{command}'")
         
         handler = self._handlers[command]
-        try:
-            if asyncio.iscoroutinefunction(handler):
-                return await handler(data)
-            else:
-                return handler(data)
-        except Exception as e:
-            logger.error(f"Command execution error for '{command}': {e}", exc_info=True)
-            raise
+        start_time = time.perf_counter()
+        status = "success"
+        
+        with tracer.start_as_current_span(f"CommandBus.execute:{command}") as span:
+            span.set_attribute("room_id", room_id)
+            span.set_attribute("command", command)
+            try:
+                if asyncio.iscoroutinefunction(handler):
+                    return await handler(room_id, data)
+                else:
+                    return handler(room_id, data)
+            except Exception as e:
+                status = "error"
+                span.record_exception(e)
+                logger.error(f"Command execution error for '{command}': {e}", exc_info=True)
+                raise
+            finally:
+                duration = time.perf_counter() - start_time
+                COMMAND_LATENCY.labels(command_name=command, room_id=room_id).observe(duration)
+                COMMAND_COUNT.labels(command_name=command, room_id=room_id, status=status).inc()
 
 command_bus = CommandBus()
 

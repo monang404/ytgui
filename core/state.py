@@ -34,9 +34,15 @@ class TrackInfo:
     local_path: Optional[str] = None
     stream_url: Optional[str] = None
     view_count: Optional[int] = None
+    stream_url_ts: Optional[int] = None
+    play_count: Optional[int] = None
+    last_played: Optional[int] = None
 
 @dataclass
 class AppState:
+    # Room Identifier
+    room_id:         str = "default"
+
     # Playback
     status:          PlayerStatus  = PlayerStatus.IDLE
     playback_mode:   PlaybackMode  = PlaybackMode.QUEUE

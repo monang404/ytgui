@@ -5,8 +5,9 @@ Publishes: LOG_MESSAGE
 """
 
 import asyncio
-from core.event_bus import EventBus, LOG_MESSAGE
-from core.command_bus import command_bus, CMD_VOLUME_UP, CMD_VOLUME_DOWN
+from core.event_bus import EventBus
+from core.events import LogMessageEvent
+from core.command_bus import CommandBus
 from core.ports import AudioPlayerPort
 from core.state import AppState, AudioOutput
 
@@ -16,9 +17,6 @@ class VolumeService:
         self.mpv = mpv
         self.state = state
         self.current_volume = state.volume
-        
-        command_bus.register(CMD_VOLUME_UP, self._on_volume_up)
-        command_bus.register(CMD_VOLUME_DOWN, self._on_volume_down)
         
     async def _on_volume_up(self, _data=None):
         self.current_volume = min(150, self.current_volume + 5)
@@ -34,4 +32,4 @@ class VolumeService:
         else:
             await self.mpv.set_volume(self.current_volume)
         self.state.volume = self.current_volume
-        await self.bus.publish(LOG_MESSAGE, f"Volume: {self.current_volume}%")
+        await self.bus.publish(LogMessageEvent(message=f"Volume: {self.current_volume}%"))

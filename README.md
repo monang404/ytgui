@@ -17,10 +17,10 @@
 - **💾 Smart Caching & Download**: Lagu yang pernah diputar atau di-download manual (`[M]`) akan disimpan secara lokal. Pemutaran ulang tidak akan menyedot kuota internet.
 - **🌐 Web UI Server-Client (bagas.fm)**: Dapat dijalankan sebagai backend server di Termux HP, lalu diakses secara nirkabel dari browser Laptop/PC atau HP lain di jaringan WiFi yang sama.
 - **🔒 Portal Akses Ganda (Admin & Client)**:
-  - **Admin Mode (Kontrol Penuh)**: Membutuhkan login username & password. Memiliki akses penuh untuk memutar musik, mencari lagu, mengatur antrean, serta mengatur volume.
-  - **Client Mode (Dengar Saja / Intercom)**: Akses instan tanpa password. Musik akan otomatis dialirkan (streaming) ke browser klien. Hanya menampilkan judul lagu, visualizer, dan daftar antrean statis (tanpa tombol kontrol). Cocok sebagai intercom nirkabel!
+  - **Admin Mode (Kontrol Penuh)**: Membutuhkan login username & password. Password dienkripsi secara kuat (*hashed*) demi keamanan tingkat enterprise.
+  - **Client Mode (Dengar Saja / Intercom)**: Akses instan tanpa password. Musik akan otomatis dialirkan (streaming) ke browser klien.
   - **Fitur Logout & Switch Mode**: Memudahkan pengguna keluar dari sesi dan beralih peran.
-- **⚡ Super Ringan & Observabel**: Dibangun dengan arsitektur *asynchronous event-driven*, pola komunikasi terpisah (CommandBus & EventBus), penggunaan RAM/CPU minimal, dan dilengkapi dengan *Structured Logging* (JSON) untuk kemudahan *troubleshooting*.
+- **⚡ Arsitektur Enterprise & Multi-room**: Dibangun dengan *Hexagonal Architecture* (*Ports and Adapters*), pola *CommandBus & EventBus*, serta mendukung **Multi-room** (pemisahan *state* antar ruangan/klien secara independen). Dilengkapi dengan *Structured Logging* (JSON) untuk kemudahan *troubleshooting*.
 
 ---
 
@@ -81,7 +81,7 @@ Saat Anda menjalankan aplikasi, server web otomatis aktif di latar belakang pada
 2. Masukkan alamat IP HP Termux Anda dan port `8765` (Contoh: `http://192.168.1.5:8765`).
 3. Anda akan disambut oleh halaman **Portal bagas.fm** untuk memilih mode:
    - **Mode Client (Dengar Saja)**: Langsung masuk tanpa sandi. Musik dari server akan otomatis dialirkan (streaming) dan berbunyi di browser Laptop/PC ini.
-   - **Mode Admin**: Gunakan username **`admin`**. Password akan di-generate otomatis secara acak dan dicetak ke konsol saat server pertama kali berjalan (juga disimpan di file `cache/admin_password.txt`). Anda juga bisa mengaturnya via Environment Variable `YTGUI_ADMIN_USER` dan `YTGUI_ADMIN_PASS`.
+   - **Mode Admin**: Gunakan username **`admin`**. Password *raw* akan di-generate otomatis dan **hanya dicetak satu kali ke konsol saat pertama berjalan**. Demi keamanan, yang disimpan di file `cache/admin_password.txt` hanyalah *hash* kriptografinya. Jika lupa, hapus file tersebut untuk me-reset sandi. Anda juga bisa mengaturnya via Environment Variable `YTGUI_ADMIN_USER` dan `YTGUI_ADMIN_PASS`.
 4. Klik tombol **`🚪 Keluar`** di pojok kanan atas UI Web untuk logout dan kembali ke halaman portal.
 
 ### 🔒 Deployment Aman (HTTPS / WSS Publik)
