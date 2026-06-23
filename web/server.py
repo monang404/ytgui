@@ -257,7 +257,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
                         data = json.loads(msg.data)
                     except json.JSONDecodeError:
                         continue
-                    await _handle_ws_message(data, ws, request.remote, state, ytdlp, manager)
+                    await _handle_ws_message(data, ws, request.remote, state, ytdlp, manager, db)
                 elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSE):
                     break
         except Exception as e:
@@ -288,6 +288,14 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
             return web.HTTPBadRequest(text="Invalid video_id")
 
         cache_file = CACHE_DIR / f"{video_id}.mp3"
+        
+        # PATCH-1-12: Validasi pencegahan Directory Traversal
+        try:
+            if not cache_file.resolve().is_relative_to(CACHE_DIR.resolve()):
+                return web.HTTPForbidden(text="Akses ditolak")
+        except Exception:
+            return web.HTTPBadRequest(text="Path tidak valid")
+
         if cache_file.exists():
             return web.FileResponse(
                 cache_file,
@@ -316,6 +324,19 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
                     if attempt == 1:
                         return web.HTTPInternalServerError(text=f"Gagal mencari stream: {e}")
                     continue
+
+            # PATCH-1-08: SSRF Validation
+            try:
+                from urllib.parse import urlparse
+                parsed_url = urlparse(stream_url)
+                if parsed_url.scheme != "https":
+                    raise ValueError("Skema URL harus HTTPS")
+                domain = parsed_url.netloc.lower()
+                if not (domain.endswith(".googlevideo.com") or domain.endswith(".youtube.com")):
+                    raise ValueError(f"Domain tidak sah: {domain}")
+            except Exception as e:
+                logger.error(f"SSRF terdeteksi atau URL stream tidak valid: {stream_url} - {e}")
+                return web.HTTPForbidden(text="URL stream tidak valid")
 
             try:
                 headers = {}
@@ -372,7 +393,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
     return app
 
 
-async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: str, state: AppState, ytdlp, manager: ConnectionManager):
+async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: str, state: AppState, ytdlp, manager: ConnectionManager, db=None):
     """Process incoming WebSocket commands from browser."""
     msg_type = msg.get("type")
     action = msg.get("action", "")
@@ -393,16 +414,14 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
         
         if action == "auth":
             token = data.get("token")
-            if token and token in manager.session_tokens:
-                if now < manager.session_tokens[token]:
+            if token and db:
+                if await db.verify_session(token):
                     manager.authenticated_connections.add(ws)
                     await ws.send_str(json.dumps({
                         "type": "auth_status",
                         "data": {"success": True, "token": token}
                     }))
                     return
-                else:
-                    del manager.session_tokens[token]
 
             attempts = manager.login_attempts.get(client_ip, [])
             attempts = [t for t in attempts if now - t < 300]
@@ -415,9 +434,11 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
 
             username = data.get("username", "")
             password = data.get("password", "")
-            if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            from core.security import verify_password
+            if username == ADMIN_USERNAME and verify_password(password, ADMIN_PASSWORD):
                 new_token = secrets.token_hex(16)
-                manager.session_tokens[new_token] = now + 86400  # 24 hours expiry
+                if db:
+                    await db.create_session(new_token, int(now) + 86400)
                 manager.authenticated_connections.add(ws)
                 if client_ip in manager.login_attempts:
                     del manager.login_attempts[client_ip]

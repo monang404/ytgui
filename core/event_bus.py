@@ -53,11 +53,18 @@ class EventBus:
                 handler = ref
             active_handlers.append(handler)
 
-        # PATCH-1-03: Concurrent dispatch instead of sequential blocking
+        # PATCH-1-03 & 1-10: Concurrent dispatch with error boundary
         tasks = []
+        async_handlers = []
         for handler in active_handlers:
             if asyncio.iscoroutinefunction(handler):
-                tasks.append(safe_create_task(handler(data), name=f"event_{event}"))
+                # PATCH-1-10: Error boundary - do not let one handler crash others
+                async def _wrap_handler(h=handler):
+                    try:
+                        await h(data)
+                    except Exception as e:
+                        logger.error(f"Async Handler {getattr(h, '__name__', h)} error on '{event}': {e}", exc_info=True)
+                tasks.append(safe_create_task(_wrap_handler(), name=f"event_{event}"))
             else:
                 try:
                     handler(data)
