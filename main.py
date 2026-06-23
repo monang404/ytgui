@@ -4,7 +4,7 @@ import stat
 import sys
 import aiohttp
 from logging.handlers import RotatingFileHandler
-from core.state import AppState, PlayerStatus
+from core.state import AppState, PlayerStatus, AudioOutput
 from core.event_bus import bus, LOG_MESSAGE, CMD_QUIT
 from engine.ytdlp_client import YtDlpClient
 from engine.mpv_controller import MpvController
@@ -126,7 +126,7 @@ async def main():
                         uri = await resolver.resolve(state.current_track)
                         await mpv.play(uri)
                         await mpv.seek(state.position)
-                        if getattr(state, "audio_output", "device") == "browser":
+                        if getattr(state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
                             await mpv.set_volume(0)
                         else:
                             await mpv.set_volume(state.volume)

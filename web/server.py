@@ -29,7 +29,7 @@ from core.event_bus import (
     CMD_QUEUE_ADD, CMD_QUEUE_REMOVE, CMD_RADIO_RANDOMIZE
 )
 from core.task_utils import safe_create_task
-from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
+from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def _state_to_dict(state: AppState) -> dict:
         "position": state.position,
         "duration": state.duration,
         "volume": state.volume,
-        "audio_output": getattr(state, "audio_output", "device"),
+        "audio_output": getattr(state, "audio_output", AudioOutput.DEVICE).value,
         "sponsorblock_active": state.sponsorblock_active,
         "queue": [_track_to_dict(t) for t in state.queue],
         "radio_queue": [_track_to_dict(t) for t in state.radio_queue],

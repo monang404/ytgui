@@ -11,7 +11,7 @@ from core.event_bus import (
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT,
     CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED, CMD_SET_OUTPUT
 )
-from core.state import AppState, PlayerStatus, PlaybackMode, TrackInfo
+from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
 from engine.mpv_controller import MpvController
 from cache.resolver import CacheResolver
 from integrations.sponsorblock import SponsorBlockHandler
@@ -82,8 +82,8 @@ class PlaybackController:
             # Play
             await self.mpv.play(uri)
             
-            if getattr(self.state, "audio_output", "device") == "browser":
-                await self.mpv.set_volume(0)
+            if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
+                await self.bus.publish(LOG_MESSAGE, "Audio output is browser, skipping mpv local playback.")
             else:
                 await self.mpv.set_volume(self.state.volume)
                 
@@ -242,11 +242,12 @@ class PlaybackController:
             if self.state.status == PlayerStatus.PAUSED:
                 self.state.status = PlayerStatus.PLAYING
 
-    async def _on_set_output(self, output: str):
+    async def _on_set_output(self, output: AudioOutput):
+        """Ubah mode output (device / browser)"""
         self.state.audio_output = output
-        if output == "browser":
+        if output == AudioOutput.BROWSER:
             await self.mpv.set_volume(0)
         else:
             await self.mpv.set_volume(self.state.volume)
-        await self.bus.publish(LOG_MESSAGE, f"Output suara diubah ke: {'Browser' if output == 'browser' else 'HP'}")
+        await self.bus.publish(LOG_MESSAGE, f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}")
         await self.bus.publish(QUEUE_UPDATED)

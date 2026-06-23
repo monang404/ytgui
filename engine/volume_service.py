@@ -7,7 +7,7 @@ Publishes: LOG_MESSAGE
 import asyncio
 from core.event_bus import EventBus, CMD_VOLUME_UP, CMD_VOLUME_DOWN, LOG_MESSAGE
 from engine.mpv_controller import MpvController
-from core.state import AppState
+from core.state import AppState, AudioOutput
 
 class VolumeService:
     def __init__(self, bus: EventBus, mpv: MpvController, state: AppState):
@@ -28,7 +28,7 @@ class VolumeService:
         await self._apply_volume()
         
     async def _apply_volume(self):
-        if getattr(self.state, "audio_output", "device") == "browser":
+        if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
             await self.mpv.set_volume(0)
         else:
             await self.mpv.set_volume(self.current_volume)
