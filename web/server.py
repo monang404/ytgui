@@ -55,6 +55,7 @@ def _state_to_dict(state: AppState) -> dict:
         "playback_mode": state.playback_mode.name,
         "current_track": _track_to_dict(state.current_track),
         "position": state.position,
+        "duration": state.duration,
         "volume": state.volume,
         "audio_output": getattr(state, "audio_output", "device"),
         "sponsorblock_active": state.sponsorblock_active,
