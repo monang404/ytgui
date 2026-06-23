@@ -17,6 +17,7 @@ from core.event_bus import bus, QUEUE_UPDATED, LOG_MESSAGE
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
 from core.state import AppState, PlaybackMode, PlayerStatus
+from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
 #artis
@@ -162,7 +163,7 @@ class RadioMode:
     Subscribes to: (tidak ada)
     Publishes: QUEUE_UPDATED, LOG_MESSAGE
     """
-    def __init__(self, ytdlp, state):
+    def __init__(self, ytdlp: MediaExtractorPort, state: AppState):
         self.ytdlp = ytdlp
         self.state = state
         self._is_fetching = False

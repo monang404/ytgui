@@ -1,7 +1,12 @@
 import os
+import time
+import logging
 from cache.db import Database
-from engine.ytdlp_client import YtDlpClient
+from config import STREAM_URL_TTL_SEC
 from core.state import TrackInfo
+from core.ports import MediaExtractorPort, TrackRepositoryPort
+
+logger = logging.getLogger(__name__)
 
 class CacheResolver:
     """
@@ -11,7 +16,7 @@ class CacheResolver:
     3. Stale -> fetch new stream URL from yt-dlp, save to DB, return it
     """
 
-    def __init__(self, db: Database, ytdlp: YtDlpClient):
+    def __init__(self, db: TrackRepositoryPort, ytdlp: MediaExtractorPort):
         self.db = db
         self.ytdlp = ytdlp
 

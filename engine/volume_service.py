@@ -6,11 +6,11 @@ Publishes: LOG_MESSAGE
 
 import asyncio
 from core.event_bus import EventBus, CMD_VOLUME_UP, CMD_VOLUME_DOWN, LOG_MESSAGE
-from engine.mpv_controller import MpvController
+from core.ports import AudioPlayerPort
 from core.state import AppState, AudioOutput
 
 class VolumeService:
-    def __init__(self, bus: EventBus, mpv: MpvController, state: AppState):
+    def __init__(self, bus: EventBus, mpv: AudioPlayerPort, state: AppState):
         self.bus = bus
         self.mpv = mpv
         self.state = state

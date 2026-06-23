@@ -1,8 +1,12 @@
 import json
 import aiohttp
 import logging
+from typing import Optional
 from config import SPONSORBLOCK_CATS
 from core.event_bus import bus, TRACK_PROGRESS, LOG_MESSAGE
+from core.state import AppState
+from core.ports import AudioPlayerPort
+from core.task_utils import safe_create_task
 
 logger = logging.getLogger(__name__)
 SPONSORBLOCK_API = "https://sponsor.ajay.app/api/skipSegments"
@@ -12,7 +16,7 @@ class SponsorBlockHandler:
     HIGH-02 fix: Uses json.dumps for category serialization.
     MED-01 fix: Accepts a shared aiohttp session.
     """
-    def __init__(self, mpv, state=None, session: aiohttp.ClientSession = None):
+    def __init__(self, mpv: AudioPlayerPort, state: AppState, session: Optional[aiohttp.ClientSession] = None):
         self.mpv = mpv
         self.state = state
         self.segments: list[tuple[float, float]] = []

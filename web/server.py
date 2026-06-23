@@ -124,7 +124,10 @@ class ConnectionManager:
             self.disconnect(ws)
 
 
-def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
+from typing import Any
+from core.ports import MediaExtractorPort, TrackRepositoryPort
+
+def create_app(state: AppState, ytdlp: MediaExtractorPort, db: TrackRepositoryPort, controller: Any) -> web.Application:
     app = web.Application()
     manager = ConnectionManager()
 

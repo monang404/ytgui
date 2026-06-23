@@ -12,7 +12,7 @@ from core.event_bus import (
     CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_RADIO_RANDOMIZE, TRACK_STARTED, LOG_MESSAGE, QUEUE_UPDATED, CMD_SET_OUTPUT
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
-from engine.mpv_controller import MpvController
+from core.ports import AudioPlayerPort
 from cache.resolver import CacheResolver
 from integrations.sponsorblock import SponsorBlockHandler
 from integrations.lyrics import LyricsFetcher
@@ -27,7 +27,7 @@ class PlaybackController:
         self,
         bus: EventBus,
         state: AppState,
-        mpv: MpvController,
+        mpv: AudioPlayerPort,
         resolver: CacheResolver,
         sponsorblock: SponsorBlockHandler,
         lyrics_fetcher: LyricsFetcher,

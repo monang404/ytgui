@@ -8,13 +8,13 @@ import asyncio
 import logging
 from core.event_bus import EventBus, CMD_DOWNLOAD, DOWNLOAD_COMPLETE, LOG_MESSAGE
 from core.state import AppState, TrackInfo
-from engine.ytdlp_client import YtDlpClient
+from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
 logger = logging.getLogger(__name__)
 
 class DownloadManager:
-    def __init__(self, bus: EventBus, state: AppState, ytdlp: YtDlpClient):
+    def __init__(self, bus: EventBus, state: AppState, ytdlp: MediaExtractorPort):
         self.bus = bus
         self.state = state
         self.ytdlp = ytdlp
