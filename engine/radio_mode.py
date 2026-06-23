@@ -131,12 +131,12 @@ ARTISTS_PER_BATCH = 4  # jumlah artis berbeda yang diambil sekaligus per batch (
 
 # Kata-kata noise yang sering muncul di judul upload YouTube dan tidak
 # relevan untuk membedakan "lagu yang sama" vs "lagu yang berbeda".
-_TITLE_NOISE_WORDS = (
+_TITLE_NOISE_WORDS = frozenset({
     "official", "music", "video", "audio", "lyric", "lyrics", "mv",
     "cover", "live", "performance", "hd", "hq", "remastered", "remaster",
     "full", "version", "ver", "feat", "ft", "original", "soundtrack",
     "ost", "karaoke", "instrumental", "acoustic", "akustik", "konser",
-)
+})
 
 
 def _normalize_title(title: str) -> str:
@@ -194,6 +194,9 @@ class RadioMode:
         Radio agar sesi berikutnya selalu mulai dari kondisi yang bersih,
         dan tidak membocorkan lagu radio ke dalam Queue Mode."""
         self.state.radio_queue.clear()
+        for task in list(self._bg_tasks):
+            task.cancel()
+        self._bg_tasks.clear()
 
     async def next(self, controller: "PlaybackController") -> None:
         """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""

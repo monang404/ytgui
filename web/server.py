@@ -477,6 +477,10 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
 
             attempts = manager.login_attempts.get(client_ip, [])
             attempts = [t for t in attempts if now - t < 300]
+            if not attempts:  # TASK-0.5: evict key kosong agar tidak leak
+                manager.login_attempts.pop(client_ip, None)
+            else:
+                manager.login_attempts[client_ip] = attempts
             if len(attempts) >= 5:
                 await ws.send_str(json.dumps({
                     "type": "auth_status",
@@ -525,6 +529,10 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
         # Command Rate Limiting
         cmd_history = manager.command_history.get(client_ip, [])
         cmd_history = [t for t in cmd_history if now - t < 60]
+        if not cmd_history:  # TASK-0.5: evict key kosong agar tidak leak
+            manager.command_history.pop(client_ip, None)
+        else:
+            manager.command_history[client_ip] = cmd_history
         if len(cmd_history) >= 30:
             await ws.send_str(json.dumps({
                 "type": "error",

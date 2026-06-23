@@ -160,6 +160,7 @@ class PlaybackController:
                 await self.bus.publish(LogMessageEvent(message="Tidak ada lagu sebelumnya"))
 
     async def _on_stop(self, _data=None):
+        self._retry_count = 0  # TASK-0.2: reset retry state agar tidak bocor ke lagu berikutnya
         await self.mpv.pause()
         self.state.status = PlayerStatus.IDLE
         self.state.current_track = None
