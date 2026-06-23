@@ -591,7 +591,7 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
             await command_bus.execute(CMD_TOGGLE_PAUSE, room_id)
 
         elif action == "next":
-            await command_bus.execute(CMD_NEXT, room_id)
+            await command_bus.execute(CMD_NEXT, room_id, data)
 
         elif action == "prev":
             await command_bus.execute(CMD_PREV, room_id)
