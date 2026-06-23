@@ -39,6 +39,7 @@ class AppState:
     audio_output:    str           = "device"
     current_track:   Optional[TrackInfo] = None
     position:        float = 0.0
+    duration:        float = 0.0
     volume:          int   = 80
     sponsorblock_active: bool = False
 
