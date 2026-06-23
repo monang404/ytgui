@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 > nul
 color 0A
 title YTGUI Web Server Startup
 echo ====================================================
@@ -7,9 +6,9 @@ echo           YTGUI Web Server -- Starting Up
 echo ====================================================
 echo.
 
-:: ──────────────────────────────────────────────────────────
-::  KONFIGURASI — Hilangkan "::" di depan baris untuk mengaktifkan
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
+::  KONFIGURASI ? Hilangkan "::" di depan baris untuk mengaktifkan
+:: ----------------------------------------------------------
 
 set YTGUI_HOST=0.0.0.0
 set YTGUI_PORT=8765
@@ -30,9 +29,9 @@ set YTGUI_PORT=8765
 :: Port TCP untuk MPV di Windows (digunakan karena Windows tidak support Unix socket)
 :: set YT_PLAYER_MPV_PORT=12345
 
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
 ::  STARTUP
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
 
 echo [1/4] Menyiapkan environment variables...
 timeout /t 1 > nul
@@ -77,9 +76,9 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr /R ":%YTGUI_PORT% " 2^>nul') 
 )
 timeout /t 1 > nul
 
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
 ::  INFO PASSWORD ADMIN
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
 
 echo.
 echo [Info Akses Admin]
@@ -88,7 +87,7 @@ if defined YTGUI_ADMIN_PASS (
 ) else (
     if exist "cache\admin_password.txt" (
         echo   Password tersimpan di: cache\admin_password.txt
-        echo   (Format pbkdf2 hash -- tidak bisa dibaca langsung)
+        echo   (Format pbkdf2 hash -- tidak bisa dibaca langsung^)
     ) else (
         echo   Password baru akan di-generate otomatis saat server pertama dijalankan.
         echo   Cek output server untuk melihat password yang digenerate.
@@ -100,9 +99,9 @@ if defined YTGUI_ADMIN_USER (
     echo   Username  : admin
 )
 
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
 ::  MULAI SERVER
-:: ──────────────────────────────────────────────────────────
+:: ----------------------------------------------------------
 
 echo.
 echo ====================================================
