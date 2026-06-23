@@ -58,38 +58,38 @@ class LyricsFetcher:
                         data = await resp.json()
                         lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
 
-            # Bersihkan judul secara umum (karena info dari YouTube sering kotor)
-            clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
-            for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
-                clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
-            clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
-            
-            # Buat search query yang lebih bersih
-            if "-" in title:
-                search_query = clean_title
-            else:
-                search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
-
-            # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
-            if not lrc:
-                url_search = f"{LYRICS_API_BASE}/search"
-                params_search = {"q": search_query}
+                # Bersihkan judul secara umum (karena info dari YouTube sering kotor)
+                clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
+                for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
+                    clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
+                clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
                 
-                async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                    if resp.status == 200:
-                        results = await resp.json()
-                        if isinstance(results, list):
-                            for res in results:
-                                lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
-                                if lrc:
-                                    break
-            
-            # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
-            if not lrc:
-                logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
-                logger.info(f"syncedlyrics query: {search_query}")
-                loop = asyncio.get_running_loop()
-                lrc = await loop.run_in_executor(None, syncedlyrics.search, search_query)
+                # Buat search query yang lebih bersih
+                if "-" in title:
+                    search_query = clean_title
+                else:
+                    search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
+    
+                # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
+                if not lrc:
+                    url_search = f"{LYRICS_API_BASE}/search"
+                    params_search = {"q": search_query}
+                    
+                    async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                        if resp.status == 200:
+                            results = await resp.json()
+                            if isinstance(results, list):
+                                for res in results:
+                                    lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
+                                    if lrc:
+                                        break
+                
+                # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
+                if not lrc:
+                    logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
+                    logger.info(f"syncedlyrics query: {search_query}")
+                    loop = asyncio.get_running_loop()
+                    lrc = await loop.run_in_executor(None, syncedlyrics.search, search_query)
             
             if lrc:
                 self.lyrics_data = self._parse_lrc(lrc)
