@@ -89,6 +89,9 @@ pip install -r requirements.txt --upgrade
 **Masalah:** Pencarian selalu gagal (No results found).
 **Solusi:** Berarti YouTube mengubah sistem mereka. Segera update mesin intinya (`yt-dlp`) dengan cara menjalankan `pip install yt-dlp --upgrade`.
 
+**Masalah:** Aplikasi crash atau perilaku aneh tidak terduga.
+**Solusi:** Anda dapat membuka dan membaca file `ytplayer.log` yang ada di root direktori. File ini menggunakan format **JSON Structured Logging** yang sangat detail dan rapi. Semua riwayat error sistem dan Exception dicatat di sana. Anda bisa mengirim isinya kepada Developer jika perlu melaporkan bug.
+
 ---
 
 ## 🌐 6. Panduan Web UI & Mode Portal (bagas.fm)

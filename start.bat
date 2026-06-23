@@ -15,7 +15,7 @@ set YTGUI_PORT=8765
 timeout /t 1 >nul
 
 echo [2/3] Memeriksa dependensi Python...
-python -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics" >nul 2>&1
+python -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics, structlog" >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo       [Peringatan] Dependensi belum lengkap! Pastikan Anda sudah menjalankan 'pip install -r requirements.txt'.
     timeout /t 2 >nul

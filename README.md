@@ -20,7 +20,7 @@
   - **Admin Mode (Kontrol Penuh)**: Membutuhkan login username & password. Memiliki akses penuh untuk memutar musik, mencari lagu, mengatur antrean, serta mengatur volume.
   - **Client Mode (Dengar Saja / Intercom)**: Akses instan tanpa password. Musik akan otomatis dialirkan (streaming) ke browser klien. Hanya menampilkan judul lagu, visualizer, dan daftar antrean statis (tanpa tombol kontrol). Cocok sebagai intercom nirkabel!
   - **Fitur Logout & Switch Mode**: Memudahkan pengguna keluar dari sesi dan beralih peran.
-- **⚡ Super Ringan**: Dibangun dengan arsitektur *asynchronous event-driven*, menggunakan RAM & CPU seminimal mungkin.
+- **⚡ Super Ringan & Observabel**: Dibangun dengan arsitektur *asynchronous event-driven*, pola komunikasi terpisah (CommandBus & EventBus), penggunaan RAM/CPU minimal, dan dilengkapi dengan *Structured Logging* (JSON) untuk kemudahan *troubleshooting*.
 
 ---
 
@@ -128,11 +128,12 @@ Untuk panduan yang lebih dalam mengenai rahasia kualitas audio, trik pencarian s
 
 ---
 
-## 📁 Struktur Direktori Cache
+## 📁 Struktur Direktori & Sistem Log
 
-Aplikasi ini menggunakan sistem *smart caching*. Semua data akan disimpan di folder `cache/` pada root direktori:
+Aplikasi ini menggunakan sistem *smart caching* dan memiliki sistem log tingkat lanjut:
 - `cache/library.db` : Database SQLite penyimpan metadata, path file lokal, dan *play count*.
 - `cache/<video_id>.mp3` : File audio hasil unduhan manual (`[M]`).
+- `ytplayer.log` : Berkas log aplikasi dalam format JSON (Structured Logging) untuk observabilitas yang mudah dibaca oleh mesin/developer.
 
 Anda bisa menghapus isi folder `cache` kapanpun jika ingin menghemat ruang penyimpanan.
 
