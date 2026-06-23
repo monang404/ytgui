@@ -112,9 +112,9 @@
         pbCacheBadge: $("pb-cache-badge"),
         pbSbBadge: $("pb-sb-badge"),
         pbDlBadge: $("pb-dl-badge"),
+        mainOverlay: $("main-overlay"),
         // Settings Sheet
         settingsSheet: $("settings-sheet"),
-        settingsOverlay: $("settings-overlay"),
         sbToggle: $("sb-toggle"),
         ssOutBtn: $("ss-out-btn"),
         ssOutSub: $("ss-out-sub"),
@@ -126,12 +126,12 @@
         ssHistorySub: $("ss-history-sub"),
         ssHistoryBtn: $("ss-history-btn"),
         // Modals
-        actionOverlay: $("action-modal-overlay"),
-        actionTitle: $("action-modal-title"),
+        actionSheet: $("action-sheet"),
+        actionTitle: $("action-sheet-title"),
         actionPlayNow: $("action-play-now"),
         actionEnqueue: $("action-enqueue"),
         actionCancel: $("action-cancel"),
-        helpOverlay: $("help-modal-overlay"),
+        helpSheet: $("help-sheet"),
         helpCloseBtn: $("help-close-btn"),
         // Toasts
         connectionToast: $("connection-toast"),
@@ -919,9 +919,7 @@
 
     dom.actionCancel.addEventListener("click", hideActionModal);
 
-    dom.actionOverlay.addEventListener("click", (e) => {
-        if (e.target === dom.actionOverlay) hideActionModal();
-    });
+
 
     // ══════════════════════════════════════
     // Tab Navigation
@@ -1216,12 +1214,12 @@
     // Settings Sheet
     function openSettings() {
         dom.settingsSheet.classList.add("open");
-        dom.settingsOverlay.classList.add("active");
+        dom.mainOverlay.classList.add("open");
         renderSettingsSheet();
     }
     function closeSettings() {
         dom.settingsSheet.classList.remove("open");
-        dom.settingsOverlay.classList.remove("active");
+        closeMainOverlay();
     }
     function renderSettingsSheet() {
         if (!dom.settingsSheet || !dom.settingsSheet.classList.contains("open")) return;
@@ -1268,8 +1266,14 @@
             }
         });
     }
-    if (dom.settingsOverlay) {
-        dom.settingsOverlay.addEventListener("click", closeSettings);
+    function closeMainOverlay() {
+        dom.mainOverlay.classList.remove("open");
+        if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
+        if (dom.actionSheet) dom.actionSheet.classList.remove("open");
+        if (dom.helpSheet) dom.helpSheet.classList.remove("open");
+    }
+    if (dom.mainOverlay) {
+        dom.mainOverlay.addEventListener("click", closeMainOverlay);
     }
     if (dom.sbToggle) {
         dom.sbToggle.addEventListener("click", () => {
@@ -1314,15 +1318,13 @@
     // ══════════════════════════════════════
 
     dom.btnHelp.addEventListener("click", () => {
-        dom.helpOverlay.classList.add("active");
+        dom.helpSheet.classList.add("open");
+        dom.mainOverlay.classList.add("open");
     });
 
     dom.helpCloseBtn.addEventListener("click", () => {
-        dom.helpOverlay.classList.remove("active");
-    });
-
-    dom.helpOverlay.addEventListener("click", (e) => {
-        if (e.target === dom.helpOverlay) dom.helpOverlay.classList.remove("active");
+        dom.helpSheet.classList.remove("open");
+        closeMainOverlay();
     });
 
     // ══════════════════════════════════════
@@ -1385,11 +1387,11 @@
                 switchTab("search");
                 break;
             case "?":
-                dom.helpOverlay.classList.toggle("active");
+                if (dom.helpSheet.classList.contains("open")) { dom.helpSheet.classList.remove("open"); closeMainOverlay(); } else { dom.helpSheet.classList.add("open"); dom.mainOverlay.classList.add("open"); }
                 break;
             case "Escape":
                 hideActionModal();
-                dom.helpOverlay.classList.remove("active");
+                if (dom.helpSheet) dom.helpSheet.classList.remove("open");
                 break;
         }
     });
