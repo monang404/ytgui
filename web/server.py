@@ -39,6 +39,10 @@ logger = structlog.get_logger(__name__)
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+# TASK-1.4: Konstanta validasi room_id
+_ROOM_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
+MAX_ROOMS = 10
+
 
 def _track_to_dict(track: Optional[TrackInfo]) -> Optional[dict]:
     if not track:
@@ -268,6 +272,15 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
     # --- Route: WebSocket ---
     async def handle_websocket(request):
         room_id = request.query.get("room", "default")
+
+        # TASK-1.4: Validasi room_id — cegah path traversal & memory exhaustion
+        if not _ROOM_ID_RE.match(room_id):
+            return web.HTTPBadRequest(
+                text="Invalid room_id: hanya huruf, angka, '-', '_', maksimum 64 karakter"
+            )
+        if room_id not in room_manager.rooms and len(room_manager.rooms) >= MAX_ROOMS:
+            return web.HTTPTooManyRequests(text="Batas maksimum room tercapai")
+
         room = await room_manager.get_or_create_room(room_id)
         
         ws = web.WebSocketResponse()
@@ -428,8 +441,20 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
 
     # --- Route: Metrics Endpoint ---
     async def handle_metrics(request):
+        # TASK-1.3: Batasi akses metrics ke localhost atau via X-Metrics-Token
+        import os as _os
+        client_ip = request.remote
+        _localhost_ips = {"127.0.0.1", "::1", "::ffff:127.0.0.1"}
+        metrics_token = _os.environ.get("YTGUI_METRICS_TOKEN")
+        is_local = client_ip in _localhost_ips
+        has_valid_token = (
+            metrics_token
+            and request.headers.get("X-Metrics-Token") == metrics_token
+        )
+        if not is_local and not has_valid_token:
+            return web.HTTPForbidden(text="Akses ditolak: metrics hanya untuk localhost atau gunakan X-Metrics-Token")
+
         content, content_type = get_metrics_content()
-        # Prometheus content_type contains charset — strip it for aiohttp compatibility
         ct = content_type.split(";")[0].strip()
         return web.Response(body=content, content_type=ct)
 
@@ -511,21 +536,13 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
                 }))
             return
 
-        # If not authenticated, reject all other commands
-        # Pengecualian: izinkan command "next" dari client HANYA jika sesuai dengan track saat ini (trigger auto-skip browser)
+        # TASK-1.5: Semua command wajib autentikasi — hapus unauthenticated next bypass
         if not is_authenticated:
-            is_valid_auto_skip = (
-                action == "next" 
-                and isinstance(data, dict) 
-                and data.get("video_id") == getattr(state.current_track, "video_id", None)
-            )
-            if not is_valid_auto_skip:
-                await ws.send_str(json.dumps({
-                    "type": "error",
-                    "data": "Akses ditolak. Silakan login sebagai Admin.",
-                }))
-                return
-            
+            await ws.send_str(json.dumps({
+                "type": "error",
+                "data": "Akses ditolak. Silakan login sebagai Admin.",
+            }))
+            return
         # Command Rate Limiting
         cmd_history = manager.command_history.get(client_ip, [])
         cmd_history = [t for t in cmd_history if now - t < 60]
