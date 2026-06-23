@@ -51,7 +51,7 @@ class AppState:
     position:        float = 0.0
     duration:        float = 0.0
     volume:          int   = 80
-    sponsorblock_active: bool = False
+    sponsorblock_active: bool = True
 
     # Queue (hanya aktif di QUEUE mode)
     queue:           deque = field(default_factory=deque)

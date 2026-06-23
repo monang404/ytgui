@@ -63,3 +63,29 @@ class DiscoverService:
         except Exception:
             pass
         return tracks
+
+    async def get_cached(self, n: int) -> list[TrackInfo]:
+        """Mengambil n lagu yang sudah ter-cache (local_path is not null)."""
+        if not getattr(self.db, '_conn', None):
+            return []
+            
+        tracks = []
+        try:
+            async with self.db._conn.execute(
+                "SELECT * FROM tracks WHERE local_path IS NOT NULL ORDER BY last_played DESC LIMIT ?", (n,)
+            ) as cursor:
+                async for row in cursor:
+                    d = dict(row)
+                    tracks.append(TrackInfo(
+                        video_id=d["video_id"],
+                        title=d["title"],
+                        artist=d["artist"],
+                        duration=d["duration"],
+                        thumbnail=d["thumbnail"],
+                        local_path=d["local_path"],
+                        stream_url=d["stream_url"],
+                        view_count=d["view_count"]
+                    ))
+        except Exception:
+            pass
+        return tracks

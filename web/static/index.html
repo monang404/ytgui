@@ -7,7 +7,8 @@
     <meta name="theme-color" content="#1a1a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>YTGUI — YouTube Player</title>
+    <title>bagas.fm — Music Player</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -19,22 +20,19 @@
         <p class="portal-subtitle">Silakan pilih mode akses untuk memutar musik</p>
         
         <div class="portal-options">
-            <!-- Mode Client -->
             <button id="portal-client-btn" class="portal-btn client">
-                <span class="portal-icon">🔊</span>
+                <span class="portal-icon"><i class="ti ti-volume"></i></span>
                 <span class="portal-btn-title">Mode Client</span>
                 <span class="portal-btn-desc">Dengarkan audio langsung di browser ini secara real-time.</span>
             </button>
             
-            <!-- Mode Admin -->
             <div class="portal-admin-wrapper">
                 <button id="portal-admin-btn" class="portal-btn admin">
-                    <span class="portal-icon">⚡</span>
+                    <span class="portal-icon"><i class="ti ti-bolt"></i></span>
                     <span class="portal-btn-title">Mode Admin</span>
                     <span class="portal-btn-desc">Akses kontrol penuh (putar, cari, atur antrean & volume).</span>
                 </button>
                 
-                <!-- Form Login Admin -->
                 <div id="portal-login-form" class="portal-login-form hidden">
                     <div class="login-input-group">
                         <input type="text" id="admin-username" placeholder="Username" autocomplete="off">
@@ -50,130 +48,251 @@
     </div>
 </div>
 
-<div id="app">
+<div id="app" class="fm portal-active">
 
     <!-- ═══ Header ═══ -->
-    <header id="app-header">
-        <span class="app-title">bagas.fm</span>
-        <div class="header-right">
-            <button id="output-toggle-btn" class="output-btn" title="Ubah Output Suara">📱 HP</button>
-            <button id="logout-btn" class="logout-btn" title="Keluar / Ganti Mode">🚪 Keluar</button>
-            <span class="status-indicator">
-                <span class="status-dot" id="status-dot"></span>
-                <span id="status-text">online</span>
-            </span>
+    <header class="fm-header" id="app-header">
+        <span class="fm-title">bagas.fm</span>
+        <div class="fm-hright">
+            <button id="output-toggle-btn" class="out-btn" title="Ubah Output Suara">
+                <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> <span id="output-btn-text">Device</span>
+            </button>
+            <button id="logout-btn" class="out-btn" title="Keluar / Ganti Mode">
+                <i class="ti ti-logout" style="font-size:11px"></i> Keluar
+            </button>
+            <div class="status-indicator" style="display:flex; align-items:center; gap:6px;">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text" style="font-size:11px; color:#9a9abc">online</span>
+            </div>
         </div>
     </header>
 
     <!-- ═══ Content Area ═══ -->
-    <main id="content-area">
+    <main class="content" id="content-area">
 
         <!-- Tab: Now Playing -->
         <section id="tab-home" class="tab-panel active">
-            <canvas id="eq-canvas" width="280" height="140"></canvas>
-            <div class="np-title" id="np-title">Belum ada lagu yang diputar</div>
-            <div class="np-artist" id="np-artist">Cari lagu untuk memulai</div>
+            <div class="card" style="display:flex;gap:12px;align-items:center">
+                <div class="np-art" id="np-thumbnail">
+                    <i class="ti ti-music" style="font-size:28px;color:#e040fb" aria-hidden="true"></i>
+                </div>
+                <div class="np-meta">
+                    <div class="np-track" id="np-title">Belum ada lagu yang diputar</div>
+                    <div class="np-artist" id="np-artist">Cari lagu untuk memulai</div>
+                    <div class="np-dur" id="np-dur-meta"></div>
+                </div>
+            </div>
+
+            <div class="eq-wrap" id="eq-wrap">
+                <canvas id="eq-canvas" width="280" height="52" style="width:100%;height:100%"></canvas>
+            </div>
+
+            <div class="section-label">Baru Diputar</div>
+            <div class="discover-row" id="recent-row">
+                <div class="discover-empty">Belum ada riwayat</div>
+            </div>
         </section>
 
         <!-- Tab: Search -->
         <section id="tab-search" class="tab-panel">
-            <div id="search-input-wrap">
-                <span class="search-icon">🔍</span>
+            <div class="search-wrap" id="search-input-wrap">
+                <i class="ti ti-search" aria-hidden="true"></i>
                 <input type="text" id="search-input" placeholder="Ketik nama lagu atau artis..." autocomplete="off" autofocus>
             </div>
-            <div id="search-msg">Ketik nama lagu atau artis</div>
+            <div id="search-msg" style="padding:0 14px 6px; font-size:11px; color:#6a6a8c">Ketik nama lagu atau artis</div>
             <div id="search-results"></div>
         </section>
 
         <!-- Tab: Radio -->
         <section id="tab-radio" class="tab-panel">
-            <button class="radio-toggle-btn" id="radio-toggle-btn">📻 RADIO: OFF</button>
-            <div class="radio-info" id="radio-info">Radio memutar lagu otomatis tanpa henti.<br>Ketuk untuk mengaktifkan.</div>
-            <div class="radio-actions">
-                <button id="radio-randomize-btn">🎲 Acak Ulang</button>
-                <button id="radio-skip-btn">⏭ Skip</button>
+            <div class="radio-toggle" id="radio-toggle-wrap">
+                <div class="rt-left">
+                    <div class="rt-icon" id="rt-icon"><i class="ti ti-antenna" aria-hidden="true"></i></div>
+                    <div>
+                        <div class="rt-title">Radio Mode</div>
+                        <div class="rt-sub" id="rt-sub">Aktifkan untuk putar otomatis</div>
+                    </div>
+                </div>
+                <button class="toggle off" id="radio-toggle-btn" data-on="false" aria-label="Toggle Radio">
+                    <div class="toggle-dot"></div>
+                </button>
+            </div>
+
+            <div class="next-card" id="next-card" style="display:none">
+                <div class="next-header">
+                    <span class="next-label">Selanjutnya</span>
+                    <button class="next-skip" id="radio-skip-btn">⏭ Skip</button>
+                </div>
+                <div class="next-item" id="next-item">
+                    <div class="next-thumb" id="next-thumb"><i class="ti ti-music" style="font-size:16px;color:#6a6a8c" aria-hidden="true"></i></div>
+                    <div class="next-info">
+                        <div class="next-title" id="next-title">-</div>
+                        <div class="next-meta" id="next-meta">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-label" style="margin-top: 15px;">Benih Artis</div>
+            <div class="chip-wrap" id="chip-wrap"></div>
+
+            <div class="section-label">Acak Artis</div>
+            <div style="padding: 0 14px 10px; display: flex; gap: 8px;">
+                <button id="radio-randomize-btn" style="background:#1e1e38;border:1px solid #2e2e48;border-radius:10px;padding:8px 14px;color:#c0c0e0;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px">
+                    <i class="ti ti-dice" style="font-size:14px" aria-hidden="true"></i> Acak Ulang
+                </button>
             </div>
         </section>
 
         <!-- Tab: Queue -->
         <section id="tab-queue" class="tab-panel">
-            <div id="queue-list"></div>
-            <div id="queue-footer">Mode: QUEUE</div>
+            <div id="queue-list" style="display:flex; flex-direction:column;"></div>
+            <div id="queue-footer" style="text-align:center; padding:12px 0; font-size:11px; color:#6a6a8c;">Mode: QUEUE</div>
 
-            <div id="lyrics-panel">
-                <button class="lyrics-toggle-btn" id="lyrics-toggle-btn">📝 Lirik ▾</button>
-                <div id="lyrics-content">
-                    <div style="color: var(--text-dim)">Tidak ada lirik</div>
+            <div class="lyrics-panel" id="lyrics-panel">
+                <div class="lyric-hdr">
+                    <button id="lyrics-toggle-btn" style="background:none; border:none; color:#9a9abc; display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+                        <i class="ti ti-align-center" style="font-size:15px" aria-hidden="true"></i> Lirik Tersinkron
+                    </button>
+                    <div class="lyric-offset" id="lyric-offset-ctrl">
+                        <span>Offset</span>
+                        <button id="lyric-offset-minus">−</button>
+                        <span id="lyric-offset-display">+0.0s</span>
+                        <button id="lyric-offset-plus">+</button>
+                    </div>
+                </div>
+                <div class="lyric-body" id="lyrics-content">
+                    <div class="lyric-line near">Tidak ada lirik</div>
                 </div>
             </div>
+        </section>
+
+        <!-- Tab: Discover -->
+        <section id="tab-discover" class="tab-panel">
+            <div class="section-label">Paling Sering Diputar</div>
+            <div class="disc-row2" id="discover-favorites"></div>
+
+            <div class="section-label">Baru Diputar</div>
+            <div class="discover-row" id="discover-recent"></div>
+
+            <div class="section-label">Tersimpan Lokal (Cache)</div>
+            <div id="discover-cached" style="display:flex; flex-direction:column; padding-bottom:12px;"></div>
         </section>
 
     </main>
 
     <!-- ═══ Player Bar ═══ -->
-    <div id="player-bar">
-        <!-- Track Info -->
-        <div class="pb-info-row">
-            <div class="pb-track-info" id="pb-track-info"></div>
-            <span class="pb-mode-badge queue" id="pb-mode-badge">≡ queue</span>
+    <div class="pbar" id="player-bar">
+        <div class="pb-row1">
+            <div class="pb-title" id="pb-track-info"></div>
+            <span class="pb-badge queue" id="pb-mode-badge">≡ queue</span>
+        </div>
+        
+        <div class="pb-seek">
+            <span class="pb-time" id="pb-time-pos">0:00</span>
+            <div class="pb-track" id="pb-progress-track">
+                <div class="pb-fill" id="pb-progress-fill" style="width: 0%"></div>
+                <div class="pb-thumb" id="seek-thumb" style="left: 0%"></div>
+            </div>
+            <span class="pb-time" style="text-align:right" id="pb-time-dur">0:00</span>
         </div>
 
-        <!-- Progress -->
-        <div class="pb-progress-wrap">
-            <span class="pb-time" id="pb-time-pos">00:00</span>
-            <div class="pb-progress-track" id="pb-progress-track">
-                <div class="pb-progress-fill" id="pb-progress-fill" style="width: 0%"></div>
+        <div class="pb-ctrl">
+            <div class="vol-grp">
+                <i class="ti ti-volume" aria-hidden="true"></i>
+                <input type="range" min="0" max="100" value="80" id="vol-slider">
+                <span class="vol-label" id="pb-vol-label">80%</span>
             </div>
-            <span class="pb-time end" id="pb-time-dur">00:00</span>
-        </div>
-
-        <!-- Controls -->
-        <div class="pb-controls">
-            <div class="pb-secondary-controls">
-                <button class="pb-btn" id="btn-voldown" title="Volume -">🔉</button>
-                <span class="pb-vol-label" id="pb-vol-label">80%</span>
-                <button class="pb-btn" id="btn-volup" title="Volume +">🔊</button>
+            <div class="main-ctrl">
+                <button class="btn-prev" aria-label="Previous" id="btn-prev"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>
+                <button class="btn-play" aria-label="Play/Pause" id="btn-play"><i class="ti ti-player-play-filled" style="font-size:15px;color:#fff" aria-hidden="true"></i></button>
+                <button class="btn-next" aria-label="Next" id="btn-next"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
             </div>
-
-            <div class="pb-main-controls">
-                <button class="pb-btn" id="btn-prev" title="Previous">⏮</button>
-                <button class="pb-btn play-btn" id="btn-play" title="Play/Pause">▶</button>
-                <button class="pb-btn" id="btn-next" title="Next">⏭</button>
-            </div>
-
-            <div class="pb-secondary-controls">
-                <button class="pb-btn" id="btn-download" title="Download">⬇️</button>
-                <button class="pb-btn" id="btn-help" title="Help">❓</button>
+            <div class="pb-sec">
+                <button id="btn-settings" title="Pengaturan" aria-label="Pengaturan"><i class="ti ti-settings" aria-hidden="true"></i></button>
+                <button id="btn-download" title="Unduh" aria-label="Unduh lagu ini"><i class="ti ti-download" aria-hidden="true"></i></button>
+                <button id="btn-help" title="Help" aria-label="Bantuan"><i class="ti ti-help" aria-hidden="true"></i></button>
             </div>
         </div>
-
-        <!-- Badges -->
         <div class="pb-badges">
-            <span class="pb-badge cache-badge" id="pb-cache-badge"></span>
-            <span class="pb-badge sb-badge" id="pb-sb-badge"></span>
-            <span class="pb-badge dl-badge" id="pb-dl-badge"></span>
+            <span class="pb-badge-sm cached" id="pb-cache-badge" style="display:none">✓ tersimpan</span>
+            <span class="pb-badge-sm sb" id="pb-sb-badge" style="display:none">SB aktif</span>
+            <span class="pb-badge-sm dl" id="pb-dl-badge" style="display:none"></span>
         </div>
     </div>
 
     <!-- ═══ Navigation Bar ═══ -->
-    <nav id="nav-bar">
+    <nav class="navrow" id="nav-bar">
         <button class="nav-btn active" data-tab="home" id="nav-home">
-            <span class="nav-icon">💿</span>
-            <span>Player</span>
+            <i class="ti ti-disc" aria-hidden="true"></i><span>Player</span>
         </button>
         <button class="nav-btn" data-tab="search" id="nav-search">
-            <span class="nav-icon">🔍</span>
-            <span>Search</span>
+            <i class="ti ti-search" aria-hidden="true"></i><span>Search</span>
         </button>
         <button class="nav-btn" data-tab="radio" id="nav-radio">
-            <span class="nav-icon">📻</span>
-            <span>Radio</span>
+            <i class="ti ti-antenna" aria-hidden="true"></i><span>Radio</span>
         </button>
         <button class="nav-btn" data-tab="queue" id="nav-queue">
-            <span class="nav-icon">📋</span>
-            <span>Queue</span>
+            <i class="ti ti-list" aria-hidden="true"></i><span>Queue</span>
+        </button>
+        <button class="nav-btn" data-tab="discover" id="nav-discover">
+            <i class="ti ti-compass" aria-hidden="true"></i><span>Discover</span>
         </button>
     </nav>
+
+    <!-- ═══ Settings Sheet ═══ -->
+    <div class="settings-sheet" id="settings-sheet">
+        <div class="ss-handle"></div>
+        <div class="ss-title">Pengaturan Pemutaran</div>
+        
+        <div class="ss-row">
+            <div class="ss-label">
+                <i class="ti ti-shield-check" aria-hidden="true"></i>
+                <div><div class="ss-label-text">SponsorBlock</div><div class="ss-label-sub">Lewati sponsor, intro, outro</div></div>
+            </div>
+            <button class="toggle off" id="sb-toggle" data-on="false" aria-label="Toggle SponsorBlock"><div class="toggle-dot"></div></button>
+        </div>
+        
+        <div class="ss-row">
+            <div class="ss-label">
+                <i class="ti ti-device-speaker" aria-hidden="true"></i>
+                <div><div class="ss-label-text">Output Audio</div><div class="ss-label-sub" id="ss-out-sub">Keluar via perangkat (mpv)</div></div>
+            </div>
+            <button class="out-btn" id="ss-out-btn">
+                <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> Device
+            </button>
+        </div>
+
+        <div class="ss-row">
+            <div class="ss-label">
+                <i class="ti ti-player-stop" aria-hidden="true"></i>
+                <div><div class="ss-label-text">Stop Pemutaran</div><div class="ss-label-sub">Hentikan lagu sepenuhnya</div></div>
+            </div>
+            <button id="ss-stop-btn" style="background:#1e1e38;border:1px solid #2e2e48;border-radius:8px;padding:4px 10px;color:#e94560;font-size:11px;cursor:pointer">⏹ Stop</button>
+        </div>
+
+        <div class="ss-row" id="ss-dl-row" style="display:none">
+            <div style="width:100%">
+                <div class="ss-label" style="margin-bottom:6px">
+                    <i class="ti ti-download" aria-hidden="true"></i>
+                    <div><div class="ss-label-text">Mengunduh...</div><div class="ss-label-sub" id="ss-dl-track">-</div></div>
+                </div>
+                <div class="dl-bar-wrap">
+                    <div class="dl-label"><span>Progress</span><span id="ss-dl-pct">0%</span></div>
+                    <div class="dl-bar"><div class="dl-fill shimmer" id="ss-dl-fill" style="width:0%"></div></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ss-row">
+            <div class="ss-label">
+                <i class="ti ti-history" aria-hidden="true"></i>
+                <div><div class="ss-label-text">Riwayat Putar</div><div class="ss-label-sub" id="ss-history-sub">0 lagu diputar</div></div>
+            </div>
+            <button id="ss-history-btn" style="background:#1e1e38;border:1px solid #2e2e48;border-radius:8px;padding:4px 10px;color:#9a9abc;font-size:11px;cursor:pointer">Lihat</button>
+        </div>
+    </div>
+    
+    <div id="settings-overlay" class="overlay" onclick="document.getElementById('settings-sheet').classList.remove('open'); document.getElementById('settings-overlay').classList.remove('open')"></div>
 
 </div>
 
@@ -182,9 +301,9 @@
     <div id="action-modal">
         <div class="modal-title" id="action-modal-title">Title</div>
         <div class="modal-actions">
-            <button class="btn-play-now" id="action-play-now">▷ Putar</button>
-            <button class="btn-enqueue" id="action-enqueue">+ Antrean</button>
-            <button class="btn-cancel" id="action-cancel">✕</button>
+            <button class="btn-play-now" id="action-play-now"><i class="ti ti-player-play"></i> Putar</button>
+            <button class="btn-enqueue" id="action-enqueue"><i class="ti ti-playlist-add"></i> Antrean</button>
+            <button class="btn-cancel" id="action-cancel"><i class="ti ti-x"></i></button>
         </div>
     </div>
 </div>

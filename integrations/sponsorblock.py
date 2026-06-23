@@ -35,9 +35,6 @@ class SponsorBlockHandler:
     async def fetch_segments(self, video_id: str):
         """Fetches skip segments and stores them in memory for the current track."""
         self.segments = []
-        if self.state:
-            self.state.sponsorblock_active = False
-        
         # HIGH-02 fix: Use json.dumps instead of str().replace()
         params = {
             "videoID": video_id,
@@ -57,8 +54,6 @@ class SponsorBlockHandler:
                         self.segments = [
                             (seg["segment"][0], seg["segment"][1]) for seg in data
                         ]
-                        if self.state:
-                            self.state.sponsorblock_active = len(self.segments) > 0
                         logger.info(f"SponsorBlock: {len(self.segments)} segments for {video_id}")
                     elif resp.status == 404:
                         pass  # No segments for this video, that's normal
@@ -71,6 +66,8 @@ class SponsorBlockHandler:
     async def _on_progress(self, event: TrackProgressEvent):
         """Called every ~0.5s by MpvController. Seeks past sponsored segments."""
         current_pos = event.position
+        if getattr(self.state, "sponsorblock_active", True) == False:
+            return
         if not self.segments or not isinstance(current_pos, (int, float)):
             return
 

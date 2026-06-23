@@ -209,9 +209,22 @@ class PlaybackController:
         await self.bus.publish(QueueUpdatedEvent())
         await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}"))
 
-    async def _on_radio_randomize(self, _data=None):
+    async def _on_queue_reorder(self, data: dict):
+        async with self._lock:
+            from_index = data.get("from_index")
+            to_index = data.get("to_index")
+            q = self.state.queue
+            if from_index is not None and to_index is not None:
+                if 0 <= from_index < len(q) and 0 <= to_index < len(q):
+                    item = q[from_index]
+                    del q[from_index]
+                    q.insert(to_index, item)
+                    await self.bus.publish(QueueUpdatedEvent())
+
+    async def _on_radio_randomize(self, data=None):
         async with self._lock:
             if self.state.playback_mode == PlaybackMode.RADIO:
+                seed = data.get("seed_artist") if data else None
                 self.state.radio_queue.clear()
                 
                 # Stop playing current track immediately to give instant "reset" feel
@@ -222,8 +235,8 @@ class PlaybackController:
                 await self.bus.publish(QueueUpdatedEvent())
                 
                 await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio..."))
-                # Panggil fetch dengan seed=None agar memaksa penggunaan seed acak dari list
-                await self.radio_mode._fetch_and_play_initial(self, seed_artist=None)
+                # Panggil fetch dengan seed jika ada, jika tidak None
+                await self.radio_mode._fetch_and_play_initial(self, seed_artist=seed)
             else:
                 await self.bus.publish(LogMessageEvent(message="Radio tidak aktif"))
 
@@ -244,3 +257,14 @@ class PlaybackController:
             await self.mpv.set_volume(self.state.volume)
         await self.bus.publish(LogMessageEvent(message=f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}"))
         await self.bus.publish(QueueUpdatedEvent())
+
+    async def _on_set_sponsorblock(self, enabled: bool):
+        self.state.sponsorblock_active = enabled
+        await self.bus.publish(LogMessageEvent(message=f"SponsorBlock: {'ON' if enabled else 'OFF'}"))
+        await self.bus.publish(QueueUpdatedEvent())
+
+    async def _on_lyrics_offset(self, data: dict):
+        offset = data.get("offset", 0.0)
+        self.state.lyrics_offset = float(offset)
+        from core.events import LyricsUpdatedEvent
+        await self.bus.publish(LyricsUpdatedEvent())

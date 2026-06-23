@@ -28,9 +28,9 @@ from core.events import (
 )
 from core.command_bus import (
     command_bus, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
-    CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_VOLUME_UP, CMD_VOLUME_DOWN,
-    CMD_DOWNLOAD, CMD_SET_MODE, CMD_SET_OUTPUT, CMD_QUEUE_SELECT,
-    CMD_QUEUE_ADD, CMD_QUEUE_REMOVE, CMD_RADIO_RANDOMIZE
+    CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_VOLUME_SET,
+    CMD_DOWNLOAD, CMD_SET_MODE, CMD_SET_OUTPUT, CMD_SET_SPONSORBLOCK, CMD_QUEUE_SELECT,
+    CMD_QUEUE_ADD, CMD_QUEUE_REMOVE, CMD_QUEUE_REORDER, CMD_RADIO_RANDOMIZE, CMD_LYRICS_OFFSET
 )
 from core.task_utils import safe_create_task
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
@@ -142,6 +142,7 @@ class ConnectionManager:
 from typing import Any
 from core.ports import MediaExtractorPort, DatabasePort
 from core.room_manager import RoomManager
+from services.discover_service import DiscoverService
 
 def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: DatabasePort) -> web.Application:
     app = web.Application()
@@ -582,6 +583,20 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
                     "data": [_track_to_dict(t) for t in results],
                 }, ensure_ascii=False))
 
+        elif action == "discover":
+            ds = DiscoverService(db)
+            recent = await ds.get_recent(15)
+            favorites = await ds.get_favorites(15)
+            cached = await ds.get_cached(15)
+            await ws.send_str(json.dumps({
+                "type": "discover_data",
+                "data": {
+                    "recent": [_track_to_dict(t) for t in recent],
+                    "favorites": [_track_to_dict(t) for t in favorites],
+                    "cached_tracks": [_track_to_dict(t) for t in cached]
+                }
+            }, ensure_ascii=False))
+
         elif action == "play_track":
             track = _dict_to_track(data)
             if track:
@@ -609,6 +624,10 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
         elif action == "volume_down":
             await command_bus.execute(CMD_VOLUME_DOWN, room_id)
 
+        elif action == "volume_set":
+            vol = data.get("volume", 80)
+            await command_bus.execute(CMD_VOLUME_SET, room_id, {"volume": int(vol)})
+
         elif action == "download":
             await command_bus.execute(CMD_DOWNLOAD, room_id)
 
@@ -630,13 +649,27 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
             if track:
                 await command_bus.execute(CMD_QUEUE_ADD, room_id, track)
 
+        elif action == "queue_reorder":
+            from_idx = int(data.get("from_index", 0))
+            to_idx = int(data.get("to_index", 0))
+            await command_bus.execute(CMD_QUEUE_REORDER, room_id, {"from_index": from_idx, "to_index": to_idx})
+
         elif action == "radio_randomize":
-            await command_bus.execute(CMD_RADIO_RANDOMIZE, room_id)
+            seed_artist = data.get("seed_artist")
+            await command_bus.execute(CMD_RADIO_RANDOMIZE, room_id, {"seed_artist": seed_artist})
 
         elif action == "set_output":
             output_str = data.get("output", "device")
             output_val = AudioOutput.BROWSER if output_str == "browser" else AudioOutput.DEVICE
             await command_bus.execute(CMD_SET_OUTPUT, room_id, output_val)
+
+        elif action == "set_sponsorblock":
+            enabled = data.get("enabled", True)
+            await command_bus.execute(CMD_SET_SPONSORBLOCK, room_id, bool(enabled))
+
+        elif action == "lyrics_offset":
+            offset = data.get("offset", 0.0)
+            await command_bus.execute(CMD_LYRICS_OFFSET, room_id, {"offset": float(offset)})
 
     except Exception as e:
         logger.error(f"Error handling WS command '{action}': {e}", exc_info=True)

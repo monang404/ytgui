@@ -6,6 +6,20 @@
 (function () {
     "use strict";
 
+    // Seed artists — sync dengan engine/radio_mode.py SEED_ARTISTS
+    const SEED_ARTISTS = [
+        "Nadin Amizah","Peterpan","NOAH","Dewa 19","Ungu","Nidji","Samsons",
+        "ST12","Setia Band","Wali","The Changcuters","Kotak","Geisha","Drive",
+        "d'Masiv","The Rain","Letto","Kerispatih","Vierra","Vierratale","Govinda",
+        "Ada Band","Radja","Kangen Band","J-Rocks","Andra and The Backbone",
+        "Padi Reborn","Armada","Cokelat","Gigi","Slank","Sheila On 7",
+        "Maliq & D'Essentials","The Groove","Kahitna","Juicy Luicy","Hindia",
+        "Lomba Sihir","Reality Club","Fourtwnty","Ariel NOAH","Afgan","Judika",
+        "Glenn Fredly","Tompi","Marcell Siahaan","Ello","Virgoun","Rizky Febian",
+        "Ardhito Pramono","Tulus","Pamungkas","Budi Doremi","Mahalini",
+        "Tiara Andini","Lyodra","Ziva Magnolya"
+    ];
+
     // ── State Store ──
     const store = {
         status: "IDLE",
@@ -51,14 +65,23 @@
         // Now Playing
         npTitle: $("np-title"),
         npArtist: $("np-artist"),
+        npThumbnail: $("np-thumbnail"),
+        npDurMeta: $("np-dur-meta"),
+        recentRow: $("recent-row"),
         eqCanvas: $("eq-canvas"),
         // Search
         searchInput: $("search-input"),
         searchMsg: $("search-msg"),
         searchResults: $("search-results"),
         // Radio
+        radioToggleWrap: $("radio-toggle-wrap"),
         radioToggleBtn: $("radio-toggle-btn"),
-        radioInfo: $("radio-info"),
+        rtSub: $("rt-sub"),
+        nextCard: $("next-card"),
+        nextTitle: $("next-title"),
+        nextMeta: $("next-meta"),
+        nextThumb: $("next-thumb"),
+        chipWrap: $("chip-wrap"),
         radioRandomizeBtn: $("radio-randomize-btn"),
         radioSkipBtn: $("radio-skip-btn"),
         // Queue
@@ -67,6 +90,9 @@
         lyricsPanel: $("lyrics-panel"),
         lyricsToggleBtn: $("lyrics-toggle-btn"),
         lyricsContent: $("lyrics-content"),
+        lyricOffsetMinus: $("lyric-offset-minus"),
+        lyricOffsetPlus: $("lyric-offset-plus"),
+        lyricOffsetDisplay: $("lyric-offset-display"),
         // Player Bar
         pbTrackInfo: $("pb-track-info"),
         pbModeBadge: $("pb-mode-badge"),
@@ -75,16 +101,30 @@
         pbProgressTrack: $("pb-progress-track"),
         pbProgressFill: $("pb-progress-fill"),
         pbVolLabel: $("pb-vol-label"),
+        volSlider: $("vol-slider"),
         btnPrev: $("btn-prev"),
         btnPlay: $("btn-play"),
         btnNext: $("btn-next"),
-        btnVolDown: $("btn-voldown"),
-        btnVolUp: $("btn-volup"),
+        btnStop: $("btn-stop"),
+        btnSettings: $("btn-settings"),
         btnDownload: $("btn-download"),
         btnHelp: $("btn-help"),
         pbCacheBadge: $("pb-cache-badge"),
         pbSbBadge: $("pb-sb-badge"),
         pbDlBadge: $("pb-dl-badge"),
+        // Settings Sheet
+        settingsSheet: $("settings-sheet"),
+        settingsOverlay: $("settings-overlay"),
+        sbToggle: $("sb-toggle"),
+        ssOutBtn: $("ss-out-btn"),
+        ssOutSub: $("ss-out-sub"),
+        ssStopBtn: $("ss-stop-btn"),
+        ssDlRow: $("ss-dl-row"),
+        ssDlTrack: $("ss-dl-track"),
+        ssDlPct: $("ss-dl-pct"),
+        ssDlFill: $("ss-dl-fill"),
+        ssHistorySub: $("ss-history-sub"),
+        ssHistoryBtn: $("ss-history-btn"),
         // Modals
         actionOverlay: $("action-modal-overlay"),
         actionTitle: $("action-modal-title"),
@@ -222,6 +262,13 @@
             case "search_results":
                 renderSearchResults(msg.data);
                 break;
+            case "discover_data":
+                store.discover_recent   = msg.data.recent   || [];
+                store.discover_favorites = msg.data.favorites || [];
+                store.discover_cached   = msg.data.cached_tracks || [];
+                renderDiscoverTab();
+                renderRecentRow();
+                break;
             case "log":
                 showLogToast(msg.data);
                 break;
@@ -243,6 +290,7 @@
         renderRadio();
         renderQueue();
         renderLyrics();
+        renderSettingsSheet();
     }
 
     // ── Header ──
@@ -268,6 +316,17 @@
     // ── Now Playing ──
     function renderNowPlaying() {
         const t = store.current_track;
+
+        // Thumbnail
+        if (dom.npThumbnail) {
+            if (t && t.thumbnail) {
+                dom.npThumbnail.innerHTML = `<img src="${escapeHtml(t.thumbnail)}" alt="" loading="lazy">`;
+            } else {
+                dom.npThumbnail.innerHTML = '<span class="np-thumb-fallback">🎵</span>';
+            }
+        }
+
+        // Title & Artist
         if (store.status === "LOADING") {
             dom.npTitle.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:8px; vertical-align:-3px; width:20px; height:20px;"></span> ⏳ Memuat...';
             dom.npArtist.textContent = t ? t.title : "";
@@ -277,6 +336,140 @@
         } else {
             dom.npTitle.textContent = "Belum ada lagu yang diputar";
             dom.npArtist.textContent = "Cari lagu untuk memulai";
+        }
+
+        // Duration meta
+        if (dom.npDurMeta && t) {
+            dom.npDurMeta.textContent = formatTime(t.duration);
+        } else if (dom.npDurMeta) {
+            dom.npDurMeta.textContent = '';
+        }
+
+        renderRecentRow();
+    }
+
+    function renderRecentRow() {
+        if (!dom.recentRow) return;
+        // Jika ada discover data dari server, gunakan itu
+        const items = (store.discover_recent && store.discover_recent.length > 0)
+            ? store.discover_recent.slice(0, 5)
+            : (store.queue || []).slice(0, 5);
+
+        if (items.length === 0) {
+            dom.recentRow.innerHTML = '<div class="discover-empty">Belum ada riwayat</div>';
+            return;
+        }
+        dom.recentRow.innerHTML = items.map(track => `
+            <div class="disc-card" data-vid="${escapeHtml(track.video_id || '')}">
+                <div class="disc-thumb">
+                    ${track.thumbnail
+                        ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
+                        : '🎵'}
+                    ${track.local_path ? '<span class="disc-tag">cache</span>' : ''}
+                </div>
+                <div class="disc-info">
+                    <div class="disc-title">${escapeHtml(track.title)}</div>
+                    <div class="disc-artist">${escapeHtml(track.artist || '')}</div>
+                </div>
+            </div>
+        `).join('');
+
+        dom.recentRow.querySelectorAll('.disc-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const vid = card.dataset.vid;
+                const track = items.find(t => t.video_id === vid);
+                if (track) showActionModal(track);
+            });
+        });
+    }
+
+    function renderDiscoverTab() {
+        const favEl = $('discover-favorites');
+        const recentEl = $('discover-recent');
+        const cachedEl = $('discover-cached');
+
+        if (favEl && store.discover_favorites) {
+            if (store.discover_favorites.length === 0) {
+                favEl.innerHTML = '<div class="discover-empty">Belum ada data favorit</div>';
+            } else {
+                favEl.innerHTML = store.discover_favorites.map((track, i) => `
+                    <div class="fav-card" data-vid="${escapeHtml(track.video_id || '')}">
+                        <div class="fav-num">${i + 1}</div>
+                        <div class="fav-thumb">
+                            ${track.thumbnail
+                                ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
+                                : '🎵'}
+                        </div>
+                        <div class="fav-info">
+                            <div class="fav-title">${escapeHtml(track.title)}</div>
+                            <div class="fav-cnt">${escapeHtml(track.artist || '')} · ${track.play_count || 0}×</div>
+                        </div>
+                    </div>
+                `).join('');
+                favEl.querySelectorAll('.fav-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const vid = card.dataset.vid;
+                        const track = store.discover_favorites.find(t => t.video_id === vid);
+                        if (track) showActionModal(track);
+                    });
+                });
+            }
+        }
+
+        if (recentEl && store.discover_recent) {
+            if (store.discover_recent.length === 0) {
+                recentEl.innerHTML = '<div class="discover-empty">Belum ada riwayat</div>';
+            } else {
+                recentEl.innerHTML = store.discover_recent.map(track => `
+                    <div class="disc-card" data-vid="${escapeHtml(track.video_id || '')}">
+                        <div class="disc-thumb">
+                            ${track.thumbnail
+                                ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
+                                : '🎵'}
+                            ${track.local_path ? '<span class="disc-tag">cache</span>' : ''}
+                        </div>
+                        <div class="disc-info">
+                            <div class="disc-title">${escapeHtml(track.title)}</div>
+                            <div class="disc-artist">${escapeHtml(track.artist || '')}</div>
+                        </div>
+                    </div>
+                `).join('');
+                recentEl.querySelectorAll('.disc-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const vid = card.dataset.vid;
+                        const track = store.discover_recent.find(t => t.video_id === vid);
+                        if (track) showActionModal(track);
+                    });
+                });
+            }
+        }
+
+        if (cachedEl && store.discover_cached) {
+            if (store.discover_cached.length === 0) {
+                cachedEl.innerHTML = '<div class="discover-empty">Tidak ada file tersimpan</div>';
+            } else {
+                cachedEl.innerHTML = store.discover_cached.map(track => `
+                    <div class="search-result-item" data-vid="${escapeHtml(track.video_id || '')}">
+                        <div class="sr-thumb">
+                            ${track.thumbnail
+                                ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
+                                : '🎵'}
+                        </div>
+                        <div class="sr-info">
+                            <div class="sr-title">${escapeHtml(track.title)}</div>
+                            <div class="sr-meta">${escapeHtml(track.artist || '')} · ${formatTime(track.duration)}</div>
+                        </div>
+                        <span class="sr-badge cache">✓ Cache</span>
+                    </div>
+                `).join('');
+                cachedEl.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const vid = item.dataset.vid;
+                        const track = store.discover_cached.find(t => t.video_id === vid);
+                        if (track) showActionModal(track);
+                    });
+                });
+            }
         }
     }
 
@@ -318,6 +511,7 @@
 
         // Volume
         dom.pbVolLabel.textContent = store.volume + "%";
+        if (dom.volSlider) dom.volSlider.value = store.volume;
 
         // Cache badge
         if (t && t.local_path) {
@@ -343,32 +537,78 @@
 
     function renderPlayBtn() {
         if (store.status === "PLAYING") {
-            dom.btnPlay.textContent = "⏸";
+            dom.btnPlay.innerHTML = "<i class=\"ti ti-player-pause-filled\" style=\"font-size:15px;color:#fff\"></i>";
         } else {
-            dom.btnPlay.textContent = "▶";
+            dom.btnPlay.innerHTML = "<i class=\"ti ti-player-play-filled\" style=\"font-size:15px;color:#fff\"></i>";
         }
     }
 
     // ── Radio ──
     function renderRadio() {
-        const isRadio = store.playback_mode === "RADIO";
-        if (isRadio) {
-            dom.radioToggleBtn.textContent = "📻 RADIO: ON";
-            dom.radioToggleBtn.classList.add("active");
+        const isRadio = store.playback_mode === 'RADIO';
 
-            if (store.radio_queue.length > 0) {
-                const next = store.radio_queue[0];
-                dom.radioInfo.innerHTML =
-                    "Radio aktif.<br>Selanjutnya: <strong>" + escapeHtml(next.title) + "</strong>";
-            } else {
-                dom.radioInfo.innerHTML = "Radio aktif.<br>Sedang menyiapkan lagu berikutnya...";
-            }
-        } else {
-            dom.radioToggleBtn.textContent = "📻 RADIO: OFF";
-            dom.radioToggleBtn.classList.remove("active");
-            dom.radioInfo.innerHTML =
-                "Radio memutar lagu otomatis tanpa henti.<br>Ketuk untuk mengaktifkan.";
+        // Toggle button
+        if (dom.radioToggleBtn) {
+            dom.radioToggleBtn.dataset.on = isRadio ? 'true' : 'false';
         }
+
+
+        // Sub text
+        if (dom.rtSub) {
+            dom.rtSub.textContent = isRadio
+                ? 'Menyetel lagu otomatis...'
+                : 'Aktifkan untuk putar otomatis';
+        }
+
+        // Next card
+        if (dom.nextCard) {
+            if (isRadio && store.radio_queue && store.radio_queue.length > 0) {
+                const next = store.radio_queue[0];
+                dom.nextCard.style.display = 'block';
+                if (dom.nextTitle) dom.nextTitle.textContent = next.title || '-';
+                if (dom.nextMeta) {
+                    dom.nextMeta.textContent = (next.artist || '') + ' · ' + formatTime(next.duration);
+                }
+                if (dom.nextThumb) {
+                    dom.nextThumb.innerHTML = next.thumbnail
+                        ? `<img src="${escapeHtml(next.thumbnail)}" alt="" loading="lazy">`
+                        : '🎵';
+                }
+            } else {
+                dom.nextCard.style.display = 'none';
+            }
+        }
+
+        // Artist chips (render sekali — tidak perlu re-render tiap state update)
+        renderSeedChips();
+    }
+
+    function renderSeedChips() {
+        if (!dom.chipWrap || dom.chipWrap.children.length > 0) return; // sudah dirender
+        dom.chipWrap.innerHTML = SEED_ARTISTS.slice(0, 20).map(name => `
+            <span class="chip" data-seed="${escapeHtml(name)}">${escapeHtml(name)}</span>
+        `).join('');
+
+        // Event listener for chips (Task 3.3)
+        dom.chipWrap.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                if (store.userRole !== "admin") return;
+                const seed = chip.dataset.seed;
+                // Highlight chip
+                dom.chipWrap.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                
+                // Switch mode if not radio
+                if (store.playback_mode !== "RADIO") {
+                    wsSend("set_mode", { mode: "RADIO" });
+                }
+                // Send custom seed
+                wsSend("radio_randomize", { seed_artist: seed });
+                
+                // Show notification locally for quick feedback
+                showLogToast("Menyetel radio dari artis: " + seed);
+            });
+        });
     }
 
     function renderQueue() {
@@ -413,6 +653,7 @@
     function createQueueItemTemplate() {
         const div = document.createElement("div");
         div.innerHTML = `
+            <span class="qi-drag" aria-hidden="true">⠿</span>
             <span class="qi-index"></span>
             <div class="qi-info">
                 <div class="qi-title"></div>
@@ -425,8 +666,13 @@
 
     function updateQueueItem(div, track, index, isCurrent, isRadio) {
         div.className = "queue-item" + (isCurrent ? " current" : "");
-        if (!isCurrent && !isRadio) div.dataset.index = index;
-        else div.removeAttribute("data-index");
+        if (!isCurrent && !isRadio) {
+            div.dataset.index = index;
+            div.setAttribute('draggable', 'true');
+        } else {
+            div.removeAttribute("data-index");
+            div.removeAttribute('draggable');
+        }
         
         div.querySelector(".qi-index").textContent = isCurrent ? "▶" : index + 1;
         div.querySelector(".qi-title").textContent = track.title;
@@ -454,6 +700,50 @@
             wsSend("queue_select", { index: parseInt(item.dataset.index) });
         }
     });
+
+    // Drag-to-reorder queue
+    let dragSrcIndex = null;
+
+    function initQueueDragDrop() {
+        dom.queueList.addEventListener('dragstart', e => {
+            const item = e.target.closest('.queue-item');
+            if (!item || !item.hasAttribute('data-index')) return;
+            dragSrcIndex = parseInt(item.dataset.index);
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        dom.queueList.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const item = e.target.closest('.queue-item');
+            if (item && item.hasAttribute('data-index')) {
+                // Visual feedback
+                document.querySelectorAll('.queue-item.drag-over')
+                    .forEach(el => el.classList.remove('drag-over'));
+                item.classList.add('drag-over');
+            }
+        });
+
+        dom.queueList.addEventListener('drop', e => {
+            e.preventDefault();
+            const item = e.target.closest('.queue-item');
+            if (!item || !item.hasAttribute('data-index') || dragSrcIndex === null) return;
+            const toIndex = parseInt(item.dataset.index);
+            if (toIndex !== dragSrcIndex) {
+                wsSend('queue_reorder', { from_index: dragSrcIndex, to_index: toIndex });
+            }
+            cleanupDrag();
+        });
+
+        dom.queueList.addEventListener('dragend', cleanupDrag);
+    }
+
+    function cleanupDrag() {
+        dragSrcIndex = null;
+        document.querySelectorAll('.queue-item.dragging, .queue-item.drag-over')
+            .forEach(el => el.classList.remove('dragging', 'drag-over'));
+    }
 
     // ── Lyrics ──
     function renderLyrics() {
@@ -631,7 +921,7 @@
     // Tab Navigation
     // ══════════════════════════════════════
 
-    const tabs = ["home", "search", "radio", "queue"];
+    const tabs = ["home", "search", "radio", "queue", "discover"];
 
     document.querySelectorAll(".nav-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -665,6 +955,10 @@
         // Auto-focus search input
         if (tab === "search") {
             setTimeout(() => dom.searchInput.focus(), 100);
+        }
+        // Request discover data when opening discover tab
+        if (tab === "discover") {
+            wsSend("discover");
         }
     }
 
@@ -823,12 +1117,25 @@
             wsSend("prev");
         }
     });
-    dom.btnVolUp.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("volume_up");
-    });
-    dom.btnVolDown.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("volume_down");
-    });
+
+    if (dom.btnStop) {
+        dom.btnStop.addEventListener('click', () => {
+            if (store.userRole === 'admin') wsSend('stop');
+        });
+    }
+
+    // Volume slider
+    if (dom.volSlider) {
+        dom.volSlider.addEventListener("input", () => {
+            store.volume = parseInt(dom.volSlider.value);
+            dom.pbVolLabel.textContent = store.volume + "%";
+        });
+        dom.volSlider.addEventListener("change", () => {
+            if (store.userRole === "admin") {
+                wsSend("volume_set", { volume: store.volume });
+            }
+        });
+    }
     dom.btnDownload.addEventListener("click", () => {
         if (store.userRole === "admin") wsSend("download");
     });
@@ -875,6 +1182,126 @@
         dom.lyricsPanel.classList.toggle("active");
         renderLyrics();
     });
+
+    // Lyrics offset controls
+    if (dom.lyricOffsetMinus) {
+        dom.lyricOffsetMinus.addEventListener("click", () => {
+            if (store.userRole !== "admin") return;
+            store.lyrics_offset = (store.lyrics_offset || 0) - 0.5;
+            updateOffsetDisplay();
+            wsSend("lyrics_offset", { offset: store.lyrics_offset });
+        });
+    }
+    if (dom.lyricOffsetPlus) {
+        dom.lyricOffsetPlus.addEventListener("click", () => {
+            if (store.userRole !== "admin") return;
+            store.lyrics_offset = (store.lyrics_offset || 0) + 0.5;
+            updateOffsetDisplay();
+            wsSend("lyrics_offset", { offset: store.lyrics_offset });
+        });
+    }
+    function updateOffsetDisplay() {
+        if (!dom.lyricOffsetDisplay) return;
+        const val = store.lyrics_offset || 0;
+        const sign = val >= 0 ? '+' : '';
+        dom.lyricOffsetDisplay.textContent = sign + val.toFixed(1) + 's';
+    }
+
+    // Settings Sheet
+    function openSettings() {
+        dom.settingsSheet.classList.add("open");
+        dom.settingsOverlay.classList.add("active");
+        renderSettingsSheet();
+    }
+    function closeSettings() {
+        dom.settingsSheet.classList.remove("open");
+        dom.settingsOverlay.classList.remove("active");
+    }
+    function renderSettingsSheet() {
+        if (!dom.settingsSheet || !dom.settingsSheet.classList.contains("open")) return;
+        // SponsorBlock toggle
+        if (dom.sbToggle) {
+            dom.sbToggle.dataset.on = store.sponsorblock_active ? "true" : "false";
+        }
+        // Output
+        if (dom.ssOutSub && dom.ssOutBtn) {
+            if (store.audio_output === "browser") {
+                dom.ssOutSub.textContent = "Keluar via browser ini";
+                dom.ssOutBtn.textContent = "💻 Browser";
+            } else {
+                dom.ssOutSub.textContent = "Keluar via perangkat (mpv)";
+                dom.ssOutBtn.textContent = "📱 Device";
+            }
+        }
+        // Download progress
+        if (dom.ssDlRow) {
+            if (store.download_progress != null) {
+                dom.ssDlRow.style.display = "flex";
+                const pct = Math.round(store.download_progress * 100);
+                if (dom.ssDlPct) dom.ssDlPct.textContent = pct + "%";
+                if (dom.ssDlFill) dom.ssDlFill.style.width = pct + "%";
+                if (dom.ssDlTrack && store.current_track) {
+                    dom.ssDlTrack.textContent = store.current_track.title;
+                }
+            } else {
+                dom.ssDlRow.style.display = "none";
+            }
+        }
+        // History count
+        if (dom.ssHistorySub) {
+            dom.ssHistorySub.textContent = (store.history_count || 0) + " lagu diputar";
+        }
+    }
+
+    if (dom.btnSettings) {
+        dom.btnSettings.addEventListener("click", () => {
+            if (dom.settingsSheet.classList.contains("open")) {
+                closeSettings();
+            } else {
+                openSettings();
+            }
+        });
+    }
+    if (dom.settingsOverlay) {
+        dom.settingsOverlay.addEventListener("click", closeSettings);
+    }
+    if (dom.sbToggle) {
+        dom.sbToggle.addEventListener("click", () => {
+            if (store.userRole !== "admin") return;
+            const newVal = dom.sbToggle.dataset.on !== "true";
+            wsSend("set_sponsorblock", { enabled: newVal });
+        });
+    }
+    if (dom.ssOutBtn) {
+        dom.ssOutBtn.addEventListener("click", () => {
+            if (store.userRole !== "admin") return;
+            const newOutput = store.audio_output === "browser" ? "device" : "browser";
+            if (newOutput === "browser") unlockBrowserAudio();
+            wsSend("set_output", { output: newOutput });
+            closeSettings();
+        });
+    }
+    if (dom.ssStopBtn) {
+        dom.ssStopBtn.addEventListener("click", () => {
+            if (store.userRole !== "admin") return;
+            wsSend("stop");
+            closeSettings();
+        });
+    }
+
+    if (dom.ssHistoryBtn) {
+        dom.ssHistoryBtn.addEventListener('click', () => {
+            closeSettings();
+            switchTab('discover');
+            wsSend('discover', {});
+            // Scroll ke recent section setelah data dimuat
+            setTimeout(() => {
+                if (dom.discRecentList) {
+                    dom.discRecentList.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 300);
+        });
+    }
 
     // ══════════════════════════════════════
     // Help Modal
@@ -1184,5 +1611,6 @@
         if (adminWrapper) adminWrapper.style.display = "none";
     }
 
+    initQueueDragDrop();
     wsConnect();
 })();

@@ -1,122 +1,113 @@
 @echo off
-color 0A
-title YTGUI Web Server Startup
-echo ====================================================
-echo           YTGUI Web Server -- Starting Up
-echo ====================================================
+color 0B
+
+echo.
+echo    __   __ _____  ____  _   _  _____    _____  __  __
+echo    \ \ / / ^|_   _^|/ ___^|^| ^| ^| ^|^|_   _^|  ^|  ___^|^|  \/  ^|
+echo     \ V /   ^| ^|  ^| ^|  _ ^| ^| ^| ^|  ^| ^|    ^| ^|_   ^| ^|\/^| ^|
+echo      ^| ^|    ^| ^|  ^| ^|_^| ^|^| ^|_^| ^|  ^| ^|    ^|  _^|  ^| ^|  ^| ^|
+echo      ^|_^|    ^|_^|   \____^| \___/   ^|_^|    ^|_^|    ^|_^|  ^|_^|
+echo.
+echo    ================================================================
+echo                      YTGUI Web Server Startup
+echo    ================================================================
 echo.
 
 :: ----------------------------------------------------------
-::  KONFIGURASI ? Hilangkan "::" di depan baris untuk mengaktifkan
+::  CONFIGURATION
 :: ----------------------------------------------------------
+set "YTGUI_HOST=0.0.0.0"
+set "YTGUI_PORT=8765"
 
-set YTGUI_HOST=0.0.0.0
-set YTGUI_PORT=8765
-
-:: Direktori kerja (default: folder script ini berada)
-:: set YT_PLAYER_BASE=C:\ytgui
-
-:: Kredensial admin
-:: Jika tidak di-set, password akan digenerate otomatis dan disimpan di cache\admin_password.txt
-:: Jika di-set, password akan di-hash otomatis saat startup (tidak perlu hash manual)
-:: set YTGUI_ADMIN_USER=admin
-:: set YTGUI_ADMIN_PASS=password_rahasia_anda
-
-:: Token opsional untuk akses endpoint /metrics dari luar localhost
-:: Jika tidak di-set, /metrics hanya bisa diakses dari 127.0.0.1
-:: set YTGUI_METRICS_TOKEN=token_rahasia_metrics
-
-:: Port TCP untuk MPV di Windows (digunakan karena Windows tidak support Unix socket)
-:: set YT_PLAYER_MPV_PORT=12345
+:: Admin credentials (uncomment to set explicitly)
+:: set "YTGUI_ADMIN_USER=admin"
+:: set "YTGUI_ADMIN_PASS=your_secret_password"
 
 :: ----------------------------------------------------------
-::  STARTUP
+::  STARTUP SEQUENCE
 :: ----------------------------------------------------------
 
-echo [1/4] Menyiapkan environment variables...
-timeout /t 1 > nul
+echo  [*] Initializing Environment Variables...
+ping 127.0.0.1 -n 2 > nul
 
-echo [2/4] Memeriksa dependensi Python...
-set DEPS_OK=1
+echo  [*] Checking Python Dependencies...
+set "DEPS_OK=1"
 for %%m in (aiohttp aiosqlite yt_dlp syncedlyrics structlog prometheus_client opentelemetry) do (
     python -c "import %%m" > nul 2>&1
     if errorlevel 1 (
-        echo       [GAGAL] Modul '%%m' tidak ditemukan.
-        set DEPS_OK=0
+        echo      [-] Missing module: %%m
+        set "DEPS_OK=0"
     )
 )
-if "%DEPS_OK%"=="1" (
-    echo       [OK] Semua dependensi Python lengkap.
-) else (
-    echo       [Peringatan] Ada dependensi yang belum lengkap!
-    echo       Jalankan: pip install -r requirements.txt
-    timeout /t 3 > nul
-)
-timeout /t 1 > nul
 
-echo [3/4] Memeriksa instalasi MPV...
+if "%DEPS_OK%"=="1" (
+    echo      [+] All Python dependencies are satisfied.
+) else (
+    echo.
+    echo  [!] WARNING: Some dependencies are missing.
+    echo      Please run: pip install -r requirements.txt
+    echo.
+    ping 127.0.0.1 -n 4 > nul
+)
+
+echo  [*] Verifying MPV Installation...
 where mpv > nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo       [Peringatan] MPV tidak terdeteksi di PATH!
-    echo       Download dari: https://mpv.io/installation/
-    echo       Lalu tambahkan mpv.exe ke PATH sistem.
-    timeout /t 3 > nul
+    echo      [-] MPV not found in system PATH.
+    echo          Download from: https://mpv.io/installation/
+    echo          Then add mpv.exe to your system PATH.
+    echo.
+    ping 127.0.0.1 -n 4 > nul
 ) else (
-    echo       [OK] MPV terdeteksi.
+    echo      [+] MPV detected.
 )
-timeout /t 1 > nul
 
-echo [4/4] Merapikan sesi sebelumnya...
-:: Matikan instance MPV yang mungkin masih berjalan dari sesi sebelumnya
+echo  [*] Cleaning Up Previous Sessions...
 taskkill /F /IM mpv.exe > nul 2>&1
-
-:: Bebaskan port jika masih terpakai
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr /R ":%YTGUI_PORT% " 2^>nul') do (
     taskkill /F /PID %%a > nul 2>&1
 )
-timeout /t 1 > nul
 
 :: ----------------------------------------------------------
-::  INFO PASSWORD ADMIN
+::  ADMIN ACCESS INFO
 :: ----------------------------------------------------------
-
 echo.
-echo [Info Akses Admin]
+echo  ----------------------------------------------------------------
+echo   Admin Access Information
+echo  ----------------------------------------------------------------
 if defined YTGUI_ADMIN_PASS (
-    echo   Password diambil dari environment variable YTGUI_ADMIN_PASS.
+    echo   [i] Password loaded from environment variable YTGUI_ADMIN_PASS.
 ) else (
     if exist "cache\admin_password.txt" (
-        echo   Password tersimpan di: cache\admin_password.txt
-        echo   (Format pbkdf2 hash -- tidak bisa dibaca langsung^)
+        echo   [i] Password stored securely in: cache\admin_password.txt
     ) else (
-        echo   Password baru akan di-generate otomatis saat server pertama dijalankan.
-        echo   Cek output server untuk melihat password yang digenerate.
+        echo   [i] A new password will be auto-generated on first launch.
     )
 )
 if defined YTGUI_ADMIN_USER (
-    echo   Username  : %YTGUI_ADMIN_USER%
+    echo   [i] Username: %YTGUI_ADMIN_USER%
 ) else (
-    echo   Username  : admin
+    echo   [i] Username: admin
 )
 
 :: ----------------------------------------------------------
-::  MULAI SERVER
+::  SERVER STARTUP
 :: ----------------------------------------------------------
-
 echo.
-echo ====================================================
-echo  Akses Client : http://localhost:%YTGUI_PORT%/
-echo  Akses Admin  : http://localhost:%YTGUI_PORT%/admin
-echo  Health Check : http://localhost:%YTGUI_PORT%/health
-echo  Metrics      : http://localhost:%YTGUI_PORT%/metrics
-echo ====================================================
+echo    ================================================================
+echo       Client Interface : http://localhost:%YTGUI_PORT%/
+echo       Admin Interface  : http://localhost:%YTGUI_PORT%/admin
+echo       System Health    : http://localhost:%YTGUI_PORT%/health
+echo       Metrics          : http://localhost:%YTGUI_PORT%/metrics
+echo    ================================================================
 echo.
-timeout /t 1 > nul
+echo  [*] Starting Server...
+ping 127.0.0.1 -n 2 > nul
 
 python main.py
 echo.
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Server berhenti dengan error. Kode: %ERRORLEVEL%
-    echo Cek ytplayer.log untuk detail.
+    echo  [X] Server terminated with error code: %ERRORLEVEL%
+    echo      Please check the application logs for details.
 )
 pause

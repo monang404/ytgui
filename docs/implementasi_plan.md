@@ -1898,9 +1898,9 @@ if (dom.ssHistoryBtn) {
 - [ ] Task 2.4: Radio tab: next-card + seed chips
 
 ### Fase 3 (Polish)
-- [ ] Task 3.1: Stop button di player bar
-- [ ] Task 3.2: Queue drag-to-reorder
-- [ ] Task 3.3: History view via Settings → Discover
+- [x] Task 3.1: Stop button di player bar
+- [x] Task 3.2: Queue drag-to-reorder
+- [x] Task 3.3: History view via Settings → Discover
 
 ---
 
