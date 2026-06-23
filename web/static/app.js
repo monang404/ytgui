@@ -549,7 +549,13 @@
 
         // Toggle button
         if (dom.radioToggleBtn) {
-            dom.radioToggleBtn.dataset.on = isRadio ? 'true' : 'false';
+            if (isRadio) {
+                dom.radioToggleBtn.classList.add("on");
+                dom.radioToggleBtn.classList.remove("off");
+            } else {
+                dom.radioToggleBtn.classList.add("off");
+                dom.radioToggleBtn.classList.remove("on");
+            }
         }
 
 
