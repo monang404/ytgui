@@ -227,7 +227,9 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
     # --- Route: Serve index.html ---
     async def handle_index(request):
-        return web.FileResponse(STATIC_DIR / "index.html")
+        resp = web.FileResponse(STATIC_DIR / "index.html")
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
     # --- Route: WebSocket ---
     async def handle_websocket(request):
@@ -329,7 +331,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
                             "Content-Type": upstream.headers.get("Content-Type", "audio/mpeg"),
                             "Accept-Ranges": "bytes",
                             "Access-Control-Allow-Origin": "*",
-                            "Cache-Control": "no-store",
+                            "Cache-Control": "private, max-age=3600",
                         }
                     )
                     
@@ -343,7 +345,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
                     await response.prepare(request)
 
-                    async for chunk in upstream.content.iter_chunked(65536):
+                    async for chunk in upstream.content.iter_chunked(16384):
                         await response.write(chunk)
 
                     await response.write_eof()
