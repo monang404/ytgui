@@ -614,34 +614,34 @@ web/server.py subscribe ke room.event_bus per room
 ## Checklist Ringkas untuk Tracking
 
 ### FASE 0
-- `[ ]` TASK-0.1 — `_TITLE_NOISE_WORDS` → frozenset
-- `[ ]` TASK-0.2 — Reset `_retry_count` di `_on_stop`
-- `[ ]` TASK-0.3 — Cancel `_bg_tasks` di `on_deactivated`
-- `[ ]` TASK-0.4 — Fix `_on_download` signature
-- `[ ]` TASK-0.5 — Evict key `login_attempts` & `command_history`
+- `[x]` TASK-0.1 — `_TITLE_NOISE_WORDS` → frozenset
+- `[x]` TASK-0.2 — Reset `_retry_count` di `_on_stop`
+- `[x]` TASK-0.3 — Cancel `_bg_tasks` di `on_deactivated`
+- `[x]` TASK-0.4 — Fix `_on_download` signature
+- `[x]` TASK-0.5 — Evict key `login_attempts` & `command_history`
 
 ### FASE 1
-- `[ ]` TASK-1.1 — Hapus plaintext fallback `verify_password`
-- `[ ]` TASK-1.2 — Hash ENV password di startup *(kerjakan bersama 1.1)*
-- `[ ]` TASK-1.3 — Proteksi `/metrics` endpoint
-- `[ ]` TASK-1.4 — Validasi `room_id`
-- `[ ]` TASK-1.5 — Hapus unauthenticated `next` bypass
+- `[x]` TASK-1.1 — Hapus plaintext fallback `verify_password`
+- `[x]` TASK-1.2 — Hash ENV password di startup *(kerjakan bersama 1.1)*
+- `[x]` TASK-1.3 — Proteksi `/metrics` endpoint
+- `[x]` TASK-1.4 — Validasi `room_id`
+- `[x]` TASK-1.5 — Hapus unauthenticated `next` bypass
 
 ### FASE 2
-- `[ ]` TASK-2.1 — Lock `_on_track_ended`
-- `[ ]` TASK-2.2 — Fix duplicate `http_session`
-- `[ ]` TASK-2.3 — Fix MPV socket poll (`MPV_SOCKET` → `self.socket_path`)
-- `[ ]` TASK-2.4 — Fix `db.conn` vs `db._conn`
-- `[ ]` TASK-2.5 — Fix script injection termux notification
+- `[x]` TASK-2.1 — Lock `_on_track_ended`
+- `[x]` TASK-2.2 — Fix duplicate `http_session`
+- `[x]` TASK-2.3 — Fix MPV socket poll (`MPV_SOCKET` → `self.socket_path`)
+- `[x]` TASK-2.4 — Fix `db.conn` vs `db._conn`
+- `[x]` TASK-2.5 — Fix script injection termux notification
 
 ### FASE 3
-- `[ ]` TASK-3.1 — Verifikasi `EventBus` bisa diinstansiasi
-- `[ ]` TASK-3.2 — `Room` buat `event_bus` sendiri
-- `[ ]` TASK-3.3 — Inject `event_bus` ke `MpvController`
-- `[ ]` TASK-3.4 — Inject `event_bus` ke `LyricsFetcher`
-- `[ ]` TASK-3.5 — Inject `event_bus` ke `SponsorBlockHandler`
-- `[ ]` TASK-3.6 — Update `web/server.py` subscribe per-room
-- `[ ]` TASK-3.7 — Hapus global `bus` singleton
+- `[x]` TASK-3.1 — Verifikasi `EventBus` bisa diinstansiasi
+- `[x]` TASK-3.2 — `Room` buat `event_bus` sendiri
+- `[x]` TASK-3.3 — Inject `event_bus` ke `MpvController`
+- `[x]` TASK-3.4 — Inject `event_bus` ke `LyricsFetcher`
+- `[x]` TASK-3.5 — Inject `event_bus` ke `SponsorBlockHandler`
+- `[x]` TASK-3.6 — Update `web/server.py` subscribe per-room
+- `[x]` TASK-3.7 — Hapus global `bus` singleton
 
 ### FASE 4 (Opsional)
 - `[x]` TASK-4.1 — `ThreadPoolExecutor` untuk yt-dlp
