@@ -273,6 +273,9 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
 
     # TASK-3.6: Daftarkan callback — dipanggil saat room baru dibuat
     room_manager.on_room_created(_setup_room_subscriptions)
+    # Juga subscribe ke room yang sudah ada (misalnya default room)
+    for room in room_manager.rooms.values():
+        _setup_room_subscriptions(room)
 
     # --- Route: Serve index.html ---
     async def handle_index(request):
