@@ -3,7 +3,7 @@ import aiohttp
 import structlog
 from typing import Optional
 from config import SPONSORBLOCK_CATS
-from core.event_bus import bus
+from core.event_bus import EventBus
 from core.events import TrackProgressEvent, LogMessageEvent
 from core.state import AppState
 from core.ports import AudioPlayerPort
@@ -17,15 +17,20 @@ class SponsorBlockHandler:
     HIGH-02 fix: Uses json.dumps for category serialization.
     MED-01 fix: Accepts a shared aiohttp session.
     """
-    def __init__(self, mpv: AudioPlayerPort, state: AppState, session: Optional[aiohttp.ClientSession] = None):
+    def __init__(self, mpv: AudioPlayerPort, state: AppState, session: Optional[aiohttp.ClientSession] = None, event_bus: EventBus = None):
         self.mpv = mpv
         self.state = state
         self.segments: list[tuple[float, float]] = []
         self._session = session
-        bus.subscribe(TrackProgressEvent, self._on_progress)
+        # TASK-3.5: Injected per-room bus (fallback ke global jika belum direfactor)
+        if event_bus is None:
+            from core.event_bus import bus as _global_bus
+            event_bus = _global_bus
+        self._bus = event_bus
+        self._bus.subscribe(TrackProgressEvent, self._on_progress)
 
     def cleanup(self):
-        bus.unsubscribe(TrackProgressEvent, self._on_progress)
+        self._bus.unsubscribe(TrackProgressEvent, self._on_progress)
 
     async def fetch_segments(self, video_id: str):
         """Fetches skip segments and stores them in memory for the current track."""
@@ -72,5 +77,5 @@ class SponsorBlockHandler:
         for start, end in self.segments:
             if start <= current_pos <= start + 0.6:
                 await self.mpv.seek(end)
-                await bus.publish(LogMessageEvent(message=f"Melewati sponsor ({int(start)}s - {int(end)}s)"))
+                await self._bus.publish(LogMessageEvent(message=f"Melewati sponsor ({int(start)}s - {int(end)}s)"))
                 break

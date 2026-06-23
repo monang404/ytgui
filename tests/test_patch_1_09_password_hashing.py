@@ -63,11 +63,15 @@ class TestPasswordHashing:
         assert verify_password(password, hash1) is True
         assert verify_password(password, hash2) is True
 
-    def test_verify_plaintext_fallback(self):
-        """verify_password harus support fallback plaintext (backward compat)."""
-        # Jika hashed_password bukan format pbkdf2, fallback ke plaintext compare
-        assert verify_password("admin", "admin") is True
+    def test_verify_plaintext_fallback_removed(self):
+        """TASK-1.1: Plaintext fallback HARUS ditolak untuk keamanan.
+        Sebelumnya ada fallback plaintext compare, tapi sudah dihapus.
+        verify_password dengan non-pbkdf2 hash HARUS return False."""
+        # Plaintext compare harus ditolak (TASK-1.1 security fix)
+        assert verify_password("admin", "admin") is False
         assert verify_password("admin", "wrong") is False
+        # Hanya pbkdf2 format yang diterima
+        assert verify_password("admin", "pbkdf2:sha256:invalid") is False
 
     def test_hash_contains_salt(self):
         """Hash harus mengandung salt (encoded)."""

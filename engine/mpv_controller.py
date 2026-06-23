@@ -3,7 +3,7 @@ import json
 import structlog
 import os
 from config import MPV_SOCKET
-from core.event_bus import bus
+from core.event_bus import EventBus
 from core.events import TrackProgressEvent, TrackEndedEvent, TrackPauseChangedEvent
 from core.state import PlayerStatus
 from core.task_utils import safe_create_task
@@ -22,7 +22,7 @@ class MpvController:
     MED-11: Basic reconnection support via is_connected flag.
     """
 
-    def __init__(self, socket_path: str = None, tcp_port: str = None):
+    def __init__(self, socket_path: str = None, tcp_port: str = None, event_bus: EventBus = None):
         self._reader = None
         self._writer = None
         self._request_id = 0
@@ -32,6 +32,11 @@ class MpvController:
         self._mpv_process = None
         self.socket_path = socket_path or MPV_SOCKET
         self.tcp_port = tcp_port or os.environ.get("YT_PLAYER_MPV_PORT", "12345")
+        # TASK-3.3: Injected per-room bus (fallback ke global jika belum direfactor)
+        if event_bus is None:
+            from core.event_bus import bus as _global_bus
+            event_bus = _global_bus
+        self._bus = event_bus
 
     async def connect(self):
         import shutil
@@ -68,9 +73,10 @@ class MpvController:
             )
             if os.name != 'nt':
                 # Poll sampai socket tersedia, max 5 detik
+                # TASK-2.3 fix: gunakan self.socket_path (per-room), bukan MPV_SOCKET global
                 for _ in range(50):
                     await asyncio.sleep(0.1)
-                    if os.path.exists(MPV_SOCKET):
+                    if os.path.exists(self.socket_path):
                         break
             else:
                 await asyncio.sleep(1.0)  # Windows pipe tidak bisa di-poll dengan cara sama
@@ -203,13 +209,13 @@ class MpvController:
             name = msg.get("name")
             data = msg.get("data")
             if name == "time-pos" and isinstance(data, (int, float)):
-                await bus.publish(TrackProgressEvent(position=float(data)))
+                await self._bus.publish(TrackProgressEvent(position=float(data)))
             elif name == "pause":
-                await bus.publish(TrackPauseChangedEvent(is_paused=bool(data)))
+                await self._bus.publish(TrackPauseChangedEvent(is_paused=bool(data)))
         elif event == "end-file":
             reason = msg.get("reason", "")
             if reason in ("eof", "stop", "error"):
-                await bus.publish(TrackEndedEvent(reason=reason))
+                await self._bus.publish(TrackEndedEvent(reason=reason))
 
     async def _command(self, cmd: list) -> int:
         if not self.is_connected or not self._writer:

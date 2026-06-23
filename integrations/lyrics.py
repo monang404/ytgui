@@ -6,7 +6,7 @@ import asyncio
 import syncedlyrics
 from contextlib import asynccontextmanager
 from config import LYRICS_API_BASE
-from core.event_bus import bus
+from core.event_bus import EventBus
 from core.events import LyricsUpdatedEvent, TrackProgressEvent
 
 logger = structlog.get_logger(__name__)
@@ -18,15 +18,20 @@ class LyricsFetcher:
     MED-01 fix: Accepts a shared aiohttp session.
     LOW-07 fix: Strips timestamp prefixes from displayed lyrics.
     """
-    def __init__(self, state, session: aiohttp.ClientSession = None):
+    def __init__(self, state, session: aiohttp.ClientSession = None, event_bus: EventBus = None):
         self.state = state
         self.lyrics_data: list[tuple[float, str]] = []
         self._session = session
         self._current_generation = 0
-        bus.subscribe(TrackProgressEvent, self._on_progress)
+        # TASK-3.4: Injected per-room bus (fallback ke global jika belum direfactor)
+        if event_bus is None:
+            from core.event_bus import bus as _global_bus
+            event_bus = _global_bus
+        self._bus = event_bus
+        self._bus.subscribe(TrackProgressEvent, self._on_progress)
 
     def cleanup(self):
-        bus.unsubscribe(TrackProgressEvent, self._on_progress)
+        self._bus.unsubscribe(TrackProgressEvent, self._on_progress)
 
     async def fetch(self, track: TrackInfo):
         """Fetches synchronized lyrics from lrclib.net and parses them."""
@@ -42,7 +47,7 @@ class LyricsFetcher:
         self._current_generation += 1
         gen = self._current_generation
         
-        await bus.publish(LyricsUpdatedEvent())
+        await self._bus.publish(LyricsUpdatedEvent())
 
         @asynccontextmanager
         async def get_session():
@@ -102,7 +107,7 @@ class LyricsFetcher:
                     self.lyrics_data = self._parse_lrc(lrc)
                     # LOW-07 fix: Store CLEAN lines (no timestamps) for display
                     self.state.lyrics_lines = [text for _, text in self.lyrics_data]
-                    await bus.publish(LyricsUpdatedEvent())
+                    await self._bus.publish(LyricsUpdatedEvent())
                     logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
                 else:
                     logger.info("Lyrics: No lyrics found anywhere")
@@ -113,7 +118,7 @@ class LyricsFetcher:
         finally:
             if self._current_generation == gen:
                 self.state.lyrics_loading = False
-                await bus.publish(LyricsUpdatedEvent())
+                await self._bus.publish(LyricsUpdatedEvent())
 
     def _parse_lrc(self, lrc_text: str) -> list[tuple[float, str]]:
         """Parse LRC format. Strips timestamp tags from text content."""
@@ -149,4 +154,4 @@ class LyricsFetcher:
                 
         if self.state.lyrics_index != active_idx:
             self.state.lyrics_index = active_idx
-            await bus.publish(LyricsUpdatedEvent())
+            await self._bus.publish(LyricsUpdatedEvent())

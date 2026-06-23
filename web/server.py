@@ -21,7 +21,7 @@ import aiohttp
 from aiohttp import web
 
 from config import CACHE_DIR, STREAM_URL_TTL_SEC
-from core.event_bus import bus
+# TASK-3.7: global bus singleton tidak diimport lagi — semua pakai per-room bus
 from core.events import (
     TrackStartedEvent, TrackProgressEvent, QueueUpdatedEvent, LyricsUpdatedEvent,
     DownloadCompleteEvent, LogMessageEvent, TrackPauseChangedEvent
@@ -158,10 +158,10 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
         await app["http_session"].close()
     app.on_cleanup.append(on_cleanup)
 
-    # --- Progress throttle ---
-    last_progress = {"t": 0.0}
+    # TASK-3.6: Progress throttle per-room (bukan global dict yang dishare)
+    last_progress_per_room: dict[str, float] = {}
 
-    # --- EventBus → WebSocket bridge ---
+    # --- EventBus → WebSocket bridge functions ---
     async def _prefetch_stream_url(video_id: str):
         """Resolve dan cache stream URL di background, sebelum client request."""
         row = await db.get_track(video_id)
@@ -191,9 +191,11 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
         if not room: return
         position = event.position
         now = time.monotonic()
-        if now - last_progress["t"] < 0.33:
-            return  # Throttle: max ~3 updates/sec
-        last_progress["t"] = now
+        # TASK-3.6: Throttle per-room — jangan cross-room throttle
+        room_id_key = event.room_id or "default"
+        if now - last_progress_per_room.get(room_id_key, 0.0) < 0.33:
+            return  # Throttle: max ~3 updates/sec per room
+        last_progress_per_room[room_id_key] = now
         await manager.broadcast({
             "type": "progress",
             "data": {
@@ -254,14 +256,23 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
             },
         }, room_id=event.room_id)
 
-    # Subscribe to EventBus
-    bus.subscribe(TrackStartedEvent, _on_track_started)
-    bus.subscribe(TrackProgressEvent, _on_track_progress)
-    bus.subscribe(QueueUpdatedEvent, _on_queue_updated)
-    bus.subscribe(LyricsUpdatedEvent, _on_lyrics_updated)
-    bus.subscribe(DownloadCompleteEvent, _on_download_complete)
-    bus.subscribe(LogMessageEvent, _on_log_message)
-    bus.subscribe(TrackPauseChangedEvent, _on_pause_changed)
+    def _setup_room_subscriptions(room):
+        """TASK-3.6: Subscribe ke event_bus milik room yang baru dibuat.
+        Dipanggil otomatis oleh RoomManager setiap kali room baru dibuat.
+        Dengan ini, setiap room memiliki listener independen — tidak ada
+        cross-room event contamination.
+        """
+        room.event_bus.subscribe(TrackStartedEvent, _on_track_started)
+        room.event_bus.subscribe(TrackProgressEvent, _on_track_progress)
+        room.event_bus.subscribe(QueueUpdatedEvent, _on_queue_updated)
+        room.event_bus.subscribe(LyricsUpdatedEvent, _on_lyrics_updated)
+        room.event_bus.subscribe(DownloadCompleteEvent, _on_download_complete)
+        room.event_bus.subscribe(LogMessageEvent, _on_log_message)
+        room.event_bus.subscribe(TrackPauseChangedEvent, _on_pause_changed)
+        logger.info(f"Per-room EventBus subscriptions set up for room: {room.room_id}")
+
+    # TASK-3.6: Daftarkan callback — dipanggil saat room baru dibuat
+    room_manager.on_room_created(_setup_room_subscriptions)
 
     # --- Route: Serve index.html ---
     async def handle_index(request):

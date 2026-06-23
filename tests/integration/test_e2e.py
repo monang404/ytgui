@@ -51,6 +51,8 @@ def mock_room_manager(mock_db, mock_ytdlp):
     fake_room.playback.mpv = MagicMock()
     fake_room.playback.mpv.is_connected = True
     
+    # TASK-1.4: rooms dict is required by handle_websocket for room validation
+    manager.rooms = {"default": fake_room}
     manager.get_or_create_room = AsyncMock(return_value=fake_room)
     return manager
 
