@@ -78,6 +78,15 @@ class Database:
         ))
         await self._conn.commit()
 
+    async def update_stream_url_only(self, video_id: str, stream_url: str):
+        """Hanya update stream_url tanpa mengubah metadata (mencegah overwite dengan 'Temp')."""
+        ts = int(time.time())
+        await self._conn.execute(
+            "UPDATE tracks SET stream_url=?, stream_url_ts=? WHERE video_id=?",
+            (stream_url, ts, video_id)
+        )
+        await self._conn.commit()
+
     async def increment_play_count(self, video_id: str):
         """MED-10 fix: Only called when a track actually starts playing."""
         ts = int(time.time())

@@ -20,7 +20,7 @@ from typing import Optional
 import aiohttp
 from aiohttp import web
 
-from config import CACHE_DIR
+from config import CACHE_DIR, STREAM_URL_TTL_SEC
 from core.event_bus import (
     bus, TRACK_STARTED, TRACK_PROGRESS, QUEUE_UPDATED, LYRICS_UPDATED,
     DOWNLOAD_COMPLETE, LOG_MESSAGE, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
@@ -147,13 +147,11 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
         """Resolve dan cache stream URL di background, sebelum client request."""
         row = await db.get_track(video_id)
         if row and row.get("stream_url") and row.get("stream_url_ts"):
-            if time.time() - row["stream_url_ts"] < 7200:
+            if time.time() - row["stream_url_ts"] < STREAM_URL_TTL_SEC:
                 return  # sudah ada, skip
         try:
             url = await ytdlp.get_stream_url(video_id)
-            from core.state import TrackInfo
-            temp_track = TrackInfo(video_id=video_id, title="Temp", artist="Temp", duration=0)
-            await db.upsert_track(temp_track, stream_url=url)
+            await db.update_stream_url_only(video_id, url)
         except Exception as e:
             logger.warning(f"Pre-fetch stream URL gagal untuk {video_id}: {e}")
 
@@ -232,7 +230,9 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
     # --- Route: Serve index.html ---
     async def handle_index(request):
-        return web.FileResponse(STATIC_DIR / "index.html")
+        resp = web.FileResponse(STATIC_DIR / "index.html")
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
     # --- Route: WebSocket ---
     async def handle_websocket(request):
@@ -300,7 +300,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
         row = await db.get_track(video_id)
         if row and row.get("stream_url") and row.get("stream_url_ts"):
-            if time.time() - row["stream_url_ts"] < 7200:
+            if time.time() - row["stream_url_ts"] < STREAM_URL_TTL_SEC:
                 stream_url = row["stream_url"]
 
         http_session = request.app.get("http_session")
@@ -311,9 +311,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
             if not stream_url:
                 try:
                     stream_url = await ytdlp.get_stream_url(video_id)
-                    from core.state import TrackInfo
-                    track = TrackInfo(video_id=video_id, title="Temp", artist="Temp", duration=0)
-                    await db.upsert_track(track, stream_url=stream_url)
+                    await db.update_stream_url_only(video_id, stream_url)
                 except Exception as e:
                     if attempt == 1:
                         return web.HTTPInternalServerError(text=f"Gagal mencari stream: {e}")
@@ -336,7 +334,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
                             "Content-Type": upstream.headers.get("Content-Type", "audio/mpeg"),
                             "Accept-Ranges": "bytes",
                             "Access-Control-Allow-Origin": "*",
-                            "Cache-Control": "no-store",
+                            "Cache-Control": "private, max-age=3600",
                         }
                     )
                     
@@ -350,7 +348,7 @@ def create_app(state: AppState, ytdlp, db, controller) -> web.Application:
 
                     await response.prepare(request)
 
-                    async for chunk in upstream.content.iter_chunked(65536):
+                    async for chunk in upstream.content.iter_chunked(16384):
                         await response.write(chunk)
 
                     await response.write_eof()

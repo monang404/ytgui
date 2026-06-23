@@ -371,85 +371,89 @@
         }
     }
 
-    // ── Queue ──
     function renderQueue() {
         const isRadio = store.playback_mode === "RADIO";
         const upcoming = isRadio ? store.radio_queue : store.queue;
 
-        dom.queueList.innerHTML = "";
+        const allItems = [];
+        if (store.current_track) {
+            allItems.push({ track: store.current_track, index: -1, isCurrent: true });
+        }
+        upcoming.forEach((track, i) => allItems.push({ track, index: i, isCurrent: false }));
 
-        if (!upcoming.length && !store.current_track) {
-            dom.queueList.innerHTML =
-                '<div class="queue-empty">' +
-                (isRadio ? "Radio sedang menyiapkan lagu..." : "Cari lagu atau aktifkan Radio") +
-                "</div>";
+        if (allItems.length === 0) {
+            dom.queueList.innerHTML = '<div class="queue-empty">' + (isRadio ? "Radio sedang menyiapkan lagu..." : "Cari lagu atau aktifkan Radio") + '</div>';
         } else {
-            // Current track
-            if (store.current_track) {
-                const el = createQueueItem(store.current_track, -1, true, isRadio);
-                dom.queueList.appendChild(el);
+            const existing = Array.from(dom.queueList.children);
+            if (existing.length === 1 && existing[0].classList.contains('queue-empty')) {
+                existing[0].remove();
+                existing.shift();
             }
 
-            // Upcoming
-            upcoming.forEach((track, i) => {
-                const el = createQueueItem(track, i, false, isRadio);
-                dom.queueList.appendChild(el);
+            allItems.forEach((item, i) => {
+                let el = existing[i];
+                if (!el) {
+                    el = createQueueItemTemplate();
+                    dom.queueList.appendChild(el);
+                }
+                updateQueueItem(el, item.track, item.index, item.isCurrent, isRadio);
             });
+
+            while (dom.queueList.children.length > allItems.length) {
+                dom.queueList.removeChild(dom.queueList.lastChild);
+            }
         }
 
-        // Footer
         const modeStr = isRadio
             ? '<span style="color:var(--status-ok)">RADIO</span>'
             : '<span style="color:var(--text-dim)">QUEUE</span>';
         dom.queueFooter.innerHTML = "Mode: " + modeStr + " | 📝 Lirik: Tekan L";
     }
 
-    function createQueueItem(track, index, isCurrent, isRadio) {
+    function createQueueItemTemplate() {
         const div = document.createElement("div");
-        div.className = "queue-item" + (isCurrent ? " current" : "");
-
-        const idxSpan = document.createElement("span");
-        idxSpan.className = "qi-index";
-        idxSpan.textContent = isCurrent ? "▶" : index + 1;
-
-        const infoDiv = document.createElement("div");
-        infoDiv.className = "qi-info";
-
-        const titleDiv = document.createElement("div");
-        titleDiv.className = "qi-title";
-        titleDiv.textContent = track.title;
-
-        const durDiv = document.createElement("div");
-        durDiv.className = "qi-dur";
-        durDiv.textContent = track.artist + " · " + formatTime(track.duration);
-
-        infoDiv.appendChild(titleDiv);
-        infoDiv.appendChild(durDiv);
-
-        div.appendChild(idxSpan);
-        div.appendChild(infoDiv);
-
-        // Remove button (only for queue mode non-current items)
-        if (!isCurrent && !isRadio) {
-            const rmBtn = document.createElement("button");
-            rmBtn.className = "qi-remove";
-            rmBtn.textContent = "✕";
-            rmBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                wsSend("queue_remove", { index });
-            });
-            div.appendChild(rmBtn);
-        }
-
-        // Click to play (only queue mode non-current)
-        if (!isCurrent && !isRadio) {
-            div.addEventListener("click", () => {
-                wsSend("queue_select", { index });
-            });
-        }
-
+        div.innerHTML = `
+            <span class="qi-index"></span>
+            <div class="qi-info">
+                <div class="qi-title"></div>
+                <div class="qi-dur"></div>
+            </div>
+            <button class="qi-remove">✕</button>
+        `;
         return div;
     }
+
+    function updateQueueItem(div, track, index, isCurrent, isRadio) {
+        div.className = "queue-item" + (isCurrent ? " current" : "");
+        if (!isCurrent && !isRadio) div.dataset.index = index;
+        else div.removeAttribute("data-index");
+        
+        div.querySelector(".qi-index").textContent = isCurrent ? "▶" : index + 1;
+        div.querySelector(".qi-title").textContent = track.title;
+        div.querySelector(".qi-dur").textContent = track.artist + " · " + formatTime(track.duration);
+        
+        const rmBtn = div.querySelector(".qi-remove");
+        if (isCurrent || isRadio) {
+            rmBtn.style.display = "none";
+        } else {
+            rmBtn.style.display = "block";
+            rmBtn.dataset.index = index;
+        }
+    }
+
+    dom.queueList.addEventListener("click", (e) => {
+        if (store.userRole !== "admin") return;
+        const rmBtn = e.target.closest(".qi-remove");
+        if (rmBtn) {
+            e.stopPropagation();
+            wsSend("queue_remove", { index: parseInt(rmBtn.dataset.index) });
+            return;
+        }
+        const item = e.target.closest(".queue-item");
+        if (item && item.hasAttribute("data-index")) {
+            wsSend("queue_select", { index: parseInt(item.dataset.index) });
+        }
+    });
 
     // ── Lyrics ──
     function renderLyrics() {
@@ -793,7 +797,11 @@
     });
 
     dom.btnPlay.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("toggle_pause");
+        if (store.userRole === "admin") {
+            store.status = store.status === "PLAYING" ? "PAUSED" : "PLAYING";
+            renderPlayBtn();
+            wsSend("toggle_pause");
+        }
     });
     dom.btnNext.addEventListener("click", () => {
         if (store.userRole === "admin") {
@@ -801,11 +809,19 @@
             if (store.current_track && store.current_track.video_id) {
                 data.video_id = store.current_track.video_id;
             }
+            store.status = "LOADING";
+            renderNowPlaying();
+            renderPlayerBar();
             wsSend("next", data);
         }
     });
     dom.btnPrev.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("prev");
+        if (store.userRole === "admin") {
+            store.status = "LOADING";
+            renderNowPlaying();
+            renderPlayerBar();
+            wsSend("prev");
+        }
     });
     dom.btnVolUp.addEventListener("click", () => {
         if (store.userRole === "admin") wsSend("volume_up");
@@ -953,8 +969,25 @@
     const NUM_BANDS = 12;
     const bandHeights = new Array(NUM_BANDS).fill(0);
     const bandTargets = new Array(NUM_BANDS).fill(0);
+    
+    // Pre-bake gradients (PATCH-0-07)
+    const eqGradients = [];
+    const _canvasH = dom.eqCanvas.height;
+    for (let i = 0; i < NUM_BANDS; i++) {
+        const grad = eqCtx.createLinearGradient(0, _canvasH, 0, 0);
+        const hue = 340 + (i / NUM_BANDS) * 60;
+        grad.addColorStop(0, `hsla(${hue}, 80%, 55%, 0.9)`);
+        grad.addColorStop(0.5, `hsla(${hue + 20}, 70%, 50%, 0.7)`);
+        grad.addColorStop(1, `hsla(${hue + 40}, 60%, 65%, 0.5)`);
+        eqGradients.push(grad);
+    }
 
     function tickEQ() {
+        if (store.active_tab !== "home") {
+            requestAnimationFrame(tickEQ);
+            return;
+        }
+
         const canvas = dom.eqCanvas;
         const w = canvas.width;
         const h = canvas.height;
@@ -980,14 +1013,7 @@
             const x = i * (bandW + gap);
             const y = h - bh;
 
-            // Gradient per band
-            const grad = eqCtx.createLinearGradient(x, h, x, y);
-            const hue = 340 + (i / NUM_BANDS) * 60; // red → pink range
-            grad.addColorStop(0, `hsla(${hue}, 80%, 55%, 0.9)`);
-            grad.addColorStop(0.5, `hsla(${hue + 20}, 70%, 50%, 0.7)`);
-            grad.addColorStop(1, `hsla(${hue + 40}, 60%, 65%, 0.5)`);
-
-            eqCtx.fillStyle = grad;
+            eqCtx.fillStyle = eqGradients[i];
             eqCtx.beginPath();
             // Rounded top
             const r = Math.min(bandW / 2, 4);

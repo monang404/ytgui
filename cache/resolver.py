@@ -27,11 +27,11 @@ class CacheResolver:
                 return path
 
         import time
-        # Rule 2: Gunakan stream_url dari cache jika belum kadaluwarsa (6 jam = 21600 detik)
+        from config import STREAM_URL_TTL_SEC
+        # Rule 2: Gunakan stream_url dari cache jika belum kadaluwarsa
         if row and row.get("stream_url") and row.get("stream_url_ts"):
             ts = row.get("stream_url_ts")
-            # Jika URL bukan format standar youtube (berarti direct audio) dan masih fresh
-            if time.time() - ts < 21600:
+            if time.time() - ts < STREAM_URL_TTL_SEC:
                 track.stream_url = row["stream_url"]
                 return track.stream_url
 
