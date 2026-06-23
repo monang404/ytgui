@@ -1071,6 +1071,14 @@
                 audio.oncanplay = null;
             };
             
+            audio.onended = () => {
+                console.log("Browser audio ended, requesting next track");
+                // Cek apakah output memang browser, jika ya kita trigger next
+                if (store.audio_output === "browser") {
+                    wsSend("next", { video_id: track.video_id });
+                }
+            };
+            
             audio.load();
         }
 

@@ -434,12 +434,19 @@ async def _handle_ws_message(msg: dict, ws: web.WebSocketResponse, client_ip: st
             return
 
         # If not authenticated, reject all other commands
+        # Pengecualian: izinkan command "next" dari client HANYA jika sesuai dengan track saat ini (trigger auto-skip browser)
         if not is_authenticated:
-            await ws.send_str(json.dumps({
-                "type": "error",
-                "data": "Akses ditolak. Silakan login sebagai Admin.",
-            }))
-            return
+            is_valid_auto_skip = (
+                action == "next" 
+                and isinstance(data, dict) 
+                and data.get("video_id") == getattr(state.current_track, "video_id", None)
+            )
+            if not is_valid_auto_skip:
+                await ws.send_str(json.dumps({
+                    "type": "error",
+                    "data": "Akses ditolak. Silakan login sebagai Admin.",
+                }))
+                return
             
         # Command Rate Limiting
         cmd_history = manager.command_history.get(client_ip, [])
