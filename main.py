@@ -65,7 +65,7 @@ async def main():
     command_router = CommandRouter(room_manager)
     
     # Termux now-playing notification (no-op outside Termux)
-    nowplaying = TermuxNowPlaying(default_room.event_bus, default_room.state)
+    nowplaying = TermuxNowPlaying(bus, default_room.state)
     await nowplaying.start()
 
     # Connectivity Check

@@ -4,7 +4,8 @@ from textual.widgets import Static, ListView, ListItem, Button, Label
 from textual.containers import Vertical, Horizontal
 from rich.markup import escape
 from core.state import AppState, PlaybackMode
-from core.event_bus import bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
+from core.event_bus import bus
+from core.command_bus import command_bus, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE
 from tui.theme import TEXT_DIM, ACCENT_FIRE, STATUS_OK, BORDER, TEXT_PRIMARY
 from textual.binding import Binding
 from textual import work
