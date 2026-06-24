@@ -19,8 +19,8 @@ function renderPlayerBar() {
         dom.pbModeBadge.className = "pb-mode-badge queue";
     }
 
-    dom.pbVolLabel.textContent = store.volume + "%";
-    if (dom.volSlider) dom.volSlider.value = store.volume;
+    if (dom.pbVolLabel) dom.pbVolLabel.textContent = store.volume + "%";
+    if (dom.volSlider && !window.isDraggingVol) dom.volSlider.value = store.volume;
 
     if (t && t.local_path) {
         dom.pbCacheBadge.textContent = "✓ tersimpan";
@@ -56,6 +56,7 @@ function renderPlayBtn() {
 }
 
 function renderProgress() {
+    if (window.isDraggingPb) return;
     const dur = store.current_track ? store.current_track.duration : 0;
     const pos = store.position || 0;
     const pct = dur > 0 ? Math.min(100, (pos / dur) * 100) : 0;

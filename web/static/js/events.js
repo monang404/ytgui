@@ -77,14 +77,17 @@ function initEvents() {
     }
 
     if (dom.volSlider) {
+        window.isDraggingVol = false;
         dom.volSlider.addEventListener("input", () => {
+            window.isDraggingVol = true;
             store.volume = parseInt(dom.volSlider.value);
-            dom.pbVolLabel.textContent = store.volume + "%";
+            if (dom.pbVolLabel) dom.pbVolLabel.textContent = store.volume + "%";
         });
         dom.volSlider.addEventListener("change", () => {
             if (store.userRole === "admin") {
                 wsSend("volume_set", { volume: store.volume });
             }
+            window.isDraggingVol = false;
         });
     }
 
@@ -92,14 +95,35 @@ function initEvents() {
         if (store.userRole === "admin") wsSend("download");
     });
 
-    dom.pbProgressTrack.addEventListener("click", (e) => {
-        if (store.userRole !== "admin") return;
+    window.isDraggingPb = false;
+    function updatePb(e) {
+        if (store.userRole !== "admin") return 0;
         const rect = dom.pbProgressTrack.getBoundingClientRect();
-        const pct = (e.clientX - rect.left) / rect.width;
+        let pct = (e.clientX - rect.left) / rect.width;
+        pct = Math.max(0, Math.min(1, pct));
         const dur = store.current_track ? store.current_track.duration : 0;
-        if (dur > 0) {
-            wsSend("seek", { position: pct * dur });
-        }
+        if (dom.pbProgressFill) dom.pbProgressFill.style.width = (pct * 100) + "%";
+        const thumb = dom.pbProgressTrack.querySelector('.pb-thumb');
+        if (thumb) thumb.style.left = (pct * 100) + "%";
+        if (dom.pbTimePos) dom.pbTimePos.textContent = formatTime(pct * dur);
+        return pct;
+    }
+    dom.pbProgressTrack.addEventListener("pointerdown", (e) => {
+        if (store.userRole !== "admin") return;
+        window.isDraggingPb = true;
+        dom.pbProgressTrack.setPointerCapture(e.pointerId);
+        updatePb(e);
+    });
+    dom.pbProgressTrack.addEventListener("pointermove", (e) => {
+        if (window.isDraggingPb) updatePb(e);
+    });
+    dom.pbProgressTrack.addEventListener("pointerup", (e) => {
+        if (!window.isDraggingPb) return;
+        window.isDraggingPb = false;
+        dom.pbProgressTrack.releasePointerCapture(e.pointerId);
+        const pct = updatePb(e);
+        const dur = store.current_track ? store.current_track.duration : 0;
+        if (dur > 0) wsSend("seek", { position: pct * dur });
     });
 
     dom.radioToggleBtn.addEventListener("click", () => {
