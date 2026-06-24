@@ -153,23 +153,6 @@
         <section id="tab-queue" class="tab-panel">
             <div id="queue-list" style="display:flex; flex-direction:column;"></div>
             <div id="queue-footer" style="text-align:center; padding:12px 0; font-size:11px; color:#6a6a8c;">Mode: QUEUE</div>
-
-            <div class="lyrics-panel" id="lyrics-panel">
-                <div class="lyric-hdr">
-                    <button id="lyrics-toggle-btn" style="background:none; border:none; color:#9a9abc; display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                        <i class="ti ti-align-center" style="font-size:15px" aria-hidden="true"></i> Lirik Tersinkron
-                    </button>
-                    <div class="lyric-offset" id="lyric-offset-ctrl">
-                        <span>Offset</span>
-                        <button id="lyric-offset-minus">−</button>
-                        <span id="lyric-offset-display">+0.0s</span>
-                        <button id="lyric-offset-plus">+</button>
-                    </div>
-                </div>
-                <div class="lyric-body" id="lyrics-content">
-                    <div class="lyric-line near">Tidak ada lirik</div>
-                </div>
-            </div>
         </section>
 
         <!-- Tab: Discover -->
@@ -214,6 +197,7 @@
                 <button class="btn-next" aria-label="Next" id="btn-next"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
             </div>
             <div class="pb-sec">
+                <button id="btn-lyrics" title="Lirik" aria-label="Lirik Lagu"><i class="ti ti-microphone-2" aria-hidden="true"></i></button>
                 <button id="btn-settings" title="Pengaturan" aria-label="Pengaturan"><i class="ti ti-settings" aria-hidden="true"></i></button>
                 <button id="btn-download" title="Unduh" aria-label="Unduh lagu ini"><i class="ti ti-download" aria-hidden="true"></i></button>
                 <button id="btn-help" title="Help" aria-label="Bantuan"><i class="ti ti-help" aria-hidden="true"></i></button>
@@ -298,6 +282,28 @@
         </div>
     </div>
     
+    <!-- ═══ Lyrics Sheet ═══ -->
+    <div class="settings-sheet" id="lyrics-sheet">
+        <div class="ss-handle"></div>
+        <div class="ss-title">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                <span><i class="ti ti-microphone-2" aria-hidden="true"></i> Lirik Tersinkron</span>
+                <div class="lyric-offset" id="lyric-offset-ctrl">
+                    <span>Offset</span>
+                    <button id="lyric-offset-minus">−</button>
+                    <span id="lyric-offset-display">+0.0s</span>
+                    <button id="lyric-offset-plus">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="lyrics-panel" id="lyrics-panel" style="border:none; padding: 0;">
+            <div class="lyric-body" id="lyrics-content" style="height: 60vh; overflow-y: auto;">
+                <div class="lyric-line near" style="text-align:center; padding:20px; color:#6a6a8c;">Tidak ada lirik</div>
+            </div>
+        </div>
+        <button id="lyrics-close-btn" class="ss-out-btn" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 10px;">Tutup</button>
+    </div>
+
     <!-- ═══ Action Sheet ═══ -->
     <div class="settings-sheet" id="action-sheet">
         <div class="ss-handle"></div>

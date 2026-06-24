@@ -205,7 +205,7 @@ function renderQueue() {
     const modeStr = isRadio
         ? '<span style="color:var(--fm-green)">RADIO</span>'
         : '<span style="color:var(--fm-text-5)">QUEUE</span>';
-    dom.queueFooter.innerHTML = "Mode: " + modeStr + " | 📝 Lirik: Tekan L";
+    dom.queueFooter.innerHTML = "Mode: " + modeStr;
 }
 
 function createQueueItemTemplate() {

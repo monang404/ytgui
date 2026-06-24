@@ -146,10 +146,19 @@ function initEvents() {
         }
     });
 
-    dom.lyricsToggleBtn.addEventListener("click", () => {
-        dom.lyricsPanel.classList.toggle("active");
-        renderLyrics();
-    });
+    if (dom.btnLyrics) {
+        dom.btnLyrics.addEventListener("click", () => {
+            dom.lyricsSheet.classList.add("open");
+            dom.mainOverlay.classList.add("open");
+        });
+    }
+
+    if (dom.lyricsCloseBtn) {
+        dom.lyricsCloseBtn.addEventListener("click", () => {
+            dom.lyricsSheet.classList.remove("open");
+            closeMainOverlay();
+        });
+    }
 
     if (dom.lyricOffsetMinus) {
         dom.lyricOffsetMinus.addEventListener("click", () => {
@@ -387,9 +396,18 @@ function initEvents() {
                 break;
             case "l":
             case "L":
-                switchTab("queue");
-                dom.lyricsPanel.classList.toggle("active");
-                renderLyrics();
+               if (e.key === "l" || e.key === "L") {
+                if (dom.lyricsSheet) {
+                    const isOpen = dom.lyricsSheet.classList.contains("open");
+                    if (isOpen) {
+                        dom.lyricsSheet.classList.remove("open");
+                        closeMainOverlay();
+                    } else {
+                        dom.lyricsSheet.classList.add("open");
+                        dom.mainOverlay.classList.add("open");
+                    }
+                }
+            }    renderLyrics();
                 break;
             case "/":
                 e.preventDefault();
