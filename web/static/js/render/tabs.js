@@ -53,64 +53,65 @@ function renderNowPlaying() {
 function renderDiscoverTab() {
     if (dom.discFavorites && store.discover_favorites) {
         if (store.discover_favorites.length === 0) {
-            dom.discFavorites.innerHTML = '<div class="discover-empty">Belum ada data favorit</div>';
+            dom.discFavorites.innerHTML = '<div class="discover-empty"><i class="ti ti-heart-broken" style="font-size:32px; opacity:0.6; margin-bottom:12px; display:block;"></i>Belum ada data favorit</div>';
         } else {
-            dom.discFavorites.innerHTML = store.discover_favorites.map((track, i) => `
+            dom.discFavorites.innerHTML = store.discover_favorites.map((track, i) => {
+                const title = typeof cleanTrackTitle === "function" ? escapeHtml(cleanTrackTitle(track.title)) : escapeHtml(track.title);
+                const playCnt = track.play_count > 0 ? ` · ${track.play_count}×` : '';
+                return `
                 <div class="fav-card" data-vid="${escapeHtml(track.video_id || '')}">
                     <div class="fav-num">${i + 1}</div>
                     <div class="fav-thumb">
-                        ${track.thumbnail
-                            ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
-                            : '<i class="ti ti-music"></i>'}
+                        ${track.thumbnail ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">` : '<i class="ti ti-music"></i>'}
                     </div>
                     <div class="fav-info">
-                        <div class="fav-title">${escapeHtml(track.title)}</div>
-                        <div class="fav-cnt">${escapeHtml(track.artist || '')} · ${track.play_count || 0}×</div>
+                        <div class="fav-title">${title}</div>
+                        <div class="fav-cnt">${escapeHtml(track.artist || '')}${playCnt}</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     }
 
     if (dom.discRecent && store.discover_recent) {
         if (store.discover_recent.length === 0) {
-            dom.discRecent.innerHTML = '<div class="discover-empty">Belum ada riwayat</div>';
+            dom.discRecent.innerHTML = '<div class="discover-empty"><i class="ti ti-history" style="font-size:32px; opacity:0.6; margin-bottom:12px; display:block;"></i>Belum ada riwayat</div>';
         } else {
-            dom.discRecent.innerHTML = store.discover_recent.map(track => `
-                <div class="disc-card" data-vid="${escapeHtml(track.video_id || '')}">
-                    <div class="disc-thumb">
-                        ${track.thumbnail
-                            ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
-                            : '<i class="ti ti-music"></i>'}
+            dom.discRecent.innerHTML = store.discover_recent.map(track => {
+                const title = typeof cleanTrackTitle === "function" ? escapeHtml(cleanTrackTitle(track.title)) : escapeHtml(track.title);
+                return `
+                <div class="sr-item" data-vid="${escapeHtml(track.video_id || '')}">
+                    <div class="sr-thumb">
+                        ${track.thumbnail ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">` : '<i class="ti ti-music"></i>'}
                         ${track.local_path ? '<span class="disc-tag">cache</span>' : ''}
                     </div>
-                    <div class="disc-info">
-                        <div class="disc-title">${escapeHtml(track.title)}</div>
-                        <div class="disc-artist">${escapeHtml(track.artist || '')}</div>
+                    <div class="sr-info">
+                        <div class="sr-title">${title}</div>
+                        <div class="sr-meta">${escapeHtml(track.artist || '')}</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     }
 
     if (dom.discCached && store.discover_cached) {
         if (store.discover_cached.length === 0) {
-            dom.discCached.innerHTML = '<div class="discover-empty">Tidak ada file tersimpan</div>';
+            dom.discCached.innerHTML = '<div class="discover-empty"><i class="ti ti-box-off" style="font-size:32px; opacity:0.6; margin-bottom:12px; display:block;"></i>Tidak ada file tersimpan</div>';
         } else {
-            dom.discCached.innerHTML = store.discover_cached.map(track => `
-                <div class="search-result-item" data-vid="${escapeHtml(track.video_id || '')}">
+            dom.discCached.innerHTML = store.discover_cached.map(track => {
+                const title = typeof cleanTrackTitle === "function" ? escapeHtml(cleanTrackTitle(track.title)) : escapeHtml(track.title);
+                return `
+                <div class="sr-item" data-vid="${escapeHtml(track.video_id || '')}">
                     <div class="sr-thumb">
-                        ${track.thumbnail
-                            ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
-                            : '<i class="ti ti-music"></i>'}
+                        ${track.thumbnail ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">` : '<i class="ti ti-music"></i>'}
                     </div>
                     <div class="sr-info">
-                        <div class="sr-title">${escapeHtml(track.title)}</div>
+                        <div class="sr-title">${title}</div>
                         <div class="sr-meta">${escapeHtml(track.artist || '')} · ${formatTime(track.duration)}</div>
                     </div>
                     <span class="sr-badge cache" style="display:inline-block">✓ Cache</span>
                 </div>
-            `).join('');
+            `}).join('');
         }
     }
 }

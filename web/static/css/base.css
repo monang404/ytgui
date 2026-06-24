@@ -1171,7 +1171,7 @@ button:focus-visible {
 .discover-empty {
   text-align: center;
   padding: 32px 20px;
-  color: var(--fm-text-5);
+  color: #a0a0c0;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -1181,14 +1181,6 @@ button:focus-visible {
   display: block;
   font-size: 32px;
   margin-bottom: 12px;
-  opacity: 0.4;
-}
-
-.discover-empty::before {
-  content: '○';
-  display: block;
-  font-size: 24px;
-  margin-bottom: 8px;
   opacity: 0.4;
 }
 

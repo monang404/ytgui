@@ -268,7 +268,7 @@ function initEvents() {
     // EVENT DELEGATION UNTUK DISCOVER / SEED / SEARCH
     document.addEventListener("click", (e) => {
         // Recent / Favorite / Cached / Search Results cards
-        const card = e.target.closest(".disc-card, .fav-card, .search-result-item");
+        const card = e.target.closest(".disc-card, .fav-card, .search-result-item, .sr-item");
         if (card && card.dataset.vid) {
             let track = null;
             if (card.classList.contains("search-result-item") && card.dataset.searchTrackStr) {
