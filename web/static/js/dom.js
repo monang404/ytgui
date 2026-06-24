@@ -40,13 +40,7 @@ function initDOM() {
         radioToggleWrap: $("radio-toggle-wrap"),
         radioToggleBtn: $("radio-toggle-btn"),
         rtSub: $("rt-sub"),
-        nextCard: $("next-card"),
-        nextTitle: $("next-title"),
-        nextMeta: $("next-meta"),
-        nextThumb: $("next-thumb"),
-
         radioRandomizeBtn: $("radio-randomize-btn"),
-        radioSkipBtn: $("radio-skip-btn"),
         radioQueueList: $("radio-queue-list"),
         queueList: $("queue-list"),
         queueFooter: $("queue-footer"),

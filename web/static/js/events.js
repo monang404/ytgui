@@ -157,15 +157,7 @@ function initEvents() {
         if (store.userRole === "admin") wsSend("radio_randomize");
     });
 
-    dom.radioSkipBtn.addEventListener("click", () => {
-        if (store.userRole === "admin") {
-            const data = {};
-            if (store.current_track && store.current_track.video_id) {
-                data.video_id = store.current_track.video_id;
-            }
-            wsSend("next", data);
-        }
-    });
+
 
     if (dom.btnLyrics) {
         dom.btnLyrics.addEventListener("click", () => {

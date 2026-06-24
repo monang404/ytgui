@@ -136,23 +136,7 @@ function renderRadio() {
             : 'Aktifkan untuk putar otomatis';
     }
 
-    if (dom.nextCard) {
-        if (isRadio && store.radio_queue && store.radio_queue.length > 0) {
-            const next = store.radio_queue[0];
-            dom.nextCard.style.display = 'block';
-            if (dom.nextTitle) dom.nextTitle.textContent = next.title || '-';
-            if (dom.nextMeta) {
-                dom.nextMeta.textContent = (next.artist || '') + ' · ' + formatTime(next.duration);
-            }
-            if (dom.nextThumb) {
-                dom.nextThumb.innerHTML = next.thumbnail
-                    ? `<img src="${escapeHtml(next.thumbnail)}" alt="" loading="lazy">`
-                    : '<i class="ti ti-music"></i>';
-            }
-        } else {
-            dom.nextCard.style.display = 'none';
-        }
-    }
+
 }
 
 function renderQueue() {
