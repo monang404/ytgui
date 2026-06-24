@@ -91,38 +91,38 @@ html, body {
   .mobile-only { display: none !important; }
 }
 
-/* --- Global Player State Logic for Search Tab --- */
+/* --- Global Player State Logic for Non-Home Tabs --- */
 @media (max-width: 1023px) {
     body[data-active-tab="search"] #app-header {
         display: none !important;
     }
-    body[data-active-tab="search"][data-player-state="IDLE"] #player-bar {
+    body:not([data-active-tab="home"])[data-player-state="IDLE"] #player-bar {
         display: none !important;
     }
-    body[data-active-tab="search"] #player-bar {
+    body:not([data-active-tab="home"]) #player-bar {
         padding: 6px 12px 10px;
         border-top: 1px solid var(--fm-border, #1e1e32);
     }
-    body[data-active-tab="search"] #player-bar .pb-row1 {
+    body:not([data-active-tab="home"]) #player-bar .pb-row1 {
         display: flex;
         flex: 1;
         margin-bottom: 0;
     }
-    body[data-active-tab="search"] #player-bar .pb-title {
+    body:not([data-active-tab="home"]) #player-bar .pb-title {
         font-size: 14px;
         max-width: none;
     }
-    body[data-active-tab="search"] #player-bar .pb-seek,
-    body[data-active-tab="search"] #player-bar .pb-sec,
-    body[data-active-tab="search"] #player-bar .vol-grp,
-    body[data-active-tab="search"] #player-bar .pb-badges,
-    body[data-active-tab="search"] #player-bar .btn-prev,
-    body[data-active-tab="search"] #player-bar .btn-next,
-    body[data-active-tab="search"] #player-bar .btn-shuffle,
-    body[data-active-tab="search"] #player-bar .btn-repeat {
+    body:not([data-active-tab="home"]) #player-bar .pb-seek,
+    body:not([data-active-tab="home"]) #player-bar .pb-sec,
+    body:not([data-active-tab="home"]) #player-bar .vol-grp,
+    body:not([data-active-tab="home"]) #player-bar .pb-badges,
+    body:not([data-active-tab="home"]) #player-bar .btn-prev,
+    body:not([data-active-tab="home"]) #player-bar .btn-next,
+    body:not([data-active-tab="home"]) #player-bar .btn-shuffle,
+    body:not([data-active-tab="home"]) #player-bar .btn-repeat {
         display: none !important;
     }
-    body[data-active-tab="search"] #player-bar .pb-ctrl {
+    body:not([data-active-tab="home"]) #player-bar .pb-ctrl {
         padding-top: 0;
         gap: 0;
         width: auto;
@@ -131,11 +131,11 @@ html, body {
         top: 0;
         bottom: 0;
     }
-    body[data-active-tab="search"] #player-bar .main-ctrl {
+    body:not([data-active-tab="home"]) #player-bar .main-ctrl {
         width: auto;
         justify-content: flex-end;
     }
-    body[data-active-tab="search"] #player-bar .btn-play {
+    body:not([data-active-tab="home"]) #player-bar .btn-play {
         width: 44px;
         height: 44px;
         font-size: 16px;
