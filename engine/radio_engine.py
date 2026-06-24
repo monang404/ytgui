@@ -12,7 +12,7 @@ import asyncio
 import random
 import re
 from typing import TYPE_CHECKING, Optional
-from core.event_bus import bus
+
 from core.events import QueueUpdatedEvent, LogMessageEvent
 
 _RADIO_SEARCH_SEM = asyncio.Semaphore(2)

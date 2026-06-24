@@ -4,7 +4,7 @@ Subscribes to: (tidak ada — dipanggil oleh PlaybackController)
 Publishes: QUEUE_UPDATED
 """
 
-from core.event_bus import bus
+
 from core.events import QueueUpdatedEvent
 from core.state import PlayerStatus
 from typing import TYPE_CHECKING

@@ -1,0 +1,27 @@
+{
+    "id": "dQw4w9WgXcQ",
+    "title": "Never Gonna Give You Up",
+    "uploader": "Rick Astley",
+    "duration": 212,
+    "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.url",
+    "webpage_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "formats": [
+        {
+            "format_id": "251",
+            "url": "https://manifest.googlevideo.com/api/manifest/dash/...",
+            "ext": "webm",
+            "acodec": "opus",
+            "vcodec": "none",
+            "abr": 160
+        }
+    ],
+    "requested_formats": [
+        {
+            "format_id": "251",
+            "url": "https://manifest.googlevideo.com/api/manifest/dash/...",
+            "ext": "webm",
+            "acodec": "opus",
+            "vcodec": "none"
+        }
+    ]
+}

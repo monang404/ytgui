@@ -4,7 +4,7 @@
 ![MPV](https://img.shields.io/badge/Powered_by-MPV-purple.svg)
 ![Termux](https://img.shields.io/badge/Optimized_for-Termux-green.svg)
 
-**YT Termux Player Pro** adalah aplikasi pemutar musik YouTube berbasis CLI (Command Line Interface) yang didesain secara khusus untuk tampil memukau di layar portrait HP (Termux) maupun desktop. Aplikasi ini memutar audio dengan sangat ringan di latar belakang menggunakan `mpv`, tanpa memuat video, sehingga sangat hemat kuota internet.
+**bagas.fm (sebelumnya YT Termux Player)** adalah aplikasi web pemutar musik YouTube yang didesain secara khusus untuk tampil memukau di layar portrait HP maupun desktop. Aplikasi ini memutar audio di latar belakang menggunakan `mpv` (sebagai *engine*) dan diakses sepenuhnya melalui antarmuka web, sehingga ringan dan hemat kuota internet.
 
 ---
 
@@ -96,28 +96,19 @@ Secara default, bagas.fm berjalan di `http://` (teks biasa). Jika Anda ingin men
 Setelah aplikasi berjalan, Anda dapat mengontrol pemutaran melalui sentuhan jari/mouse secara langsung pada elemen layar (klik tombol, *progress bar*, antrean) atau menggunakan tombol pintasan *keyboard* berikut:
 
 ### 🔍 Mencari Lagu
-- Tekan **`/`** untuk masuk ke **Mode Pencarian**. 
+- Akses **Tab Pencarian** pada antarmuka web.
 - Ketik nama lagu atau artis (Contoh: `coldplay yellow`).
-- Tekan **`Enter`** untuk memutar hasil pertama dan memasukkan sisanya ke antrean.
-- Tekan **`Esc`** untuk membatalkan pencarian.
+- Klik hasil pencarian untuk memutar lagu dan menambahkannya ke antrean.
 
 ### 🎧 Kontrol Pemutaran
-| Tombol | Fungsi |
-|--------|--------|
-| `[P]` | Pause / Resume (Jeda/Putar kembali) |
-| `[N]` | Next (Lompat ke lagu selanjutnya di antrean) |
-| `[B]` | Previous (Kembali memutar lagu sebelumnya) |
-| `[S]` | Stop (Hentikan pemutaran dan kosongkan antrean) |
-| `[U]` | Volume Up (Naikkan volume 5%) |
-| `[D]` | Volume Down (Turunkan volume 5%) |
-
-### 🛠️ Fitur Tambahan
-| Tombol | Fungsi |
-|--------|--------|
-| `[M]` | Download lagu yang sedang diputar untuk dimainkan secara offline (Cache) di masa depan |
-| `[R]` | Toggle Radio Mode (Mode Autoplay lagu mirip saat antrean habis) |
-| `[L]` | Sembunyikan/Tampilkan panel Lirik Sinkron |
-| `[Q]` | Keluar dari aplikasi dengan aman |
+Gunakan tombol-tombol yang tersedia di **Player Bar** bagian bawah web UI untuk:
+- Pause / Resume
+- Next / Previous
+- Menggeser (Seek) progress lagu
+- Mengatur volume
+- Toggle antrean (Queue)
+- Mengaktifkan Radio Mode (Autoplay)
+- Menampilkan Lirik Sinkron
 
 ---
 
@@ -142,4 +133,11 @@ Anda bisa menghapus isi folder `cache` kapanpun jika ingin menghemat ruang penyi
 
 Didistribusikan di bawah lisensi MIT. Anda bebas memodifikasi, mendistribusikan, dan menggunakannya secara pribadi maupun komersial.
 
-Enjoy your terminal music experience! 🎶
+## 🤝 Berkontribusi & Arsitektur
+
+Bagi para *developer* atau agen AI yang ingin berkontribusi, sangat diwajibkan untuk membaca dokumen berikut demi menjaga kualitas dan konsistensi kode:
+- **[Panduan Kontribusi & Hukum Codebase (CONTRIBUTING.md)](docs/CONTRIBUTING.md)**
+- **[Penjelasan Arsitektur (ARCHITECTURE.md)](docs/ARCHITECTURE.md)**
+
+---
+Enjoy your web music experience! 🎶

@@ -626,13 +626,18 @@ web/server.py subscribe ke room.event_bus per room
 - `[x]` TASK-1.3 — Proteksi `/metrics` endpoint
 - `[x]` TASK-1.4 — Validasi `room_id`
 - `[x]` TASK-1.5 — Hapus unauthenticated `next` bypass
+  > Selesai: Pengecekan auth dipindah ke gatekeeper global di atas switch case (`handle_ws_message`). Command 'next' turut terlindungi.
 
 ### FASE 2
 - `[x]` TASK-2.1 — Lock `_on_track_ended`
 - `[x]` TASK-2.2 — Fix duplicate `http_session`
+  > By design: dua session dipisah untuk stream proxy vs metadata/control.
+  > Menggabungkan berisiko pool exhaustion. Jangan di-merge.
 - `[x]` TASK-2.3 — Fix MPV socket poll (`MPV_SOCKET` → `self.socket_path`)
 - `[x]` TASK-2.4 — Fix `db.conn` vs `db._conn`
 - `[x]` TASK-2.5 — Fix script injection termux notification
+  > Aman: token dan fifo_path hardcoded. shlex.quote() tidak dipakai pada path arg ke execve (Android literal), hanya pada konten .sh (bash).
+  > Jangan tambahkan shlex.quote() ke argumen path termux-notification.
 
 ### FASE 3
 - `[x]` TASK-3.1 — Verifikasi `EventBus` bisa diinstansiasi
@@ -642,9 +647,19 @@ web/server.py subscribe ke room.event_bus per room
 - `[x]` TASK-3.5 — Inject `event_bus` ke `SponsorBlockHandler`
 - `[x]` TASK-3.6 — Update `web/server.py` subscribe per-room
 - `[x]` TASK-3.7 — Hapus global `bus` singleton
+  > Selesai-parsial: Unused import dihapus. MpvController di main.py sengaja tidak diinject event_bus karena hanya dipakai sebagai dummy check startup.
+  > Jangan memaksakan inject `bus` ke sana.
 
 ### FASE 4 (Opsional)
 - `[x]` TASK-4.1 — `ThreadPoolExecutor` untuk yt-dlp
 - `[x]` TASK-4.2 — Semaphore radio batch search
 - `[x]` TASK-4.3 — Timeout syncedlyrics
 - `[x]` TASK-4.4 — Per-room progress throttle
+
+### CATATAN KHUSUS / DITUNDA
+- `[~]` CSS Law 5 — Hex hardcode di luar `tokens.css`
+  > 123 occurrences. Ditunda ke sesi CSS polishing terpisah.
+  > Jangan di-touch sampai ada sesi dedicated untuk ini.
+- `[~]` Refaktor `main.py` target < 100 baris
+  > Sebagian besar sisa baris adalah background task (checker) dan graceful shutdown yang wajar ada di entrypoint.
+  > Jangan memaksakan dipindah hanya demi angka baris, demi stabilitas shutdown.

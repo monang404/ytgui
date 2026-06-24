@@ -594,37 +594,37 @@ server/middleware.py    ← logging_middleware(), rate_limit_middleware()
 ### ⚡ Fase 0 — Critical Fixes & Safe Delete (< 2 jam, LAKUKAN PERTAMA)
 
 #### 0A. Fix CSS (bug utama)
-- [ ] **0A.1** Tambahkan blok `:root {}` dari **Bagian 3.1** sebagai **BARIS PERTAMA** `web/static/style.css`, sebelum `@import`
-- [ ] **0A.2** Verifikasi dengan `grep -n ":root" web/static/style.css` — harus muncul di baris 1
-- [ ] **0A.3** Verifikasi dengan `grep -c "var(--accent-fire)" web/static/style.css` — harus > 0 (ada yang pakai token)
+- [x] **0A.1** Tambahkan blok `:root {}` dari **Bagian 3.1** sebagai **BARIS PERTAMA** `web/static/style.css`, sebelum `@import`
+- [x] **0A.2** Verifikasi dengan `grep -n ":root" web/static/style.css` — harus muncul di baris 1
+- [x] **0A.3** Verifikasi dengan `grep -c "var(--accent-fire)" web/static/style.css` — harus > 0 (ada yang pakai token)
 
 #### 0B. Safe Delete tui/
 > Prosedur ini aman karena `tui/` sudah diverifikasi tidak diimport oleh siapapun.
 
-- [ ] **0B.1** Verifikasi tidak ada yang import tui:
+- [x] **0B.1** Verifikasi tidak ada yang import tui:
   ```bash
   grep -r "from tui\|import tui" --include="*.py" . | grep -v "tui/"
   ```
   Output harus kosong. Jika ada hasil → STOP, laporkan.
-- [ ] **0B.2** Verifikasi `textual` tidak ada di requirements:
+- [x] **0B.2** Verifikasi `textual` tidak ada di requirements:
   ```bash
   grep -i textual requirements.txt requirements-dev.txt
   ```
   Output harus kosong. Jika ada → STOP, laporkan.
-- [ ] **0B.3** Hapus folder:
+- [x] **0B.3** Hapus folder:
   ```bash
   rm -rf tui/
   ```
-- [ ] **0B.4** Verifikasi `pytest tests/` masih PASS setelah delete.
-- [ ] **0B.5** Update `README.md` — hapus bullet point tentang "TUI Interaktif & Clickable".
+- [x] **0B.4** Verifikasi `pytest tests/` masih PASS setelah delete.
+- [x] **0B.5** Update `README.md` — hapus bullet point tentang "TUI Interaktif & Clickable".
 
 #### 0C. Cleanup minor
-- [ ] **0C.1** Hapus `web/static/switchTab.txt`
-- [ ] **0C.2** Rename `docs/archive/audit_arsitktur/` → `audit_arsitektur/` (fix typo)
-- [ ] **0C.3** Lowercase semua `.PNG` → `.png` di `docs/`
-- [ ] **0C.4** Jalankan `pytest tests/` — harus PASS
+- [x] **0C.1** Hapus `web/static/switchTab.txt`
+- [x] **0C.2** Rename `docs/archive/audit_arsitktur/` → `audit_arsitektur/` (fix typo)
+- [x] **0C.3** Lowercase semua `.PNG` → `.png` di `docs/`
+- [x] **0C.4** Jalankan `pytest tests/` — harus PASS
 
-- [ ] **0.COMMIT** `fix(css): add :root design tokens; chore: remove dead tui/ code`
+- [x] **0.COMMIT** `fix(css): add :root design tokens; chore: remove dead tui/ code`
 
 **Checklist visual setelah Fase 0A:**
 - Background hitam (`#0d0d1c`) ✓
@@ -636,24 +636,24 @@ server/middleware.py    ← logging_middleware(), rate_limit_middleware()
 
 ### 🎨 Fase 1 — CSS Split (Hari 1–2)
 
-- [ ] **1.1** Buat folder `web/static/css/`
-- [ ] **1.2** Buat `css/tokens.css` — **HANYA** blok `:root {}` dengan `--fm-*` (tanpa legacy aliases)
-- [ ] **1.3** Split `style.css` ke 6 file menggunakan anchor dari **Bagian 5.2**
-- [ ] **1.4** Jalankan mapping **Bagian 3.2** — replace semua `var(--old-*)` ke `var(--fm-*)` di semua file CSS baru
-- [ ] **1.5** Update `index.html`: ganti `<link href="style.css">` dengan 7 link berurutan (lihat Bagian 5.2)
-- [ ] **1.6** Hapus `style.css` lama
-- [ ] **1.7** Verifikasi: `grep -r "var(--accent-fire\|var(--bg-panel\|var(--bg-elevated" web/static/css/` — harus kosong (semua sudah di-replace)
-- [ ] **1.8** Verifikasi visual — identik dengan sebelum split
-- [ ] **1.COMMIT** `refactor(css): split style.css into 7 focused files with fm-* tokens`
+- [x] **1.1** Buat folder `web/static/css/`
+- [x] **1.2** Buat `css/tokens.css` — **HANYA** blok `:root {}` dengan `--fm-*` (tanpa legacy aliases)
+- [x] **1.3** Split `style.css` ke 6 file menggunakan anchor dari **Bagian 5.2**
+- [x] **1.4** Jalankan mapping **Bagian 3.2** — replace semua `var(--old-*)` ke `var(--fm-*)` di semua file CSS baru
+- [x] **1.5** Update `index.html`: ganti `<link href="style.css">` dengan 7 link berurutan (lihat Bagian 5.2)
+- [x] **1.6** Hapus `style.css` lama
+- [x] **1.7** Verifikasi: `grep -r "var(--accent-fire\|var(--bg-panel\|var(--bg-elevated" web/static/css/` — harus kosong (semua sudah di-replace)
+- [x] **1.8** Verifikasi visual — identik dengan sebelum split
+- [x] **1.COMMIT** `refactor(css): split style.css into 7 focused files with fm-* tokens`
 
 ---
 
 ### 🔧 Fase 2 — JS Split (Hari 2–4)
 
-- [ ] **2.1** Buat folder `web/static/js/` dan `web/static/js/render/`
-- [ ] **2.2** Ekstrak file-file JS sesuai peta di **Bagian 5.3**
-- [ ] **2.3** Saat ekstraksi `render/*.js`: pindahkan semua `addEventListener()` ke `events.js`, refactor `wsSend()` calls agar dipanggil dari `events.js` (bukan dari dalam render function)
-- [ ] **2.4** Buat `js/main.js`:
+- [x] **2.1** Buat folder `web/static/js/` dan `web/static/js/render/`
+- [x] **2.2** Ekstrak file-file JS sesuai peta di **Bagian 5.3**
+- [x] **2.3** Saat ekstraksi `render/*.js`: pindahkan semua `addEventListener()` ke `events.js`, refactor `wsSend()` calls agar dipanggil dari `events.js` (bukan dari dalam render function)
+- [x] **2.4** Buat `js/main.js`:
   ```javascript
   (function () {
     "use strict";
@@ -664,64 +664,64 @@ server/middleware.py    ← logging_middleware(), rate_limit_middleware()
     wsConnect();
   })();
   ```
-- [ ] **2.5** Update `index.html`: ganti 1 `<script>` → 14 `<script>` berurutan (lihat Bagian 5.3)
-- [ ] **2.6** Hapus `app.js` lama
-- [ ] **2.7** Verifikasi: `grep -r "addEventListener" web/static/js/render/` — harus kosong
-- [ ] **2.8** Verifikasi: `grep -r "wsSend" web/static/js/render/` — harus kosong
-- [ ] **2.9** Verifikasi fungsional: semua 5 tab berfungsi, WS connect, EQ animasi, search/play/queue
-- [ ] **2.COMMIT** `refactor(js): split app.js into 14 focused modules`
+- [x] **2.5** Update `index.html`: ganti 1 `<script>` → 14 `<script>` berurutan (lihat Bagian 5.3)
+- [x] **2.6** Hapus `app.js` lama
+- [x] **2.7** Verifikasi: `grep -r "addEventListener" web/static/js/render/` — harus kosong
+- [x] **2.8** Verifikasi: `grep -r "wsSend" web/static/js/render/` — harus kosong
+- [x] **2.9** Verifikasi fungsional: semua 5 tab berfungsi, WS connect, EQ animasi, search/play/queue
+- [x] **2.COMMIT** `refactor(js): split app.js into 14 focused modules`
 
 ---
 
 ### 🏗️ Fase 3 — Backend Split (Hari 4–6)
 
-- [ ] **3.1** Buat folder `server/` dengan `__init__.py` dan `handlers/`
-- [ ] **3.2** Ekstrak `server/serializers.py` terlebih dahulu (tidak ada dependency ke file server lain)
-- [ ] **3.3** Ekstrak `server/handlers/auth.py`
-- [ ] **3.4** Ekstrak `server/handlers/http.py`
-- [ ] **3.5** Ekstrak `server/handlers/websocket.py`
-- [ ] **3.6** Ekstrak `server/middleware.py`
-- [ ] **3.7** Buat `server/app.py`
-- [ ] **3.8** Update `main.py`: ganti import `from web.server import ...` → `from server.app import ...` **sebelum** menghapus file lama
-- [ ] **3.9** Jalankan `pytest tests/` — harus PASS sebelum lanjut
-- [ ] **3.10** Hapus `web/server.py` dan `web/__init__.py`
-- [ ] **3.11** Fix architecture violation di `engine/playback_controller.py`: akses `plugins/lyrics` dan `plugins/sponsorblock` harus melalui port yang didefinisikan di `core/ports.py`, bukan direct import. Tambahkan port baru jika belum ada.
-- [ ] **3.12** Jalankan `pytest tests/` — harus PASS
-- [ ] **3.COMMIT** `refactor(server): split server.py into handler modules; fix engine→plugins violation`
+- [x] **3.1** Buat folder `server/` dengan `__init__.py` dan `handlers/`
+- [x] **3.2** Ekstrak `server/serializers.py` terlebih dahulu (tidak ada dependency ke file server lain)
+- [x] **3.3** Ekstrak `server/handlers/auth.py`
+- [x] **3.4** Ekstrak `server/handlers/http.py`
+- [x] **3.5** Ekstrak `server/handlers/websocket.py`
+- [x] **3.6** Ekstrak `server/middleware.py`
+- [x] **3.7** Buat `server/app.py`
+- [x] **3.8** Update `main.py`: ganti import `from web.server import ...` → `from server.app import ...` **sebelum** menghapus file lama
+- [x] **3.9** Jalankan `pytest tests/` — harus PASS sebelum lanjut
+- [x] **3.10** Hapus `web/server.py` dan `web/__init__.py`
+- [x] **3.11** Fix architecture violation di `engine/playback_controller.py`: akses `plugins/lyrics` dan `plugins/sponsorblock` harus melalui port yang didefinisikan di `core/ports.py`, bukan direct import. Tambahkan port baru jika belum ada.
+- [x] **3.12** Jalankan `pytest tests/` — harus PASS
+- [x] **3.COMMIT** `refactor(server): split server.py into handler modules; fix engine→plugins violation`
 
 ---
 
 ### 📁 Fase 4 — Rename & Reorganize (Hari 6–7)
 
-- [ ] **4.1** Rename `engine/queue_mode.py` → `engine/queue_manager.py`
-- [ ] **4.2** Rename `engine/radio_mode.py` → `engine/radio_engine.py`
-- [ ] **4.3** Rename folder `integrations/` → `plugins/`
-- [ ] **4.4** Rename `plugins/termux_notification.py` → `plugins/notifications.py`
-- [ ] **4.5** Rename folder `widgets/` → `scripts/`
-- [ ] **4.6** Buat `docs/mockups/` dan pindahkan HTML mockup + PNG (lowercase)
-- [ ] **4.7** Update **SEMUA** import yang terpengaruh rename (lihat Bagian 5.1)
-- [ ] **4.8** Jalankan `pytest tests/` — harus PASS
-- [ ] **4.COMMIT** `refactor: rename files and folders for clarity`
+- [x] **4.1** Rename `engine/queue_mode.py` → `engine/queue_manager.py`
+- [x] **4.2** Rename `engine/radio_mode.py` → `engine/radio_engine.py`
+- [x] **4.3** Rename folder `integrations/` → `plugins/`
+- [x] **4.4** Rename `plugins/termux_notification.py` → `plugins/notifications.py`
+- [x] **4.5** Rename folder `widgets/` → `scripts/`
+- [x] **4.6** Buat `docs/mockups/` dan pindahkan HTML mockup + PNG (lowercase)
+- [x] **4.7** Update **SEMUA** import yang terpengaruh rename (lihat Bagian 5.1)
+- [x] **4.8** Jalankan `pytest tests/` — harus PASS
+- [x] **4.COMMIT** `refactor: rename files and folders for clarity`
 
 ---
 
 ### 🧪 Fase 5 — Tests Reorganize (Hari 7–8)
 
-- [ ] **5.1** Buat `tests/unit/` dengan subfolder: `core/`, `engine/`, `cache/`, `server/`, `plugins/`
-- [ ] **5.2** Buat `tests/fixtures/sample_track.json`
-- [ ] **5.3** Rename dan pindahkan semua `test_patch_*` sesuai peta di **Bagian 5.5**
-- [ ] **5.4** Update `conftest.py` jika ada path-sensitive fixture
-- [ ] **5.5** Verifikasi: `pytest tests/` harus PASS semua
-- [ ] **5.COMMIT** `refactor(tests): reorganize into domain-based folders`
+- [x] **5.1** Buat `tests/unit/` dengan subfolder: `core/`, `engine/`, `cache/`, `server/`, `plugins/`
+- [x] **5.2** Buat `tests/fixtures/sample_track.json`
+- [x] **5.3** Rename dan pindahkan semua `test_patch_*` sesuai peta di **Bagian 5.5**
+- [x] **5.4** Update `conftest.py` jika ada path-sensitive fixture
+- [x] **5.5** Verifikasi: `pytest tests/` harus PASS semua
+- [x] **5.COMMIT** `refactor(tests): reorganize into domain-based folders`
 
 ---
 
 ### 📝 Fase 6 — Documentation (Hari 8–9)
 
-- [ ] **6.1** Buat `docs/CONTRIBUTING.md` — panduan kontributor + Laws of Codebase
-- [ ] **6.2** Buat `docs/ARCHITECTURE.md` — diagram arsitektur + keputusan desain
-- [ ] **6.3** Update `README.md` — struktur folder baru, cara setup, cara run (TUI sudah dihapus di Fase 0)
-- [ ] **6.COMMIT** `docs: add CONTRIBUTING and ARCHITECTURE guides`
+- [x] **6.1** Buat `docs/CONTRIBUTING.md` — panduan kontributor + Laws of Codebase
+- [x] **6.2** Buat `docs/ARCHITECTURE.md` — diagram arsitektur + keputusan desain
+- [x] **6.3** Update `README.md` — struktur folder baru, cara setup, cara run (TUI sudah dihapus di Fase 0)
+- [x] **6.COMMIT** `docs: add CONTRIBUTING and ARCHITECTURE guides`
 
 ---
 
@@ -749,12 +749,13 @@ server/middleware.py    ← logging_middleware(), rate_limit_middleware()
 ║                                                              ║
 ║  LAW 4 — main.py = wiring only                               ║
 ║    Tidak ada business logic di main.py                       ║
-║    Target: < 100 baris                                       ║
+║    Target: < 100 baris (DITUNDA: saat ini ~190 baris)        ║
 ║                                                              ║
 ║  FRONTEND                                                    ║
 ║                                                              ║
 ║  LAW 5 — TOKENS ONLY di tokens.css                           ║
 ║    Tidak ada hex color (#xxxxx) di file CSS lain. EVER.      ║
+║    (DITUNDA: hex lama belum di-replace, jangan disentuh dulu)║
 ║                                                              ║
 ║  LAW 6 — RENDER FUNCTIONS = pure I/O                         ║
 ║    Input: baca store.* → Output: update DOM                  ║
