@@ -147,8 +147,9 @@ html, body {
 .lyric-body::-webkit-scrollbar{width:2px}
 .lyric-body::-webkit-scrollbar-thumb{background:#2a2a3e}
 .lyric-line{font-size:13px;padding:3px 0;color:#5a5a7a;text-align:center;transition:color .2s}
-.lyric-line.cur{color:#f0f0ff;font-weight:500;font-size:14px}
-.lyric-line.near{color:#9a9abc}
+.lyric-line.active{color:var(--fm-accent, #e040fb);font-weight:600;font-size:15px;text-shadow:0 0 10px rgba(224,64,251,0.4);transform:scale(1.05);transition:all .3s}
+.lyric-line.past{color:#5a5a7a;opacity:0.6}
+.lyric-line.future{color:#9a9abc;opacity:0.8}
 .disc-row2{display:flex;gap:10px;padding:0 14px 12px;overflow-x:auto}
 .disc-row2::-webkit-scrollbar{display:none}
 .fav-card{background:#141426;border-radius:10px;min-width:130px;overflow:hidden;cursor:pointer;padding:10px;display:flex;align-items:center;gap:8px;flex-shrink:0}

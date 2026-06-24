@@ -113,7 +113,7 @@ function handleServerMessage(msg) {
                 if (typeof renderQueue === "function") renderQueue();
             }
             syncBrowserAudio();
-            renderLyrics();
+            if (typeof syncLocalLyrics === "function") syncLocalLyrics();
             break;
         case "lyrics":
             store.lyrics_lines = msg.data.lyrics_lines || [];

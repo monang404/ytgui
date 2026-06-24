@@ -235,30 +235,3 @@ function updateQueueItem(div, track, index, isCurrent, isRadio) {
         rmBtn.dataset.index = index;
     }
 }
-window.renderLyrics = function() {
-    if (!dom.lyricsCurrent || !dom.lyricsPrev || !dom.lyricsNext) return;
-
-    if (!store.lyrics_lines || store.lyrics_lines.length === 0) {
-        if (store.lyrics_loading) {
-            dom.lyricsPrev.textContent = "";
-            dom.lyricsCurrent.textContent = "Mencari lirik...";
-            dom.lyricsCurrent.className = "lyrics-line current lyrics-empty";
-            dom.lyricsNext.textContent = "";
-        } else {
-            dom.lyricsPrev.textContent = "";
-            dom.lyricsCurrent.textContent = "Lirik tidak tersedia";
-            dom.lyricsCurrent.className = "lyrics-line current lyrics-empty";
-            dom.lyricsNext.textContent = "";
-        }
-        return;
-    }
-
-    dom.lyricsCurrent.className = "lyrics-line current";
-
-    const idx = store.lyrics_index || 0;
-    const lines = store.lyrics_lines;
-
-    dom.lyricsPrev.textContent = idx > 0 ? lines[idx - 1] : "";
-    dom.lyricsCurrent.textContent = lines[idx] || "";
-    dom.lyricsNext.textContent = idx < lines.length - 1 ? lines[idx + 1] : "";
-};

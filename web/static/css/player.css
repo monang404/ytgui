@@ -135,11 +135,11 @@
 
 .lyrics-line.current {
     font-size: 15px;
-    color: var(--fm-text-1, #f0f0ff);
+    color: var(--fm-accent, #e040fb);
     font-weight: 600;
     opacity: 1;
     transform: scale(1.05);
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    text-shadow: 0 0 10px rgba(224, 64, 251, 0.4);
 }
 
 /* Fallback empty lyrics state */

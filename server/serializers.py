@@ -28,6 +28,7 @@ def state_to_dict(state: AppState) -> dict:
         "radio_queue": [track_to_dict(t) for t in state.radio_queue],
         "history_count": len(state.history),
         "lyrics_lines": list(state.lyrics_lines),
+        "lyrics_timestamps": list(state.lyrics_timestamps),
         "lyrics_index": state.lyrics_index,
         "lyrics_offset": state.lyrics_offset,
         "active_tab": state.active_tab,
