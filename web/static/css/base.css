@@ -43,8 +43,8 @@ body:not([data-active-tab="home"]) #player-bar #btn-settings { display: none !im
 .pb-badge{font-size:10px;background:#2a1540;color:#e040fb;padding:2px 7px;border-radius:4px;flex-shrink:0}
 .pb-badge.queue{background:#1a2240;color:#60a5fa}
 .pb-seek{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.pb-time{font-size:11px;color:#6a6a8c;min-width:32px;font-weight:500}
-.pb-track{flex:1;height:2px;background:#2a2a3e;border-radius:2px;cursor:pointer;position:relative;touch-action:none}
+.pb-time{font-size:11px;color:#b0b0c8;min-width:32px;font-weight:500}
+.pb-track{flex:1;height:2px;background:#4a4a5e;border-radius:2px;cursor:pointer;position:relative;touch-action:none}
 .pb-fill{height:100%;background:#e040fb;border-radius:2px}
 .pb-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:#e040fb;border-radius:50%;cursor:grab}
 .pb-ctrl {
@@ -255,10 +255,10 @@ body:not([data-active-tab="home"]) #player-bar #btn-settings { display: none !im
 .lyric-body{padding:0 14px 12px;max-height:120px;overflow-y:auto}
 .lyric-body::-webkit-scrollbar{width:2px}
 .lyric-body::-webkit-scrollbar-thumb{background:#2a2a3e}
-.lyric-line{font-size:13px;padding:3px 0;color:#5a5a7a;text-align:center;transition:color .2s}
+.lyric-line{font-size:13px;padding:3px 0;color:#8a8a9a;text-align:center;transition:color .2s}
 .lyric-line.active{color:var(--fm-accent, #e040fb);font-weight:600;font-size:15px;text-shadow:0 0 10px rgba(224,64,251,0.4);transform:scale(1.05);transition:all .3s}
-.lyric-line.past{color:#5a5a7a;opacity:0.6}
-.lyric-line.future{color:#9a9abc;opacity:0.8}
+.lyric-line.past{color:#8a8a9a;opacity:0.6}
+.lyric-line.future{color:#b0b0c8;opacity:0.8}
 .disc-row2{display:flex;gap:10px;padding:0 14px 12px;overflow-x:auto}
 .disc-row2::-webkit-scrollbar{display:none}
 .fav-card{background:#141426;border-radius:10px;min-width:130px;overflow:hidden;cursor:pointer;padding:10px;display:flex;align-items:center;gap:8px;flex-shrink:0}

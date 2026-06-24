@@ -121,7 +121,7 @@
             </div>
 
             <div class="main-track-info">
-                <div class="mti-title" id="np-title">Belum ada lagu yang diputar</div>
+                <div class="mti-title" id="np-title" style="text-transform: capitalize;">Belum ada lagu yang diputar</div>
                 <div class="mti-artist" id="np-artist">Cari lagu untuk memulai</div>
             </div>
 
@@ -195,13 +195,12 @@
 
     <!-- ═══ Player Bar ═══ -->
     <div class="pbar" id="player-bar">
-        <div class="pb-row1" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="pb-row1">
             <div class="pb-title" id="pb-track-info" style="flex:1;"></div>
             <div style="display:flex; align-items:center; gap:8px;">
                 <span class="pb-badge queue" id="pb-mode-badge" style="margin:0;">≡ queue</span>
             </div>
         </div>
-        
         <div class="pb-seek">
             <span class="pb-time" id="pb-time-pos">0:00</span>
             <div class="pb-track" id="pb-progress-track">
@@ -212,12 +211,19 @@
             <button id="btn-settings" title="Pengaturan" aria-label="Pengaturan" style="background:none; border:none; color:#b0b0c8; font-size:22px; cursor:pointer;"><i class="ti ti-dots-vertical" aria-hidden="true"></i></button>
         </div>
 
-        <div class="pb-ctrl">
+        <div class="pb-ctrl" style="position:relative;">
             <div class="vol-grp">
                 <i class="ti ti-volume" aria-hidden="true"></i>
                 <input type="range" min="0" max="100" value="80" class="vol-slider" id="vol-slider">
                 <span class="vol-label" id="pb-vol-label">80%</span>
             </div>
+            
+            <div class="pb-badges" style="position:absolute; left:0; bottom:12px; display:flex; gap:4px; align-items:center;">
+                <span class="pb-badge-sm cached" id="pb-cache-badge" style="display:none">✓ tersimpan</span>
+                <span class="pb-badge-sm sb" id="pb-sb-badge" style="display:none">SB aktif</span>
+                <span class="pb-badge-sm dl" id="pb-dl-badge" style="display:none"></span>
+            </div>
+
             <div class="main-ctrl">
                 <button class="btn-shuffle" aria-label="Shuffle" id="btn-shuffle"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i></button>
                 <button class="btn-prev" aria-label="Previous" id="btn-prev"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>
@@ -225,11 +231,6 @@
                 <button class="btn-next" aria-label="Next" id="btn-next"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
                 <button class="btn-repeat" aria-label="Repeat" id="btn-repeat"><i class="ti ti-repeat" aria-hidden="true"></i></button>
             </div>
-        </div>
-        <div class="pb-badges">
-            <span class="pb-badge-sm cached" id="pb-cache-badge" style="display:none">✓ tersimpan</span>
-            <span class="pb-badge-sm sb" id="pb-sb-badge" style="display:none">SB aktif</span>
-            <span class="pb-badge-sm dl" id="pb-dl-badge" style="display:none"></span>
         </div>
     </div>
 

@@ -33,8 +33,8 @@
 }
 
 .vinyl-record {
-    width: 240px; /* Increased from 180px */
-    height: 240px;
+    width: 160px; /* Reduced from 240px */
+    height: 160px;
     background: radial-gradient(circle, #000 30%, #111 40%, #000 50%, #111 60%, #000 70%, #111 80%, #050505 100%);
     border-radius: 50%;
     border: 4px solid var(--fm-border, #1e1e32);
@@ -114,6 +114,7 @@
     /* Limit to 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
