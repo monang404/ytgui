@@ -43,7 +43,11 @@ function initEvents() {
     dom.btnPlay.addEventListener("click", () => {
         if (store.userRole === "admin") {
             store.status = store.status === "PLAYING" ? "PAUSED" : "PLAYING";
+            window.lastToggleTime = Date.now();
             renderPlayBtn();
+            if (store.audio_output === "browser" && typeof syncBrowserAudio === "function") {
+                syncBrowserAudio();
+            }
             wsSend("toggle_pause");
         }
     });

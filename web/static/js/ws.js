@@ -85,7 +85,9 @@ function handleServerMessage(msg) {
             break;
         case "progress":
             store.position = msg.data.position;
-            store.status = msg.data.status;
+            if (!window.lastToggleTime || Date.now() - window.lastToggleTime > 1000) {
+                store.status = msg.data.status;
+            }
             if (msg.data.server_ts) {
                 store.server_ts = msg.data.server_ts;
             }
