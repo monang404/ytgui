@@ -82,6 +82,10 @@ function initEvents() {
             window.isDraggingVol = true;
             store.volume = parseInt(dom.volSlider.value);
             if (dom.pbVolLabel) dom.pbVolLabel.textContent = store.volume + "%";
+            if (store.audio_output === "browser" && typeof getOrInitAudio === "function") {
+                const audio = getOrInitAudio();
+                if (audio) audio.volume = Math.max(0, Math.min(1, store.volume / 100));
+            }
         });
         dom.volSlider.addEventListener("change", () => {
             if (store.userRole === "admin") {
