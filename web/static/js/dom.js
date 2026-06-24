@@ -24,7 +24,6 @@ function initDOM() {
         npArtist: $("np-artist"),
         npThumbnail: $("np-thumbnail"),
         npDurMeta: $("np-dur-meta"),
-        recentRow: $("recent-row"),
         eqCanvas: $("eq-canvas"),
         searchInput: $("search-input"),
         searchMsg: $("search-msg"),

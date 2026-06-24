@@ -25,35 +25,8 @@ function renderNowPlaying() {
     } else if (dom.npDurMeta) {
         dom.npDurMeta.textContent = '';
     }
-
-    renderRecentRow();
 }
 
-function renderRecentRow() {
-    if (!dom.recentRow) return;
-    const items = (store.discover_recent && store.discover_recent.length > 0)
-        ? store.discover_recent.slice(0, 5)
-        : (store.queue || []).slice(0, 5);
-
-    if (items.length === 0) {
-        dom.recentRow.innerHTML = '<div class="discover-empty">Belum ada riwayat</div>';
-        return;
-    }
-    dom.recentRow.innerHTML = items.map(track => `
-        <div class="disc-card" data-vid="${escapeHtml(track.video_id || '')}">
-            <div class="disc-thumb">
-                ${track.thumbnail
-                    ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
-                    : '<i class="ti ti-music"></i>'}
-                ${track.local_path ? '<span class="disc-tag">cache</span>' : ''}
-            </div>
-            <div class="disc-info">
-                <div class="disc-title">${escapeHtml(track.title)}</div>
-                <div class="disc-artist">${escapeHtml(track.artist || '')}</div>
-            </div>
-        </div>
-    `).join('');
-}
 
 function renderDiscoverTab() {
     if (dom.discFavorites && store.discover_favorites) {
