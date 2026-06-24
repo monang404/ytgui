@@ -1047,3 +1047,31 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
 }
+
+/* ══════════════════════════════════════
+   EMPTY STATES — Phase 4
+   ══════════════════════════════════════ */
+.queue-empty,
+.discover-empty {
+  text-align: center;
+  padding: 32px 20px;
+  color: var(--fm-text-5);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.queue-empty::before {
+  content: '♪';
+  display: block;
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.discover-empty::before {
+  content: '○';
+  display: block;
+  font-size: 24px;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}

@@ -55,7 +55,18 @@ function renderPlayBtn() {
     }
 }
 
+let _rafProgressPending = false;
+
 function renderProgress() {
+    if (_rafProgressPending) return;
+    _rafProgressPending = true;
+    requestAnimationFrame(() => {
+        _rafProgressPending = false;
+        _renderProgressCore();
+    });
+}
+
+function _renderProgressCore() {
     if (window.isDraggingPb) return;
     const dur = store.current_track ? store.current_track.duration : 0;
     const pos = store.position || 0;

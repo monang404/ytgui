@@ -1,6 +1,20 @@
 let ws = null;
 let wsReconnectTimer = null;
 
+// ── Dirty Flag Rendering — Phase 4 ──
+// Mencegah renderQueue dan renderRadio dipanggil setiap progress tick
+let _lastQueueSnapshot = null;
+let _lastRadioSnapshot = null;
+
+function _queueChanged(newState) {
+    const snap = JSON.stringify(newState.queue || []);
+    if (snap !== _lastQueueSnapshot) {
+        _lastQueueSnapshot = snap;
+        return true;
+    }
+    return false;
+}
+
 function wsConnect() {
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const url = `${protocol}//${location.host}/ws`;
@@ -88,7 +102,10 @@ function handleServerMessage(msg) {
         case "state":
             Object.assign(store, msg.data);
             renderFullState();
-            syncBrowserAudio();
+            // BUG-007: jangan sync audio saat user masih di portal screen
+            if (store.userRole !== 'portal') {
+                syncBrowserAudio();
+            }
             break;
         case "progress":
             store.position = msg.data.position;
