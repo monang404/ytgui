@@ -347,6 +347,18 @@ function initEvents() {
         }
     });
 
+    dom.searchResults.addEventListener("click", (e) => {
+        const item = e.target.closest(".sr-item");
+        if (item && item.dataset.searchTrackStr) {
+            try {
+                const track = JSON.parse(item.dataset.searchTrackStr);
+                if (typeof showActionModal === "function") showActionModal(track);
+            } catch (err) {
+                console.error("Invalid track data", err);
+            }
+        }
+    });
+
     dom.actionPlayNow.addEventListener("click", () => {
         if (window.pendingTrack) wsSend("play_track", window.pendingTrack);
         hideActionModal();
