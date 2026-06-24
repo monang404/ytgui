@@ -166,6 +166,7 @@ function initEvents() {
             if (store.userRole !== "admin") return;
             store.lyrics_offset = (store.lyrics_offset || 0) - 0.5;
             updateOffsetDisplay();
+            if (typeof syncLocalLyrics === "function") syncLocalLyrics();
             wsSend("lyrics_offset", { offset: store.lyrics_offset });
         });
     }
@@ -175,6 +176,7 @@ function initEvents() {
             if (store.userRole !== "admin") return;
             store.lyrics_offset = (store.lyrics_offset || 0) + 0.5;
             updateOffsetDisplay();
+            if (typeof syncLocalLyrics === "function") syncLocalLyrics();
             wsSend("lyrics_offset", { offset: store.lyrics_offset });
         });
     }

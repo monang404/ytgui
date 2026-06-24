@@ -21,6 +21,18 @@ function getOrInitAudio() {
             // Hanya tampilkan toast jika bukan dummy
             showLogToast("⚠️ Audio stream info: " + errMsg);
         };
+        localAudio.addEventListener("timeupdate", () => {
+            if (store.userRole === "client" || store.audio_output === "browser") {
+                if (!window.isDraggingPb) {
+                    store.position = localAudio.currentTime;
+                    renderProgress();
+                    renderPlayerBar();
+                }
+                if (typeof syncLocalLyrics === "function") {
+                    syncLocalLyrics();
+                }
+            }
+        });
     }
     return localAudio;
 }

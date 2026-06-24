@@ -106,6 +106,7 @@ function handleServerMessage(msg) {
             break;
         case "lyrics":
             store.lyrics_lines = msg.data.lyrics_lines || [];
+            store.lyrics_timestamps = msg.data.lyrics_timestamps || [];
             store.lyrics_index = msg.data.lyrics_index || 0;
             store.lyrics_offset = msg.data.lyrics_offset || 0;
             renderLyrics();
@@ -126,6 +127,25 @@ function handleServerMessage(msg) {
         case "error":
             showLogToast("Error: " + msg.data);
             break;
+    }
+}
+
+function syncLocalLyrics() {
+    if (store.lyrics_timestamps && store.lyrics_timestamps.length > 0) {
+        const pos = store.position + (store.lyrics_offset || 0);
+        let newIdx = -1;
+        for (let i = 0; i < store.lyrics_timestamps.length; i++) {
+            if (pos >= store.lyrics_timestamps[i]) {
+                newIdx = i;
+            } else {
+                break;
+            }
+        }
+        newIdx = Math.max(0, newIdx);
+        if (store.lyrics_index !== newIdx) {
+            store.lyrics_index = newIdx;
+            renderLyrics();
+        }
     }
 }
 

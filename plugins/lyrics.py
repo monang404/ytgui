@@ -111,6 +111,7 @@ class LyricsFetcher:
                     self.lyrics_data = self._parse_lrc(lrc)
                     # LOW-07 fix: Store CLEAN lines (no timestamps) for display
                     self.state.lyrics_lines = [text for _, text in self.lyrics_data]
+                    self.state.lyrics_timestamps = [t for t, _ in self.lyrics_data]
                     await self._bus.publish(LyricsUpdatedEvent())
                     logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
                 else:

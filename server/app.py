@@ -92,6 +92,7 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
             "type": "lyrics",
             "data": {
                 "lyrics_lines": list(room.state.lyrics_lines),
+                "lyrics_timestamps": list(room.state.lyrics_timestamps),
                 "lyrics_index": room.state.lyrics_index,
                 "lyrics_offset": room.state.lyrics_offset,
                 "lyrics_loading": getattr(room.state, "lyrics_loading", False),
