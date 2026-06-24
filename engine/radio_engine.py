@@ -227,9 +227,9 @@ class RadioMode:
                 self.state.radio_queue.extend(new_tracks)
                 while len(self.state.radio_queue) > 30:
                     self.state.radio_queue.pop()
-                await bus.publish(QueueUpdatedEvent())
+                await controller.bus.publish(QueueUpdatedEvent())
         except Exception as e:
-            await bus.publish(LogMessageEvent(message=f"Prefetch Error: {str(e)}"))
+            await controller.bus.publish(LogMessageEvent(message=f"Prefetch Error: {str(e)}"))
         finally:
             self._is_fetching = False
 
@@ -248,7 +248,7 @@ class RadioMode:
             try:
                 tracks = await asyncio.wait_for(self._gather_batch(prioritized_artist=seed_artist), timeout=30.0)
             except asyncio.TimeoutError:
-                await bus.publish(LogMessageEvent(message="Pencarian radio timeout (30s), mencoba artis lain..."))
+                await controller.bus.publish(LogMessageEvent(message="Pencarian radio timeout (30s), mencoba artis lain..."))
                 tracks = []
 
             if not tracks:
@@ -256,18 +256,18 @@ class RadioMode:
                 try:
                     tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
                 except asyncio.TimeoutError:
-                    await bus.publish(LogMessageEvent(message="Pencarian radio kembali timeout, coba lagi nanti."))
+                    await controller.bus.publish(LogMessageEvent(message="Pencarian radio kembali timeout, coba lagi nanti."))
                     tracks = []
 
             if tracks:
                 self.state.radio_queue.clear()
                 self.state.radio_queue.extend(tracks[1:])
-                await bus.publish(QueueUpdatedEvent())
+                await controller.bus.publish(QueueUpdatedEvent())
                 await controller.play_track(tracks[0])
             else:
-                await bus.publish(LogMessageEvent(message="Radio: Tidak ada hasil lagu ditemukan."))
+                await controller.bus.publish(LogMessageEvent(message="Radio: Tidak ada hasil lagu ditemukan."))
         except Exception as e:
-            await bus.publish(LogMessageEvent(message=f"Radio Error: {str(e)}"))
+            await controller.bus.publish(LogMessageEvent(message=f"Radio Error: {str(e)}"))
 
     async def _gather_batch(self, prioritized_artist: Optional[str] = None) -> list:
         """Ambil track dari beberapa artis berbeda (ARTISTS_PER_BATCH) sekaligus,

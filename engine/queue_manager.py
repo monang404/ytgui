@@ -23,7 +23,7 @@ class QueueMode:
         if not controller.state.queue:
             controller.state.status = PlayerStatus.IDLE
             controller.state.current_track = None
-            await bus.publish(QueueUpdatedEvent())
+            await controller.bus.publish(QueueUpdatedEvent())
             return
 
         track = controller.state.queue.popleft()
