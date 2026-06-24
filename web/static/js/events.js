@@ -123,7 +123,18 @@ function initEvents() {
         dom.pbProgressTrack.releasePointerCapture(e.pointerId);
         const pct = updatePb(e);
         const dur = store.current_track ? store.current_track.duration : 0;
-        if (dur > 0) wsSend("seek", { position: pct * dur });
+        if (dur > 0) {
+            const targetPos = pct * dur;
+            if (store.audio_output === "browser" && typeof getOrInitAudio === "function") {
+                const audio = getOrInitAudio();
+                if (audio && audio.src) {
+                    audio.currentTime = targetPos;
+                    store.position = targetPos;
+                    renderProgress();
+                }
+            }
+            wsSend("seek", { position: targetPos });
+        }
     });
 
     dom.radioToggleBtn.addEventListener("click", () => {
