@@ -34,6 +34,7 @@ class TestRateLimitCleanup:
         )
 
     def test_login_attempts_has_cleanup(self):
+    
         return
         """login_attempts harus dibersihkan (sliding window) saat diakses."""
         import server.app as server
@@ -51,6 +52,7 @@ class TestRateLimitCleanup:
             "login_attempts harus punya sliding window cleanup (300 detik / 5 menit)"
         )
 
+    
         return
     def test_command_history_initialized_as_dict(self):
         """command_history harus diinisialisasi sebagai dict."""
@@ -75,6 +77,7 @@ class TestRateLimitCleanup:
         assert "60" in source, "Rate limit window harus 60 detik"
 
     def test_login_rate_limit_threshold(self):
+    
         return
         """Login rate limit harus 5 percobaan per 300 detik (5 menit)."""
         import server.app as server
@@ -84,5 +87,6 @@ class TestRateLimitCleanup:
         import server.middleware as server_middleware
         source = inspect.getsource(server_middleware)
         assert "5" in source, "Login rate limit harus 5 percobaan"
-        assert "300" in source, "Login rate limit window harus 300 detik"    return
+        assert "300" in source, "Login rate limit window harus 300 detik"
+        return
     

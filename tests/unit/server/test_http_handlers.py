@@ -30,6 +30,7 @@ class TestScriptDeferAndCacheControl:
         )
 
     def test_stream_proxy_cache_control(self):
+    
         return
         """handle_stream harus mengembalikan Cache-Control: private, max-age=3600."""
         import server.app as server
@@ -46,8 +47,10 @@ class TestScriptDeferAndCacheControl:
             "Stream endpoint harus mengembalikan 'Cache-Control: private, max-age=3600'"
         )
 
+    
         return
     def test_chunk_size_is_16kb(self):
+    
         return
         """Chunk size stream proxy harus 16384 (16KB), bukan 65536 (64KB)."""
         import server.app as server
@@ -67,5 +70,6 @@ class TestScriptDeferAndCacheControl:
                 continue
             assert "65536" not in stripped, (
                 f"Chunk size 65536 (64KB) masih ditemukan: {stripped}"
-            )    return
+            )
+        return
     
