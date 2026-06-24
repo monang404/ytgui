@@ -85,8 +85,12 @@ function handleServerMessage(msg) {
             break;
         case "progress":
             store.position = msg.data.position;
+            let statusChanged = false;
             if (!window.lastToggleTime || Date.now() - window.lastToggleTime > 1000) {
-                store.status = msg.data.status;
+                if (store.status !== msg.data.status) {
+                    store.status = msg.data.status;
+                    statusChanged = true;
+                }
             }
             if (msg.data.server_ts) {
                 store.server_ts = msg.data.server_ts;
@@ -104,7 +108,10 @@ function handleServerMessage(msg) {
 
             renderProgress();
             renderPlayBtn();
-            if (typeof renderNowPlaying === "function") renderNowPlaying();
+            if (statusChanged) {
+                if (typeof renderNowPlaying === "function") renderNowPlaying();
+                if (typeof renderQueue === "function") renderQueue();
+            }
             syncBrowserAudio();
             renderLyrics();
             break;

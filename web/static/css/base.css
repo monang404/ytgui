@@ -131,7 +131,7 @@ html, body {
 .queue-item.dragging{opacity:0.5;background:var(--fm-bg-elevated)}
 .queue-item.drag-over{border-top:2px solid var(--fm-primary)}
 .qi-drag{color:var(--fm-text-5);font-size:16px;cursor:grab;flex-shrink:0;padding:4px}
-.qi-index{font-size:13px;color:var(--fm-text-5);min-width:18px;text-align:center;flex-shrink:0}
+.qi-index{font-size:13px;color:var(--fm-text-5);width:24px;text-align:center;flex-shrink:0;display:flex;justify-content:center;align-items:center}
 .queue-item.current .qi-index{color:var(--fm-primary)}
 .qi-info{flex:1;min-width:0}
 .qi-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fm-text-1)}

@@ -46,6 +46,7 @@ function initEvents() {
             window.lastToggleTime = Date.now();
             renderPlayBtn();
             if (typeof renderNowPlaying === "function") renderNowPlaying();
+            if (typeof renderQueue === "function") renderQueue();
             if (store.audio_output === "browser" && typeof syncBrowserAudio === "function") {
                 syncBrowserAudio();
             }

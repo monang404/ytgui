@@ -231,7 +231,15 @@ function updateQueueItem(div, track, index, isCurrent, isRadio) {
         div.removeAttribute('draggable');
     }
     
-    div.querySelector(".qi-index").textContent = isCurrent ? "▶" : index + 1;
+    if (isCurrent) {
+        if (store.status === "PLAYING") {
+            div.querySelector(".qi-index").innerHTML = `<div class="eq-anim-icon" style="height:12px; width:14px; gap:2px;"><span style="width:3px; background: currentColor;"></span><span style="width:3px; background: currentColor;"></span><span style="width:3px; background: currentColor;"></span></div>`;
+        } else {
+            div.querySelector(".qi-index").textContent = "▶";
+        }
+    } else {
+        div.querySelector(".qi-index").textContent = index + 1;
+    }
     div.querySelector(".qi-title").textContent = track.title;
     div.querySelector(".qi-dur").textContent = track.artist + " · " + formatTime(track.duration);
     
