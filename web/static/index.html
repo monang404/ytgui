@@ -80,7 +80,10 @@
         <section id="tab-home" class="tab-panel active">
             <div class="card" style="display:flex;gap:12px;align-items:center">
                 <div class="np-art" id="np-thumbnail">
-                    <i class="ti ti-music" style="font-size:28px;color:#e040fb" aria-hidden="true"></i>
+                    <i class="ti ti-music" id="np-thumb-icon" style="font-size:28px;color:#e040fb" aria-hidden="true"></i>
+                    <div class="eq-anim-icon" id="np-eq-anim" style="display:none;">
+                        <span></span><span></span><span></span>
+                    </div>
                 </div>
                 <div class="np-meta">
                     <div class="np-track" id="np-title">Belum ada lagu yang diputar</div>
@@ -89,8 +92,19 @@
                 </div>
             </div>
 
-            <div class="eq-wrap" id="eq-wrap">
-                <canvas id="eq-canvas" width="280" height="52" style="width:100%;height:100%"></canvas>
+            <div class="vinyl-wrap" id="vinyl-wrap">
+                <div class="vinyl-record" id="vinyl-record">
+                    <div class="vinyl-center">
+                        <img id="vinyl-cover" src="" alt="" style="display:none;">
+                        <i id="vinyl-icon" class="ti ti-music"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lyrics-wrap" id="lyrics-wrap">
+                <div class="lyrics-line prev" id="lyrics-prev"></div>
+                <div class="lyrics-line current" id="lyrics-current"></div>
+                <div class="lyrics-line next" id="lyrics-next"></div>
             </div>
 
         </section>
@@ -350,7 +364,6 @@
 <script src="/static/js/render/tabs.js" defer></script>
 <script src="/static/js/render/lyrics.js" defer></script>
 <script src="/static/js/render/search.js" defer></script>
-<script src="/static/js/eq.js" defer></script>
 <script src="/static/js/audio.js" defer></script>
 <script src="/static/js/portal.js" defer></script>
 <script src="/static/js/ws.js" defer></script>

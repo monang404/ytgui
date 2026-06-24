@@ -105,13 +105,15 @@ function handleServerMessage(msg) {
             renderProgress();
             renderPlayBtn();
             syncBrowserAudio();
+            renderLyrics();
             break;
         case "lyrics":
             store.lyrics_lines = msg.data.lyrics_lines || [];
             store.lyrics_timestamps = msg.data.lyrics_timestamps || [];
             store.lyrics_index = msg.data.lyrics_index || 0;
             store.lyrics_offset = msg.data.lyrics_offset || 0;
-            renderLyrics();
+            store.lyrics_loading = msg.data.lyrics_loading || false;
+            if (typeof renderLyrics === "function") renderLyrics();
             break;
         case "search_results":
             renderSearchResults(msg.data);
@@ -146,7 +148,7 @@ function syncLocalLyrics() {
         newIdx = Math.max(0, newIdx);
         if (store.lyrics_index !== newIdx) {
             store.lyrics_index = newIdx;
-            renderLyrics();
+            if (typeof renderLyrics === "function") renderLyrics();
         }
     }
 }

@@ -5,7 +5,6 @@
         initDOM();
         initPortal();
         initAudio();
-        initEQ();
         initEvents();
         wsConnect();
     }

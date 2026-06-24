@@ -1,11 +1,33 @@
 function renderNowPlaying() {
     const t = store.current_track;
 
-    if (dom.npThumbnail) {
+    if (dom.vinylCover) {
         if (t && t.thumbnail) {
-            dom.npThumbnail.innerHTML = `<img src="${escapeHtml(t.thumbnail)}" alt="" loading="lazy">`;
+            dom.vinylCover.src = t.thumbnail;
+            dom.vinylCover.style.display = "block";
+            if (dom.vinylIcon) dom.vinylIcon.style.display = "none";
         } else {
-            dom.npThumbnail.innerHTML = '<i class="ti ti-music" style="font-size:28px;color:#e040fb" aria-hidden="true"></i>';
+            dom.vinylCover.src = "";
+            dom.vinylCover.style.display = "none";
+            if (dom.vinylIcon) dom.vinylIcon.style.display = "block";
+        }
+    }
+
+    if (dom.npThumbIcon && dom.npEqAnim) {
+        if (store.status === "PLAYING") {
+            dom.npThumbIcon.style.display = "none";
+            dom.npEqAnim.style.display = "flex";
+        } else {
+            dom.npThumbIcon.style.display = "block";
+            dom.npEqAnim.style.display = "none";
+        }
+    }
+
+    if (dom.vinylRecord) {
+        if (store.status === "PLAYING") {
+            dom.vinylRecord.classList.add("playing");
+        } else {
+            dom.vinylRecord.classList.remove("playing");
         }
     }
 
@@ -217,3 +239,30 @@ function updateQueueItem(div, track, index, isCurrent, isRadio) {
         rmBtn.dataset.index = index;
     }
 }
+window.renderLyrics = function() {
+    if (!dom.lyricsCurrent || !dom.lyricsPrev || !dom.lyricsNext) return;
+
+    if (!store.lyrics_lines || store.lyrics_lines.length === 0) {
+        if (store.lyrics_loading) {
+            dom.lyricsPrev.textContent = "";
+            dom.lyricsCurrent.textContent = "Mencari lirik...";
+            dom.lyricsCurrent.className = "lyrics-line current lyrics-empty";
+            dom.lyricsNext.textContent = "";
+        } else {
+            dom.lyricsPrev.textContent = "";
+            dom.lyricsCurrent.textContent = "Lirik tidak tersedia";
+            dom.lyricsCurrent.className = "lyrics-line current lyrics-empty";
+            dom.lyricsNext.textContent = "";
+        }
+        return;
+    }
+
+    dom.lyricsCurrent.className = "lyrics-line current";
+
+    const idx = store.lyrics_index || 0;
+    const lines = store.lyrics_lines;
+
+    dom.lyricsPrev.textContent = idx > 0 ? lines[idx - 1] : "";
+    dom.lyricsCurrent.textContent = lines[idx] || "";
+    dom.lyricsNext.textContent = idx < lines.length - 1 ? lines[idx + 1] : "";
+};
