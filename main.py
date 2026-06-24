@@ -13,7 +13,7 @@ from engine.mpv_controller import MpvController
 from cache.db import Database
 from engine.download_manager import DownloadManager
 from engine.command_router import CommandRouter
-from plugins.termux_notification import TermuxNowPlaying
+from plugins.notifications import TermuxNowPlaying
 from core.task_utils import safe_create_task
 from core.room_manager import RoomManager
 from config import BASE_DIR, WEB_HOST, WEB_PORT
