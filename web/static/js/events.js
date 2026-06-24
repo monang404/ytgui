@@ -102,6 +102,7 @@ function initEvents() {
     }
 
     dom.btnDownload.addEventListener("click", () => {
+        if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
         if (store.userRole === "admin") wsSend("download");
     });
 
@@ -248,6 +249,7 @@ function initEvents() {
     }
 
     dom.btnHelp.addEventListener("click", () => {
+        if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
         dom.helpSheet.classList.add("open");
         dom.mainOverlay.classList.add("open");
     });

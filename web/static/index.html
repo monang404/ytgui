@@ -195,9 +195,11 @@
 
     <!-- ═══ Player Bar ═══ -->
     <div class="pbar" id="player-bar">
-        <div class="pb-row1">
-            <div class="pb-title" id="pb-track-info"></div>
-            <span class="pb-badge queue" id="pb-mode-badge">≡ queue</span>
+        <div class="pb-row1" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="pb-title" id="pb-track-info" style="flex:1;"></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="pb-badge queue" id="pb-mode-badge" style="margin:0;">≡ queue</span>
+            </div>
         </div>
         
         <div class="pb-seek">
@@ -207,6 +209,7 @@
                 <div class="pb-thumb" id="seek-thumb" style="left: 0%"></div>
             </div>
             <span class="pb-time" style="text-align:right" id="pb-time-dur">0:00</span>
+            <button id="btn-settings" title="Pengaturan" aria-label="Pengaturan" style="background:none; border:none; color:#b0b0c8; font-size:22px; cursor:pointer;"><i class="ti ti-dots-vertical" aria-hidden="true"></i></button>
         </div>
 
         <div class="pb-ctrl">
@@ -221,13 +224,6 @@
                 <button class="btn-play" aria-label="Play/Pause" id="btn-play"><i class="ti ti-player-play" style="font-size:15px;color:#fff" aria-hidden="true"></i></button>
                 <button class="btn-next" aria-label="Next" id="btn-next"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
                 <button class="btn-repeat" aria-label="Repeat" id="btn-repeat"><i class="ti ti-repeat" aria-hidden="true"></i></button>
-            </div>
-            <div class="pb-sec">
-                <button id="btn-lyrics" title="Lirik" aria-label="Lirik Lagu"><i class="ti ti-microphone-2" aria-hidden="true"></i></button>
-                <button id="btn-settings" title="Pengaturan" aria-label="Pengaturan"><i class="ti ti-settings" aria-hidden="true"></i></button>
-                <button id="btn-download" title="Unduh" aria-label="Unduh lagu ini"><i class="ti ti-download" aria-hidden="true"></i></button>
-                <button id="btn-help" title="Help" aria-label="Bantuan"><i class="ti ti-help" aria-hidden="true"></i></button>
-            </div>
         </div>
         <div class="pb-badges">
             <span class="pb-badge-sm cached" id="pb-cache-badge" style="display:none">✓ tersimpan</span>
@@ -258,8 +254,32 @@
     <!-- ═══ Settings Sheet ═══ -->
     <div class="settings-sheet" id="settings-sheet">
         <div class="ss-handle"></div>
-        <div class="ss-title">Pengaturan Pemutaran</div>
+        <div class="ss-title">Pengaturan & Menu</div>
         
+        <div class="ss-row" id="btn-lyrics" style="cursor:pointer">
+            <div class="ss-label">
+                <i class="ti ti-microphone-2" aria-hidden="true"></i>
+                <div><div class="ss-label-text">Lirik Lagu</div><div class="ss-label-sub">Tampilkan lirik tersinkronisasi</div></div>
+            </div>
+            <i class="ti ti-chevron-right" style="color:#6a6a8c"></i>
+        </div>
+
+        <div class="ss-row" id="btn-download" style="cursor:pointer">
+            <div class="ss-label">
+                <i class="ti ti-download" aria-hidden="true"></i>
+                <div><div class="ss-label-text">Unduh Lagu</div><div class="ss-label-sub">Simpan ke penyimpanan lokal</div></div>
+            </div>
+            <i class="ti ti-chevron-right" style="color:#6a6a8c"></i>
+        </div>
+
+        <div class="ss-row" id="btn-help" style="cursor:pointer">
+            <div class="ss-label">
+                <i class="ti ti-help" aria-hidden="true"></i>
+                <div><div class="ss-label-text">Bantuan & Panduan</div><div class="ss-label-sub">Panduan penggunaan aplikasi</div></div>
+            </div>
+            <i class="ti ti-chevron-right" style="color:#6a6a8c"></i>
+        </div>
+
         <div class="ss-row">
             <div class="ss-label">
                 <i class="ti ti-shield-check" aria-hidden="true"></i>

@@ -36,7 +36,8 @@ html, body {
 #content-area{flex:1;overflow-y:scroll;overflow-x:hidden}
 .content::-webkit-scrollbar{width:3px}
 .content::-webkit-scrollbar-thumb{background:#2a2a3e;border-radius:2px}
-#player-bar{background:#141426;border-top:none;padding:10px 16px 20px;flex-shrink:0}
+#player-bar{background:#141426;border-top:none;padding:10px 16px 12px;flex-shrink:0}
+body:not([data-active-tab="home"]) #player-bar #btn-settings { display: none !important; }
 .pb-row1{display:none; /* Hidden on mobile */ justify-content:space-between;align-items:center;margin-bottom:6px}
 .pb-title{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;color:#e8e8f5}
 .pb-badge{font-size:10px;background:#2a1540;color:#e040fb;padding:2px 7px;border-radius:4px;flex-shrink:0}
