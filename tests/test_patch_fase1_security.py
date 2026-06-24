@@ -198,7 +198,7 @@ class TestTask14RoomIdValidation:
 class TestTask15NextBypass:
     def test_code_does_not_contain_bypass(self):
         import pathlib
-        server_src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        server_src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         assert "is_valid_auto_skip" not in server_src
         assert "Akses ditolak. Silakan login sebagai Admin." in server_src
 

@@ -21,20 +21,20 @@ class TestTask01TitleNoiseWords:
 
     def test_is_frozenset(self):
         """Tipe harus frozenset, bukan tuple atau set biasa."""
-        from engine.radio_mode import _TITLE_NOISE_WORDS
+        from engine.radio_engine import _TITLE_NOISE_WORDS
         assert isinstance(_TITLE_NOISE_WORDS, frozenset), (
             f"_TITLE_NOISE_WORDS harus frozenset, bukan {type(_TITLE_NOISE_WORDS).__name__}"
         )
 
     def test_immutable(self):
         """frozenset tidak bisa dimodifikasi."""
-        from engine.radio_mode import _TITLE_NOISE_WORDS
+        from engine.radio_engine import _TITLE_NOISE_WORDS
         with pytest.raises(AttributeError):
             _TITLE_NOISE_WORDS.add("test")  # frozenset tidak punya .add()
 
     def test_contains_expected_words(self):
         """Pastikan kata-kata noise penting masih ada."""
-        from engine.radio_mode import _TITLE_NOISE_WORDS
+        from engine.radio_engine import _TITLE_NOISE_WORDS
         expected = {"official", "music", "video", "audio", "lyric", "lyrics",
                     "cover", "live", "hd", "hq", "remastered", "karaoke", "acoustic"}
         assert expected.issubset(_TITLE_NOISE_WORDS), (
@@ -43,13 +43,13 @@ class TestTask01TitleNoiseWords:
 
     def test_lookup_is_fast(self):
         """Verifikasi lookup 'in' bekerja seperti yang diharapkan."""
-        from engine.radio_mode import _TITLE_NOISE_WORDS
+        from engine.radio_engine import _TITLE_NOISE_WORDS
         assert "official" in _TITLE_NOISE_WORDS
         assert "bukan_noise" not in _TITLE_NOISE_WORDS
 
     def test_normalize_title_still_works(self):
         """_normalize_title() harus tetap berjalan dengan baik setelah perubahan."""
-        from engine.radio_mode import _normalize_title
+        from engine.radio_engine import _normalize_title
         # Judul dengan noise words harus difilter
         result = _normalize_title("Rasa Ini (Official Music Video)")
         assert "official" not in result
@@ -60,7 +60,7 @@ class TestTask01TitleNoiseWords:
 
     def test_normalize_title_empty(self):
         """Judul kosong harus mengembalikan string kosong."""
-        from engine.radio_mode import _normalize_title
+        from engine.radio_engine import _normalize_title
         assert _normalize_title("") == ""
         assert _normalize_title(None) == ""
 
@@ -150,7 +150,7 @@ class TestTask03RadioBgTasksCancel:
     """TASK-0.3: Semua _bg_tasks harus di-cancel saat on_deactivated dipanggil."""
 
     def _make_radio_mode(self):
-        from engine.radio_mode import RadioMode
+        from engine.radio_engine import RadioMode
         from core.state import AppState
         state = AppState(room_id="test")
         ytdlp = MagicMock()
@@ -407,7 +407,7 @@ class TestTask05EvictRateLimitKeys:
     def test_code_contains_pop_for_login_attempts(self):
         """Verifikasi struktural: server.py harus punya pop() untuk login_attempts."""
         import pathlib
-        server_src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        server_src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         assert "login_attempts.pop(client_ip" in server_src, (
             "web/server.py harus menggunakan .pop(client_ip...) untuk login_attempts"
         )
@@ -415,7 +415,7 @@ class TestTask05EvictRateLimitKeys:
     def test_code_contains_pop_for_command_history(self):
         """Verifikasi struktural: server.py harus punya pop() untuk command_history."""
         import pathlib
-        server_src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        server_src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         assert "command_history.pop(client_ip" in server_src, (
             "web/server.py harus menggunakan .pop(client_ip...) untuk command_history"
         )

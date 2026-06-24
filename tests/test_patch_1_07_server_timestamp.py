@@ -14,7 +14,11 @@ class TestProgressServerTimestamp:
 
     def test_progress_broadcast_contains_server_ts(self):
         """_on_track_progress di server.py harus mengirim server_ts."""
-        from web import server
+        import server.app as server
+        import server.handlers.http as server_http
+        import server.handlers.websocket as server_ws
+        import server.handlers.auth as server_auth
+        import server.middleware as server_middleware
         source = inspect.getsource(server)
         
         # Cari di bagian progress broadcast
@@ -24,7 +28,11 @@ class TestProgressServerTimestamp:
 
     def test_progress_broadcast_uses_time(self):
         """server_ts harus menggunakan time.time() atau time.monotonic()."""
-        from web import server
+        import server.app as server
+        import server.handlers.http as server_http
+        import server.handlers.websocket as server_ws
+        import server.handlers.auth as server_auth
+        import server.middleware as server_middleware
         source = inspect.getsource(server)
         
         # Harus import time dan menggunakannya
@@ -38,7 +46,11 @@ class TestProgressServerTimestamp:
 
     def test_progress_data_structure(self):
         """Payload progress harus punya position, status, dan server_ts."""
-        from web import server
+        import server.app as server
+        import server.handlers.http as server_http
+        import server.handlers.websocket as server_ws
+        import server.handlers.auth as server_auth
+        import server.middleware as server_middleware
         source = inspect.getsource(server)
         
         # Cari pattern progress data yang lengkap

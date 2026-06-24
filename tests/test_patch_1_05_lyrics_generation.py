@@ -6,7 +6,7 @@ menghindari race condition saat skip lagu cepat.
 
 import pytest
 from core.state import AppState
-from integrations.lyrics import LyricsFetcher
+from plugins.lyrics import LyricsFetcher
 
 
 class TestLyricsGenerationCounter:

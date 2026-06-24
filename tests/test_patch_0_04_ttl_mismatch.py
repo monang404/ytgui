@@ -42,7 +42,11 @@ class TestTTLConstantConsistency:
 
     def test_server_uses_config_constant(self):
         """web/server.py harus import dan menggunakan STREAM_URL_TTL_SEC dari config."""
-        from web import server
+        import server.app as server
+        import server.handlers.http as server_http
+        import server.handlers.websocket as server_ws
+        import server.handlers.auth as server_auth
+        import server.middleware as server_middleware
         source = inspect.getsource(server)
         assert "STREAM_URL_TTL_SEC" in source, (
             "server.py harus menggunakan STREAM_URL_TTL_SEC dari config, bukan magic number"

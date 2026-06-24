@@ -6,8 +6,8 @@ from core.state import AppState
 from core.event_bus import EventBus
 from core.command_bus import CommandBus
 from engine.mpv_controller import MpvController
-from engine.queue_mode import QueueMode
-from engine.radio_mode import RadioMode
+from engine.queue_manager import QueueMode
+from engine.radio_engine import RadioMode
 from engine.volume_service import VolumeService
 from engine.playback_controller import PlaybackController
 from cache.resolver import CacheResolver

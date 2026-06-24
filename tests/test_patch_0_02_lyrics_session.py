@@ -9,7 +9,7 @@ import pytest
 import asyncio
 import inspect
 import ast
-from integrations.lyrics import LyricsFetcher
+from plugins.lyrics import LyricsFetcher
 
 
 class TestLyricsFetcherSessionScope:

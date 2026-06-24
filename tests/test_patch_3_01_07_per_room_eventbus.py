@@ -206,13 +206,13 @@ class TestTask34LyricsFetcherEventBusInjection:
     def test_lyricsfetcher_accepts_event_bus_parameter(self):
         """LyricsFetcher.__init__ harus punya parameter event_bus."""
         import inspect
-        from integrations.lyrics import LyricsFetcher
+        from plugins.lyrics import LyricsFetcher
         sig = inspect.signature(LyricsFetcher.__init__)
         assert "event_bus" in sig.parameters
 
     def test_lyricsfetcher_stores_injected_bus(self):
         """LyricsFetcher menyimpan bus yang diinject."""
-        from integrations.lyrics import LyricsFetcher
+        from plugins.lyrics import LyricsFetcher
         from core.event_bus import EventBus
 
         custom_bus = EventBus()
@@ -228,7 +228,7 @@ class TestTask34LyricsFetcherEventBusInjection:
     def test_lyricsfetcher_no_global_bus_module_import(self):
         """integrations/lyrics.py tidak boleh import global bus di level modul."""
         import pathlib
-        src = pathlib.Path("integrations/lyrics.py").read_text(encoding="utf-8")
+        src = pathlib.Path("plugins/lyrics.py").read_text(encoding="utf-8")
         for line in src.splitlines()[:15]:
             assert "from core.event_bus import bus" not in line, \
                 "lyrics.py tidak boleh import global bus di level modul"
@@ -236,7 +236,7 @@ class TestTask34LyricsFetcherEventBusInjection:
     @pytest.mark.asyncio
     async def test_two_lyricsfetchers_isolated(self):
         """Dua LyricsFetcher dengan bus berbeda tidak saling menerima event."""
-        from integrations.lyrics import LyricsFetcher
+        from plugins.lyrics import LyricsFetcher
         from core.event_bus import EventBus
         from core.events import TrackProgressEvent
 
@@ -291,13 +291,13 @@ class TestTask35SponsorBlockHandlerEventBusInjection:
     def test_sponsorblock_accepts_event_bus_parameter(self):
         """SponsorBlockHandler.__init__ harus punya parameter event_bus."""
         import inspect
-        from integrations.sponsorblock import SponsorBlockHandler
+        from plugins.sponsorblock import SponsorBlockHandler
         sig = inspect.signature(SponsorBlockHandler.__init__)
         assert "event_bus" in sig.parameters
 
     def test_sponsorblock_stores_injected_bus(self):
         """SponsorBlockHandler menyimpan bus yang diinject."""
-        from integrations.sponsorblock import SponsorBlockHandler
+        from plugins.sponsorblock import SponsorBlockHandler
         from core.event_bus import EventBus
 
         custom_bus = EventBus()
@@ -311,7 +311,7 @@ class TestTask35SponsorBlockHandlerEventBusInjection:
     def test_sponsorblock_no_global_bus_module_import(self):
         """integrations/sponsorblock.py tidak boleh import global bus di level modul."""
         import pathlib
-        src = pathlib.Path("integrations/sponsorblock.py").read_text(encoding="utf-8")
+        src = pathlib.Path("plugins/sponsorblock.py").read_text(encoding="utf-8")
         for line in src.splitlines()[:15]:
             assert "from core.event_bus import bus" not in line, \
                 "sponsorblock.py tidak boleh import global bus di level modul"
@@ -319,7 +319,7 @@ class TestTask35SponsorBlockHandlerEventBusInjection:
     @pytest.mark.asyncio
     async def test_two_sponsorblock_handlers_isolated(self):
         """Dua SponsorBlockHandler dengan bus berbeda tidak saling menerima event."""
-        from integrations.sponsorblock import SponsorBlockHandler
+        from plugins.sponsorblock import SponsorBlockHandler
         from core.event_bus import EventBus
         from core.events import TrackProgressEvent
 
@@ -360,7 +360,7 @@ class TestTask36ServerPerRoomSubscriptions:
     def test_server_does_not_import_global_bus(self):
         """web/server.py tidak boleh import global bus singleton."""
         import pathlib
-        src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         for line in src.splitlines()[:40]:
             assert "from core.event_bus import bus" not in line, \
                 "server.py tidak boleh import global bus lagi (TASK-3.7)"
@@ -368,21 +368,21 @@ class TestTask36ServerPerRoomSubscriptions:
     def test_setup_room_subscriptions_function_exists(self):
         """server.py harus mengandung _setup_room_subscriptions."""
         import pathlib
-        src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         assert "_setup_room_subscriptions" in src, \
             "server.py harus mendefinisikan _setup_room_subscriptions (TASK-3.6)"
 
     def test_on_room_created_registered_in_create_app(self):
         """create_app harus memanggil room_manager.on_room_created(...)."""
         import pathlib
-        src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         assert "room_manager.on_room_created" in src, \
             "create_app harus mendaftarkan callback via room_manager.on_room_created"
 
     def test_per_room_progress_throttle_in_server(self):
         """server.py menggunakan per-room throttle, bukan global dict."""
         import pathlib
-        src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         assert "last_progress_per_room" in src, \
             "Throttle harus per-room (TASK-3.6 + TASK-4.4 preview)"
         # Global dict lama tidak boleh ada
@@ -467,7 +467,7 @@ class TestTask37NoGlobalBusImports:
     def test_lyrics_no_global_bus_import(self):
         """integrations/lyrics.py tidak import 'bus' di level modul."""
         import pathlib
-        src = pathlib.Path("integrations/lyrics.py").read_text(encoding="utf-8")
+        src = pathlib.Path("plugins/lyrics.py").read_text(encoding="utf-8")
         module_level = [l for l in src.splitlines()[:20] if "import" in l]
         for line in module_level:
             assert "from core.event_bus import bus" not in line, \
@@ -476,7 +476,7 @@ class TestTask37NoGlobalBusImports:
     def test_sponsorblock_no_global_bus_import(self):
         """integrations/sponsorblock.py tidak import 'bus' di level modul."""
         import pathlib
-        src = pathlib.Path("integrations/sponsorblock.py").read_text(encoding="utf-8")
+        src = pathlib.Path("plugins/sponsorblock.py").read_text(encoding="utf-8")
         module_level = [l for l in src.splitlines()[:15] if "import" in l]
         for line in module_level:
             assert "from core.event_bus import bus" not in line, \
@@ -485,7 +485,7 @@ class TestTask37NoGlobalBusImports:
     def test_server_no_global_bus_import(self):
         """web/server.py tidak import 'bus' di level modul."""
         import pathlib
-        src = pathlib.Path("web/server.py").read_text(encoding="utf-8")
+        src = "\n".join([p.read_text(encoding="utf-8") for p in pathlib.Path("server").rglob("*.py")])
         module_level = [l for l in src.splitlines()[:40] if "import" in l]
         for line in module_level:
             assert "from core.event_bus import bus" not in line, \
