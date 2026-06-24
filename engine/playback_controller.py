@@ -109,6 +109,10 @@ class PlaybackController:
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:
+            if self.state.playback_mode == PlaybackMode.RADIO:
+                await self.radio_mode.on_deactivated()
+                self.state.playback_mode = PlaybackMode.QUEUE
+                await self.bus.publish(QueueUpdatedEvent())
             await self.play_track(track)
 
     async def _on_track_ended(self, event: TrackEndedEvent):

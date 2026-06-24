@@ -111,6 +111,7 @@ function handleServerMessage(msg) {
             if (statusChanged) {
                 if (typeof renderNowPlaying === "function") renderNowPlaying();
                 if (typeof renderQueue === "function") renderQueue();
+                if (typeof updateSearchPlayingState === "function") updateSearchPlayingState();
             }
             syncBrowserAudio();
             if (typeof syncLocalLyrics === "function") syncLocalLyrics();
@@ -170,6 +171,7 @@ function renderFullState() {
     renderQueue();
     renderLyrics();
     renderSettingsSheet();
+    if (typeof updateSearchPlayingState === "function") updateSearchPlayingState();
 }
 
 function renderHeader() {

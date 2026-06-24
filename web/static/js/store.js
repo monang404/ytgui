@@ -22,5 +22,6 @@ const store = {
     discover_recent: [],
     discover_favorites: [],
     discover_cached: [],
+    search_results: [],
     server_ts: 0
 };

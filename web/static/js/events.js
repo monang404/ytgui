@@ -333,7 +333,7 @@ function initEvents() {
         if (item && item.dataset.searchTrackStr) {
             try {
                 const track = JSON.parse(item.dataset.searchTrackStr);
-                if (typeof showActionModal === "function") showActionModal(track);
+                if (typeof playSearchTrack === "function") playSearchTrack(track);
             } catch (err) {
                 console.error("Invalid track data", err);
             }
