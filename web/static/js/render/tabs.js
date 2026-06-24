@@ -206,7 +206,7 @@ function createQueueItemTemplate() {
 }
 
 function updateQueueItem(div, track, index, isCurrent, isRadio) {
-    div.className = "queue-item" + (isCurrent ? " current" : "");
+    div.className = "queue-item" + (isCurrent ? " current" : "") + (isRadio ? " radio-item" : "");
     if (!isCurrent && !isRadio) {
         div.dataset.index = index;
         div.setAttribute('draggable', 'true');
