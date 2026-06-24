@@ -49,9 +49,9 @@ function renderPlayerBar() {
 
 function renderPlayBtn() {
     if (store.status === "PLAYING") {
-        dom.btnPlay.innerHTML = "<i class=\"ti ti-player-pause-filled\" style=\"font-size:15px;color:#fff\"></i>";
+        dom.btnPlay.innerHTML = "<i class=\"ti ti-player-pause\" style=\"font-size:15px;color:#fff\"></i>";
     } else {
-        dom.btnPlay.innerHTML = "<i class=\"ti ti-player-play-filled\" style=\"font-size:15px;color:#fff\"></i>";
+        dom.btnPlay.innerHTML = "<i class=\"ti ti-player-play\" style=\"font-size:15px;color:#fff\"></i>";
     }
 }
 
