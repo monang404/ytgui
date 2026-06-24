@@ -39,8 +39,9 @@
     border: none;
     display: grid;
     grid-template-columns: 220px 1fr;
-    grid-template-rows: 1fr 72px;
+    grid-template-rows: auto 1fr 72px;
     grid-template-areas:
+      "sidebar header"
       "sidebar main"
       "nowplaying nowplaying";
   }
@@ -77,12 +78,13 @@
     font-weight: 500;
   }
 
+  /* Header area */
+  #app-header {
+    grid-area: header;
+  }
+
   /* Main content area */
-  #tab-home,
-  #tab-search,
-  #tab-queue,
-  #tab-lyrics,
-  #tab-settings {
+  #content-area {
     grid-area: main;
     overflow-y: auto;
   }
@@ -92,32 +94,34 @@
     grid-area: nowplaying;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     border-top: 1px solid var(--fm-border, #1e1e32);
     padding: 0 20px;
     gap: 16px;
   }
 
-  /* Player bar desktop layout: artwork | controls | volume */
-  .pb-left {
+  /* Player bar desktop layout */
+  .pb-row1 {
     display: flex;
     align-items: center;
     gap: 12px;
-    min-width: 200px;
+    width: 250px;
   }
 
-  .pb-center {
+  .pb-seek {
     flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
+    max-width: 600px;
+    gap: 8px;
   }
 
-  .pb-right {
-    min-width: 150px;
+  .pb-ctrl {
+    width: auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 16px;
   }
 }
 
