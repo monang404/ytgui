@@ -26,14 +26,14 @@
         <p class="portal-subtitle">Silakan pilih mode akses untuk memutar musik</p>
         
         <div class="portal-options">
-            <button id="portal-client-btn" class="portal-btn client">
+            <button id="portal-client-btn" class="portal-btn client" aria-label="Masuk sebagai Client">
                 <span class="portal-icon"><i class="ti ti-volume"></i></span>
                 <span class="portal-btn-title">Mode Client</span>
                 <span class="portal-btn-desc">Dengarkan audio langsung di browser ini secara real-time.</span>
             </button>
             
             <div class="portal-admin-wrapper">
-                <button id="portal-admin-btn" class="portal-btn admin">
+                <button id="portal-admin-btn" class="portal-btn admin" aria-label="Masuk sebagai Admin">
                     <span class="portal-icon"><i class="ti ti-bolt"></i></span>
                     <span class="portal-btn-title">Mode Admin</span>
                     <span class="portal-btn-desc">Akses kontrol penuh (putar, cari, atur antrean & volume).</span>
@@ -139,7 +139,7 @@
 
             <div class="section-label">Acak Artis</div>
             <div style="padding: 0 14px 10px; display: flex; gap: 8px;">
-                <button id="radio-randomize-btn" style="background:#1e1e38;border:1px solid #2e2e48;border-radius:10px;padding:8px 14px;color:#c0c0e0;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px">
+                <button id="radio-randomize-btn" aria-label="Acak Queue" style="background:#1e1e38;border:1px solid #2e2e48;border-radius:10px;padding:8px 14px;color:#c0c0e0;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px">
                     <i class="ti ti-dice" style="font-size:14px" aria-hidden="true"></i> Acak Ulang
                 </button>
             </div>
@@ -289,9 +289,9 @@
                 <span><i class="ti ti-microphone-2" aria-hidden="true"></i> Lirik Tersinkron</span>
                 <div class="lyric-offset" id="lyric-offset-ctrl">
                     <span>Offset</span>
-                    <button id="lyric-offset-minus">−</button>
+                    <button id="lyric-offset-minus" aria-label="Offset lirik mundur 0.5 detik">−</button>
                     <span id="lyric-offset-display">+0.0s</span>
-                    <button id="lyric-offset-plus">+</button>
+                    <button id="lyric-offset-plus" aria-label="Offset lirik maju 0.5 detik">+</button>
                 </div>
             </div>
         </div>

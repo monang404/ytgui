@@ -47,6 +47,9 @@
   --fm-transition-fast:   0.15s ease;
   --fm-transition-normal: 0.25s ease;
 
+  /* Primary — alias untuk accent, dipakai oleh queue current indicator */
+  --fm-primary:     var(--fm-accent);
+
   /* ============================================================
      LEGACY ALIASES — bridge untuk style.css yang masih pakai nama lama.
      Hapus blok ini setelah Fase 1 CSS split selesai.

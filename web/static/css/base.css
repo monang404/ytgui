@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 
 html, body {
     background: #000;
@@ -988,3 +988,27 @@ html, body {
 #tab-queue.active { display: block; }
 #tab-discover.active { display: block; }
 
+/* ══════════════════════════════════════
+   FOCUS VISIBLE — WCAG 2.1 SC 2.4.7
+   Menggantikan outline:none yang sebelumnya
+   menghilangkan keyboard navigation indicator
+   ══════════════════════════════════════ */
+.search-wrap input:focus-visible,
+.portal-login-form input:focus-visible {
+  outline: 2px solid var(--fm-accent);
+  outline-offset: 2px;
+  border-color: var(--fm-accent);
+}
+
+.vol-slider:focus-visible,
+.pb-track:focus-visible {
+  outline: 2px solid var(--fm-accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--fm-accent);
+  outline-offset: 2px;
+  border-radius: var(--fm-radius-xs);
+}
