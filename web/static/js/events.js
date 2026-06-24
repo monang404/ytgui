@@ -562,3 +562,27 @@ function _cleanupDrag() {
     _dragSrcIndex = null;
     _dragEl = null;
 }
+
+// ── Keyboard Shortcuts — Phase 5 (Desktop) ──
+// Hanya aktif di desktop (pointer: fine = mouse)
+if (window.matchMedia('(pointer: fine)').matches) {
+    document.addEventListener('keydown', (e) => {
+        // Jangan intercept saat user mengetik di input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.code) {
+            case 'Space':
+                e.preventDefault();
+                cmd('play'); // Toggle play/pause
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                cmd('next');
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                cmd('prev');
+                break;
+        }
+    });
+}

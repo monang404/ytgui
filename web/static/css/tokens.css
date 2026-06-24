@@ -52,3 +52,49 @@
 
 
 }
+
+/* ══════════════════════════════════════
+   EXTENDED TOKENS — Phase 5
+   AUDIT_V2 Chapter B — Design System
+   ══════════════════════════════════════ */
+:root {
+  /* Spacing scale (4px base grid) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Typography scale */
+  --text-xs:  10px;
+  --text-sm:  12px;
+  --text-md:  14px;
+  --text-lg:  16px;
+  --text-xl:  20px;
+  --text-2xl: 24px;
+
+  /* Font weights */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Motion tokens */
+  --duration-fast:    100ms;
+  --duration-normal:  200ms;
+  --duration-slow:    350ms;
+  --ease-out:  cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-in:   cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-both: cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  /* Interactive state colors */
+  --fm-color-hover:    rgba(255, 255, 255, 0.08);
+  --fm-color-active:   rgba(255, 255, 255, 0.12);
+  --fm-color-disabled: rgba(255, 255, 255, 0.30);
+  --fm-color-success:  #1DB954;
+  --fm-color-warning:  #F59E0B;
+  --fm-color-error:    #EF4444;
+}

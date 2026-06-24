@@ -20,19 +20,142 @@
   }
 }
 
-/* ─── Desktop (≥ 1024px) ─── */
-/* Placeholder — Phase 5 akan mengisi dengan 2-column layout */
+/* ══════════════════════════════════════
+   DESKTOP LAYOUT — Phase 5
+   Blueprint: AUDIT_V2 Chapter C.4
+   2-column: sidebar kiri + main content
+   ══════════════════════════════════════ */
 @media (min-width: 1024px) {
   body {
-    justify-content: center;
-    padding: 20px;
+    display: flex;
+    overflow: hidden;
+    height: 100vh;
   }
 
   #app {
-    max-width: 420px;
-    height: calc(100vh - 40px);
-    border-radius: var(--fm-radius-app, 36px);
-    border: 1px solid var(--fm-border, #1e1e32);
+    max-width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 1fr 72px;
+    grid-template-areas:
+      "sidebar main"
+      "nowplaying nowplaying";
+  }
+
+  /* Sidebar navigation — kiri */
+  #nav-bar {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-right: 1px solid var(--fm-border, #1e1e32);
+    padding: 20px 0;
+    overflow-y: auto;
+  }
+
+  /* Nav buttons jadi vertikal di desktop */
+  .nav-btn {
+    width: 100%;
+    flex-direction: row;
+    padding: 12px 20px;
+    justify-content: flex-start;
+    gap: 12px;
+    border-radius: 0;
+    height: auto;
+    min-height: 44px;
+  }
+
+  .nav-btn .nav-icon {
+    font-size: 18px;
+  }
+
+  .nav-btn span {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Main content area */
+  #tab-home,
+  #tab-search,
+  #tab-queue,
+  #tab-lyrics,
+  #tab-settings {
+    grid-area: main;
+    overflow-y: auto;
+  }
+
+  /* Persistent now-playing bar di bottom */
+  #player-bar {
+    grid-area: nowplaying;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--fm-border, #1e1e32);
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  /* Player bar desktop layout: artwork | controls | volume */
+  .pb-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+  }
+
+  .pb-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pb-right {
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+}
+
+/* ══════════════════════════════════════
+   TABLET LANDSCAPE — Queue Panel
+   Blueprint: AUDIT_V2 Chapter C.3
+   ══════════════════════════════════════ */
+@media (min-width: 601px) and (max-width: 1023px) and (orientation: landscape) {
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "main queue"
+      "player player";
+    max-width: 100%;
+  }
+
+  #tab-home {
+    grid-area: main;
+    overflow-y: auto;
+  }
+
+  #tab-queue {
+    grid-area: queue;
+    border-left: 1px solid var(--fm-border, #1e1e32);
+    overflow-y: auto;
+    display: block !important; /* Selalu tampil di landscape tablet */
+  }
+
+  #player-bar {
+    grid-area: player;
+    border-top: 1px solid var(--fm-border, #1e1e32);
+  }
+
+  /* Sembunyikan nav bar di tablet landscape — navigasi via swipe atau gesture */
+  #nav-bar {
+    display: none;
   }
 }
 

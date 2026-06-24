@@ -1075,3 +1075,32 @@ button:focus-visible {
   margin-bottom: 8px;
   opacity: 0.4;
 }
+
+/* ══════════════════════════════════════
+   HOVER STATES — Phase 5 (Desktop/Mouse)
+   Hanya aktif saat pointer device adalah mouse
+   (pointer: fine = mouse, pointer: coarse = touch)
+   ══════════════════════════════════════ */
+@media (hover: hover) and (pointer: fine) {
+  .queue-item:hover {
+    background: var(--fm-color-hover, rgba(255, 255, 255, 0.06));
+  }
+
+  .nav-btn:hover {
+    background: var(--fm-color-hover, rgba(255, 255, 255, 0.06));
+    color: var(--fm-text-1, #ffffff);
+  }
+
+  .fav-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  button:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  .sr-item:hover {
+    background: var(--fm-color-hover, rgba(255, 255, 255, 0.06));
+  }
+}
