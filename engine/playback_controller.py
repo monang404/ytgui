@@ -176,15 +176,23 @@ class PlaybackController:
             self.state.position = position
 
     async def _on_set_mode(self, mode: PlaybackMode):
-        if self.state.playback_mode != mode:
-            previous_mode = self.state.playback_mode
-            self.state.playback_mode = mode
-            if previous_mode == PlaybackMode.RADIO:
-                await self.radio_mode.on_deactivated()
-            if mode == PlaybackMode.RADIO:
-                await self.radio_mode.on_activated(self)
-            await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
-            await self.bus.publish(QueueUpdatedEvent())
+        async with self._lock:
+            if self.state.playback_mode != mode:
+                previous_mode = self.state.playback_mode
+                self.state.playback_mode = mode
+                
+                if previous_mode == PlaybackMode.RADIO:
+                    await self.radio_mode.on_deactivated()
+                    await self.mpv.pause()
+                    self.state.current_track = None
+                    self.state.status = PlayerStatus.IDLE
+                    await self._advance_to_next()
+                    
+                if mode == PlaybackMode.RADIO:
+                    await self.radio_mode.on_activated(self)
+                    
+                await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
+                await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_queue_select(self, index: int):
         async with self._lock:
