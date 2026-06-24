@@ -490,44 +490,75 @@ function closeMainOverlay() {
     if (dom.helpSheet) dom.helpSheet.classList.remove("open");
 }
 
-let dragSrcIndex = null;
+// ── Queue Drag & Drop — Pointer Events (Mobile + Desktop) ──
+// ADR-001: Pointer Events API dipilih karena support touch + mouse dalam 1 API
+// Menggantikan HTML5 Drag API yang tidak bekerja di touch device (BUG-002)
+let _dragSrcIndex = null;
+let _dragEl = null;
+
 function initQueueDragDrop() {
-    dom.queueList.addEventListener('dragstart', e => {
-        const item = e.target.closest('.queue-item');
-        if (!item || !item.hasAttribute('data-index')) return;
-        dragSrcIndex = parseInt(item.dataset.index);
-        item.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', dragSrcIndex);
-    });
+    const list = dom.queueList;
+    if (!list) return;
 
-    dom.queueList.addEventListener('dragover', e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        const item = e.target.closest('.queue-item');
-        if (item && item.hasAttribute('data-index')) {
-            document.querySelectorAll('.queue-item.drag-over')
-                .forEach(el => el.classList.remove('drag-over'));
-            item.classList.add('drag-over');
-        }
-    });
-
-    dom.queueList.addEventListener('drop', e => {
-        e.preventDefault();
-        const item = e.target.closest('.queue-item');
-        if (!item || !item.hasAttribute('data-index') || dragSrcIndex === null) return;
-        const toIndex = parseInt(item.dataset.index);
-        if (toIndex !== dragSrcIndex) {
-            wsSend('queue_reorder', { from_index: dragSrcIndex, to_index: toIndex });
-        }
-        cleanupDrag();
-    });
-
-    dom.queueList.addEventListener('dragend', cleanupDrag);
+    list.addEventListener('pointerdown', _onDragStart, { passive: false });
+    document.addEventListener('pointermove', _onDragMove, { passive: false });
+    document.addEventListener('pointerup', _onDragEnd);
+    document.addEventListener('pointercancel', _onDragCancel);
 }
 
-function cleanupDrag() {
-    dragSrcIndex = null;
-    document.querySelectorAll('.queue-item.dragging, .queue-item.drag-over')
-        .forEach(el => el.classList.remove('dragging', 'drag-over'));
+function _onDragStart(e) {
+    if (store.userRole !== 'admin') return;
+    const handle = e.target.closest('.qi-drag');
+    if (!handle) return;
+
+    const item = handle.closest('.queue-item');
+    if (!item || !item.hasAttribute('data-index')) return;
+
+    e.preventDefault();
+    _dragSrcIndex = parseInt(item.dataset.index);
+    _dragEl = item;
+    item.classList.add('dragging');
+    item.setPointerCapture(e.pointerId);
+}
+
+function _onDragMove(e) {
+    if (_dragSrcIndex === null || !_dragEl) return;
+    e.preventDefault();
+
+    document.querySelectorAll('.queue-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target) {
+        const over = target.closest('.queue-item[data-index]');
+        if (over && over !== _dragEl) {
+            over.classList.add('drag-over');
+        }
+    }
+}
+
+function _onDragEnd(e) {
+    if (_dragSrcIndex === null) return;
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target) {
+        const over = target.closest('.queue-item[data-index]');
+        if (over && over !== _dragEl) {
+            const toIndex = parseInt(over.dataset.index);
+            if (toIndex !== _dragSrcIndex) {
+                wsSend('queue_reorder', { from_index: _dragSrcIndex, to_index: toIndex });
+            }
+        }
+    }
+    _cleanupDrag();
+}
+
+function _onDragCancel() {
+    _cleanupDrag();
+}
+
+function _cleanupDrag() {
+    if (_dragEl) _dragEl.classList.remove('dragging');
+    document.querySelectorAll('.queue-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+    _dragSrcIndex = null;
+    _dragEl = null;
 }

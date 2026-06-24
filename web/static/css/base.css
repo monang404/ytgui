@@ -1014,3 +1014,64 @@ button:focus-visible {
   outline-offset: 2px;
   border-radius: var(--fm-radius-xs);
 }
+
+/* ══════════════════════════════════════
+   TOUCH TARGET EXPANSION — Phase 2
+   Minimum 44×44px per HIG & Material Design
+   Gunakan ::after pseudo-element (non-destructive)
+   ══════════════════════════════════════ */
+
+.pb-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.pb-thumb::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.offset-btn::after,
+.lyric-offset button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+.offset-btn,
+.lyric-offset button {
+  position: relative;
+}
+
+.vol-slider {
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+.vol-slider::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--fm-accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.qi-drag {
+  padding: 12px 8px;
+  min-width: 32px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -7,6 +7,13 @@ function wsConnect() {
 
     showConnectionToast("Menghubungkan...", "connecting");
 
+    // Tutup koneksi lama jika masih ada (BUG-003: mencegah concurrent connections)
+    if (ws && ws.readyState !== WebSocket.CLOSED) {
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.close();
+    }
+
     ws = new WebSocket(url);
     window.ws = ws;
 
