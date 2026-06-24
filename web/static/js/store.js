@@ -1,0 +1,26 @@
+const store = {
+    status: "IDLE",
+    playback_mode: "QUEUE",
+    audio_output: "device",
+    userRole: "portal", // "portal" | "client" | "admin"
+    adminUsername: "",
+    adminPassword: "",
+    current_track: null,
+    position: 0,
+    volume: 80,
+    sponsorblock_active: false,
+    queue: [],
+    radio_queue: [],
+    history_count: 0,
+    lyrics_lines: [],
+    lyrics_index: 0,
+    lyrics_offset: 0,
+    active_tab: "home",
+    error_msg: null,
+    is_online: true,
+    download_progress: null,
+    discover_recent: [],
+    discover_favorites: [],
+    discover_cached: [],
+    server_ts: 0
+};
