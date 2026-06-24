@@ -1,0 +1,54 @@
+/* ══════════════════════════════════════
+   RESPONSIVE BREAKPOINTS — Mobile First
+   bagas.fm Spotify-Class Transformation Phase 1
+   ADR-002: 601px tablet, 1024px desktop
+   ══════════════════════════════════════ */
+
+/* ─── Base: Mobile (≤ 600px) ─── */
+/* Default styles sudah mobile-first */
+
+/* ─── Tablet (601px – 1023px) ─── */
+@media (min-width: 601px) {
+  #app {
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .nav-btn span {
+    font-size: 11px;
+  }
+}
+
+/* ─── Desktop (≥ 1024px) ─── */
+/* Placeholder — Phase 5 akan mengisi dengan 2-column layout */
+@media (min-width: 1024px) {
+  body {
+    justify-content: center;
+    padding: 20px;
+  }
+
+  #app {
+    max-width: 420px;
+    height: calc(100vh - 40px);
+    border-radius: var(--fm-radius-app, 36px);
+    border: 1px solid var(--fm-border, #1e1e32);
+  }
+}
+
+/* ─── Orientation: Landscape di Mobile ─── */
+@media (max-height: 500px) and (orientation: landscape) {
+  .vinyl-wrap {
+    display: none; /* Sembunyikan vinyl di landscape untuk hemat ruang */
+  }
+}
+
+/* ─── Safe Area Insets (iPhone notch / Android nav bar) ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  #nav-bar {
+    padding-bottom: calc(5px + env(safe-area-inset-bottom));
+  }
+  #player-bar {
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+  }
+}
