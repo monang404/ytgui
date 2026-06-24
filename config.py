@@ -44,7 +44,15 @@ IS_PASSWORD_AUTO_GENERATED = False
 _password_file = BASE_DIR / "cache" / "admin_password.txt"
 
 if "YTGUI_ADMIN_PASS" in os.environ:
-    ADMIN_PASSWORD = os.environ["YTGUI_ADMIN_PASS"]
+    _raw_env_pass = os.environ["YTGUI_ADMIN_PASS"]
+    if _raw_env_pass.startswith("pbkdf2:sha256:"):
+        # Sudah di-hash sebelumnya (misalnya dari file yang di-backup)
+        ADMIN_PASSWORD = _raw_env_pass
+    else:
+        # TASK-1.2: Hash password ENV var agar tidak disimpan sebagai plaintext.
+        # Ini wajib setelah TASK-1.1 menghapus plaintext fallback di verify_password.
+        from core.security import hash_password
+        ADMIN_PASSWORD = hash_password(_raw_env_pass)
 else:
     IS_PASSWORD_AUTO_GENERATED = True
     if _password_file.exists():

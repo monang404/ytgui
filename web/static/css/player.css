@@ -1,0 +1,150 @@
+/* Animated EQ Icon in Now Playing Card */
+.eq-anim-icon {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+    height: 16px;
+    width: 24px;
+}
+.eq-anim-icon span {
+    display: block;
+    width: 4px;
+    background: var(--fm-accent, #e040fb);
+    border-radius: 2px;
+    animation: eq-bounce 1s ease-in-out infinite alternate;
+}
+.eq-anim-icon span:nth-child(1) { animation-delay: 0.1s; height: 100%; }
+.eq-anim-icon span:nth-child(2) { animation-delay: 0.3s; height: 60%; }
+.eq-anim-icon span:nth-child(3) { animation-delay: 0.0s; height: 80%; }
+
+@keyframes eq-bounce {
+    0% { transform: scaleY(0.3); transform-origin: bottom; }
+    100% { transform: scaleY(1); transform-origin: bottom; }
+}
+
+/* Vinyl Record Container */
+.vinyl-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    flex-shrink: 0;
+}
+
+.vinyl-record {
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, #000 30%, #111 40%, #000 50%, #111 60%, #000 70%, #111 80%, #050505 100%);
+    border-radius: 50%;
+    border: 4px solid var(--fm-border, #1e1e32);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.05);
+    position: relative;
+    /* Grooves effect */
+    background-image: repeating-radial-gradient(
+      circle at center,
+      #111,
+      #111 2px,
+      #0a0a0a 2px,
+      #0a0a0a 4px
+    );
+    animation: spin 6s linear infinite;
+    animation-play-state: paused;
+}
+
+.vinyl-record.playing {
+    animation-play-state: running;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.vinyl-center {
+    width: 60px;
+    height: 60px;
+    background: var(--fm-bg-elevated, #1e1e38);
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+}
+
+.vinyl-center::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #000;
+    border-radius: 50%;
+    border: 2px solid #222;
+}
+
+.vinyl-center img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.vinyl-center i {
+    font-size: 20px;
+    color: var(--fm-accent, #e040fb);
+    z-index: 1;
+}
+
+/* Lyrics Container */
+.lyrics-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 20px;
+    text-align: center;
+    overflow: hidden;
+    gap: 8px;
+    position: relative;
+    /* gradient fade top and bottom */
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
+
+.lyrics-line {
+    font-size: 13px;
+    color: var(--fm-text-4, #6a6a8c);
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    line-height: 1.4;
+    white-space: pre-wrap;
+    min-height: 18px; /* placeholder height */
+}
+
+.lyrics-line.prev, .lyrics-line.next {
+    opacity: 0.6;
+    transform: translateY(0);
+}
+
+.lyrics-line.current {
+    font-size: 15px;
+    color: var(--fm-accent, #e040fb);
+    font-weight: 600;
+    opacity: 1;
+    transform: scale(1.05);
+    text-shadow: 0 0 10px rgba(224, 64, 251, 0.4);
+}
+
+/* Fallback empty lyrics state */
+.lyrics-empty {
+    font-size: 13px;
+    color: var(--fm-text-5, #5a5a7a);
+    font-style: italic;
+}

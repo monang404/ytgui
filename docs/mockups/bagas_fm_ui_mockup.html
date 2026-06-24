@@ -1,0 +1,367 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.fm{max-width:375px;margin:0 auto;background:#0d0d1c;border-radius:36px;border:3px solid #1e1e32;height:690px;display:flex;flex-direction:column;overflow:hidden;color:#fff;font-family:-apple-system,system-ui,sans-serif;font-size:14px;position:relative}
+.fm-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 8px;flex-shrink:0}
+.fm-title{font-size:16px;font-weight:600;letter-spacing:.5px}
+.fm-hright{display:flex;align-items:center;gap:8px}
+.out-btn{background:#1a1a2e;border:1px solid #2e2e48;border-radius:8px;padding:4px 10px;color:#9a9abc;font-size:11px;cursor:pointer}
+.out-btn.browser{color:#00e5ff;border-color:#00e5ff44}
+.status-dot{width:7px;height:7px;background:#00e5b0;border-radius:50%;flex-shrink:0}
+.content{flex:1;overflow-y:auto;overflow-x:hidden}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:#2a2a3e;border-radius:2px}
+.pbar{background:#141426;border-top:1px solid #1e1e32;padding:10px 16px 4px;flex-shrink:0}
+.pb-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.pb-title{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;color:#e8e8f5}
+.pb-badge{font-size:10px;background:#2a1540;color:#e040fb;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.pb-badge.queue{background:#1a2240;color:#60a5fa}
+.pb-seek{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pb-time{font-size:10px;color:#6a6a8c;min-width:28px}
+.pb-track{flex:1;height:3px;background:#2a2a3e;border-radius:2px;cursor:pointer;position:relative}
+.pb-fill{height:100%;background:#e040fb;border-radius:2px}
+.pb-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;background:#e040fb;border-radius:50%;cursor:grab}
+.pb-ctrl{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.vol-grp{display:flex;align-items:center;gap:5px;flex:1}
+.vol-grp i{font-size:15px;color:#6a6a8c}
+.vol-grp input[type=range]{width:65px;height:3px;cursor:pointer;accent-color:#e040fb}
+.vol-label{font-size:10px;color:#6a6a8c;min-width:28px}
+.main-ctrl{display:flex;align-items:center;gap:14px}
+.btn-prev,.btn-next{background:none;border:none;color:#b0b0c8;font-size:20px;cursor:pointer;padding:2px}
+.btn-play{background:#e040fb;border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pb-sec{display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end}
+.pb-sec button{background:none;border:none;color:#6a6a8c;font-size:14px;cursor:pointer;padding:4px;border-radius:6px}
+.pb-sec button:hover{color:#ccc;background:#1e1e30}
+.pb-badges{display:flex;gap:5px;margin-top:5px;margin-bottom:4px}
+.pb-badge-sm{font-size:10px;padding:1px 6px;border-radius:3px}
+.cached{background:#122212;color:#00c870}
+.sb{background:#1f1228;color:#c084fc}
+.dl{background:#12221a;color:#34d399}
+.navrow{background:#0a0a18;border-top:1px solid #1a1a2a;display:flex;padding:5px 0 8px;flex-shrink:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:3px 0;color:#5a5a7a;transition:color .15s}
+.nav-btn.active{color:#e040fb}
+.nav-btn i{font-size:21px}
+.nav-btn span{font-size:9px}
+.section-label{font-size:11px;color:#6a6a8c;padding:14px 16px 6px;letter-spacing:.5px;text-transform:uppercase}
+.card{background:#141426;border-radius:14px;margin:0 14px 10px;padding:14px}
+.np-art{width:72px;height:72px;border-radius:12px;background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.np-art img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+.np-meta{flex:1;min-width:0;padding:2px 0}
+.np-track{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f0f0ff}
+.np-artist{font-size:13px;color:#9a9abc;margin-top:2px}
+.np-dur{font-size:11px;color:#6a6a8c;margin-top:4px}
+.eq-wrap{background:#0f0f20;border-radius:10px;height:52px;display:flex;align-items:flex-end;gap:3px;padding:6px 10px;margin:10px 14px 0;overflow:hidden}
+.eq-bar{flex:1;border-radius:3px 3px 0 0;background:#e040fb;opacity:.85;min-height:4px;transition:height .1s}
+.discover-row{display:flex;gap:10px;padding:0 14px 4px;overflow-x:auto}
+.discover-row::-webkit-scrollbar{display:none}
+.disc-card{background:#141426;border-radius:12px;min-width:108px;overflow:hidden;flex-shrink:0;cursor:pointer}
+.disc-card:hover{background:#1a1a34}
+.disc-thumb{width:108px;height:72px;background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:24px;position:relative}
+.disc-tag{position:absolute;top:4px;right:4px;font-size:9px;background:#e040fb22;color:#e040fb;padding:1px 5px;border-radius:3px}
+.disc-info{padding:6px 8px}
+.disc-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8e8f5}
+.disc-artist{font-size:10px;color:#6a6a8c;margin-top:1px}
+.search-wrap{margin:10px 14px;background:#141426;border-radius:12px;display:flex;align-items:center;gap:8px;padding:10px 12px}
+.search-wrap i{font-size:18px;color:#6a6a8c}
+.search-wrap input{flex:1;background:none;border:none;color:#fff;font-size:14px;outline:none}
+.search-wrap input::placeholder{color:#4a4a6a}
+.sr-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1a1a2a;cursor:pointer}
+.sr-item:hover{background:#141426}
+.sr-thumb{width:44px;height:44px;border-radius:8px;background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sr-info{flex:1;min-width:0}
+.sr-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8e8f5}
+.sr-meta{font-size:11px;color:#6a6a8c;margin-top:2px}
+.sr-badge{font-size:10px;padding:2px 6px;border-radius:4px;flex-shrink:0}
+.sr-badge.cache{background:#122212;color:#00c870}
+.sr-badge.stream{background:#12141e;color:#6a6a8c}
+.radio-toggle{display:flex;align-items:center;justify-content:space-between;margin:12px 14px 0;background:#141426;border-radius:14px;padding:14px}
+.rt-left{display:flex;align-items:center;gap:10px}
+.rt-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.rt-icon.on{background:#3a1040}
+.rt-icon.off{background:#1e1e38}
+.rt-title{font-size:14px;font-weight:600}
+.rt-sub{font-size:11px;color:#6a6a8c;margin-top:1px}
+.toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s}
+.toggle.on{background:#e040fb}
+.toggle.off{background:#2a2a3e}
+.toggle-dot{position:absolute;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle.on .toggle-dot{left:23px}
+.toggle.off .toggle-dot{left:3px}
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px;margin-bottom:2px}
+.chip{font-size:11px;background:#1e1e38;border:1px solid #2e2e48;border-radius:20px;padding:4px 10px;color:#c0c0e0;cursor:pointer;display:flex;align-items:center;gap:4px}
+.chip.active{background:#3a1040;border-color:#e040fb44;color:#e040fb}
+.chip .rm{color:#6a6a8c;font-size:10px}
+.chip-add{border:1px dashed #3a3a5a;background:none;color:#6a6a8c}
+.next-card{margin:0 14px 10px;background:#141426;border-radius:14px;overflow:hidden;border:1px solid #2a2a3e}
+.next-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;border-bottom:1px solid #1e1e30}
+.next-label{font-size:11px;color:#6a6a8c;text-transform:uppercase;letter-spacing:.5px}
+.next-skip{background:none;border:none;font-size:11px;color:#e040fb;cursor:pointer}
+.next-item{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.next-thumb{width:40px;height:40px;border-radius:8px;background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.next-info{flex:1;min-width:0}
+.next-title{font-size:13px;font-weight:500;color:#e8e8f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.next-meta{font-size:11px;color:#6a6a8c;margin-top:1px}
+.qi{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #141420;cursor:pointer}
+.qi.cur{background:#1a0a28}
+.qi-drag{color:#3a3a5a;font-size:16px;cursor:grab;flex-shrink:0}
+.qi-num{font-size:13px;color:#6a6a8c;min-width:18px;text-align:center;flex-shrink:0}
+.qi-num.playing{color:#e040fb}
+.qi-info{flex:1;min-width:0}
+.qi-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8e8f5}
+.qi-meta{font-size:11px;color:#6a6a8c;margin-top:1px}
+.qi-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qi-dur{font-size:11px;color:#6a6a8c}
+.qi-rm{background:none;border:none;color:#5a5a7a;font-size:14px;cursor:pointer;padding:2px 4px;border-radius:4px}
+.qi-rm:hover{color:#e040fb;background:#1e1428}
+.lyrics-panel{border-top:1px solid #1e1e30}
+.lyric-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer}
+.lyric-hdr span{font-size:12px;color:#9a9abc;display:flex;align-items:center;gap:6px}
+.lyric-offset{display:flex;align-items:center;gap:6px;font-size:11px;color:#6a6a8c}
+.lyric-offset button{background:#1e1e38;border:none;color:#9a9abc;width:22px;height:22px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.lyric-body{padding:0 14px 12px;max-height:120px;overflow-y:auto}
+.lyric-body::-webkit-scrollbar{width:2px}
+.lyric-body::-webkit-scrollbar-thumb{background:#2a2a3e}
+.lyric-line{font-size:13px;padding:3px 0;color:#5a5a7a;text-align:center;transition:color .2s}
+.lyric-line.cur{color:#f0f0ff;font-weight:500;font-size:14px}
+.lyric-line.near{color:#9a9abc}
+.disc-row2{display:flex;gap:10px;padding:0 14px 12px;overflow-x:auto}
+.disc-row2::-webkit-scrollbar{display:none}
+.fav-card{background:#141426;border-radius:10px;min-width:130px;overflow:hidden;cursor:pointer;padding:10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.fav-num{font-size:18px;font-weight:700;color:#2a2a48;min-width:24px;text-align:center}
+.fav-info{flex:1;min-width:0}
+.fav-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8e8f5}
+.fav-cnt{font-size:10px;color:#6a6a8c;margin-top:1px}
+.settings-sheet{position:absolute;bottom:0;left:0;right:0;background:#141426;border-radius:20px 20px 0 0;border-top:1px solid #2a2a3e;padding:16px;transition:transform .25s;transform:translateY(100%);z-index:10}
+.settings-sheet.open{transform:translateY(0)}
+.ss-handle{width:36px;height:3px;background:#2a2a3e;border-radius:2px;margin:0 auto 16px}
+.ss-title{font-size:14px;font-weight:600;margin-bottom:12px;color:#f0f0ff}
+.ss-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e1e30}
+.ss-row:last-child{border-bottom:none}
+.ss-label{display:flex;align-items:center;gap:8px}
+.ss-label i{font-size:18px;color:#9a9abc}
+.ss-label-text{font-size:13px;color:#e0e0f5}
+.ss-label-sub{font-size:11px;color:#6a6a8c;margin-top:1px}
+.dl-bar-wrap{margin-top:6px;background:#0f0f1c;border-radius:6px;padding:8px 10px}
+.dl-label{font-size:11px;color:#9a9abc;margin-bottom:4px;display:flex;justify-content:space-between}
+.dl-bar{height:4px;background:#1e1e2e;border-radius:2px}
+.dl-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#e040fb,#00e5ff)}
+.shimmer{animation:shimmer 2s ease-in-out infinite}
+@keyframes shimmer{0%,100%{opacity:.6}50%{opacity:1}}
+.overlay{position:absolute;inset:0;background:#00000070;z-index:9;display:none}
+.overlay.open{display:block}
+</style>
+
+<div style="padding:8px 0 16px">
+<h2 class="sr-only">bagas.fm — interactive UI mockup showing all tabs and features</h2>
+<div class="fm" id="fm">
+  <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+  <div class="fm-header">
+    <span class="fm-title">bagas.fm</span>
+    <div class="fm-hright">
+      <button class="out-btn" id="out-btn" onclick="toggleOutput()">
+        <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> Device
+      </button>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="pbar">
+    <div class="pb-row1">
+      <div class="pb-title">Ada Yang Hilang — Peterpan</div>
+      <span class="pb-badge" id="mode-badge">📻 radio</span>
+    </div>
+    <div class="pb-seek">
+      <span class="pb-time">1:23</span>
+      <div class="pb-track">
+        <div class="pb-fill" id="seek-fill" style="width:38%"></div>
+        <div class="pb-thumb" id="seek-thumb" style="left:38%"></div>
+      </div>
+      <span class="pb-time" style="text-align:right">3:45</span>
+    </div>
+    <div class="pb-ctrl">
+      <div class="vol-grp">
+        <i class="ti ti-volume" aria-hidden="true"></i>
+        <input type="range" min="0" max="100" value="80" id="vol-slider" oninput="document.getElementById('vol-out').textContent=this.value+'%'">
+        <span class="vol-label" id="vol-out">80%</span>
+      </div>
+      <div class="main-ctrl">
+        <button class="btn-prev" aria-label="Previous"><i class="ti ti-player-skip-back" style="font-size:20px" aria-hidden="true"></i></button>
+        <button class="btn-play" aria-label="Play/Pause" id="playbtn" onclick="togglePlay()"><i class="ti ti-player-pause-filled" style="font-size:16px;color:#fff" aria-hidden="true"></i></button>
+        <button class="btn-next" aria-label="Next"><i class="ti ti-player-skip-forward" style="font-size:20px" aria-hidden="true"></i></button>
+      </div>
+      <div class="pb-sec">
+        <button onclick="openSheet()" title="Pengaturan" aria-label="Pengaturan"><i class="ti ti-settings" aria-hidden="true"></i></button>
+        <button title="Unduh" aria-label="Unduh lagu ini"><i class="ti ti-download" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="pb-badges">
+      <span class="pb-badge-sm cached">✓ tersimpan</span>
+      <span class="pb-badge-sm sb">SB aktif</span>
+    </div>
+  </div>
+
+  <nav class="navrow">
+    <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+      <i class="ti ti-disc" aria-hidden="true"></i><span>Player</span>
+    </button>
+    <button class="nav-btn" data-tab="search" onclick="switchTab('search')">
+      <i class="ti ti-search" aria-hidden="true"></i><span>Search</span>
+    </button>
+    <button class="nav-btn" data-tab="radio" onclick="switchTab('radio')">
+      <i class="ti ti-antenna" aria-hidden="true"></i><span>Radio</span>
+    </button>
+    <button class="nav-btn" data-tab="queue" onclick="switchTab('queue')">
+      <i class="ti ti-list" aria-hidden="true"></i><span>Queue</span>
+    </button>
+    <button class="nav-btn" data-tab="discover" onclick="switchTab('discover')">
+      <i class="ti ti-compass" aria-hidden="true"></i><span>Discover</span>
+    </button>
+  </nav>
+
+  <div class="settings-sheet" id="ss">
+    <div class="ss-handle"></div>
+    <div class="ss-title">Pengaturan Pemutaran</div>
+    <div class="ss-row">
+      <div class="ss-label">
+        <i class="ti ti-shield-check" aria-hidden="true"></i>
+        <div><div class="ss-label-text">SponsorBlock</div><div class="ss-label-sub">Lewati sponsor, intro, outro</div></div>
+      </div>
+      <button class="toggle on" id="sb-toggle" onclick="toggleSB(this)"><div class="toggle-dot"></div></button>
+    </div>
+    <div class="ss-row">
+      <div class="ss-label">
+        <i class="ti ti-device-speaker" aria-hidden="true"></i>
+        <div><div class="ss-label-text">Output Audio</div><div class="ss-label-sub" id="out-sub">Keluar via perangkat (mpv)</div></div>
+      </div>
+      <button class="out-btn" id="out-btn2" onclick="toggleOutput()">
+        <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> Device
+      </button>
+    </div>
+    <div class="ss-row" id="dl-row" style="display:none">
+      <div style="width:100%">
+        <div class="ss-label" style="margin-bottom:6px">
+          <i class="ti ti-download" aria-hidden="true"></i>
+          <div><div class="ss-label-text">Mengunduh...</div><div class="ss-label-sub">Ada Yang Hilang — Peterpan</div></div>
+        </div>
+        <div class="dl-bar-wrap">
+          <div class="dl-label"><span>Progress</span><span>67%</span></div>
+          <div class="dl-bar"><div class="dl-fill shimmer" style="width:67%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="ss-row">
+      <div class="ss-label">
+        <i class="ti ti-history" aria-hidden="true"></i>
+        <div><div class="ss-label-text">Riwayat Putar</div><div class="ss-label-sub">24 lagu diputar sesi ini</div></div>
+      </div>
+      <button style="background:#1e1e38;border:1px solid #2e2e48;border-radius:8px;padding:4px 10px;color:#9a9abc;font-size:11px;cursor:pointer">Lihat</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var eqInterval;
+var isPlaying=true;
+var isRadioOn=true;
+var isBrowser=false;
+var sbOn=true;
+var activeTab='home';
+
+function openSheet(){
+  document.getElementById('ss').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('ss').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+function togglePlay(){
+  isPlaying=!isPlaying;
+  var ic=document.querySelector('#playbtn i');
+  ic.className=isPlaying?'ti ti-player-pause-filled':'ti ti-player-play-filled';
+  ic.style.fontSize='16px';ic.style.color='#fff';
+}
+function toggleSB(btn){
+  sbOn=!sbOn;
+  btn.className='toggle '+(sbOn?'on':'off');
+}
+function toggleOutput(){
+  isBrowser=!isBrowser;
+  var label=isBrowser?'Browser':'Device';
+  var icon=isBrowser?'ti-device-laptop':'ti-device-mobile';
+  ['out-btn','out-btn2'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(!b)return;
+    b.className='out-btn'+(isBrowser?' browser':'');
+    b.innerHTML='<i class="ti '+icon+'" style="font-size:11px"></i> '+label;
+  });
+  var sub=document.getElementById('out-sub');
+  if(sub)sub.textContent=isBrowser?'Audio streaming ke browser ini':'Keluar via perangkat (mpv)';
+}
+
+var tabContent={
+  home:function(){return'<div class="card" style="display:flex;gap:12px;align-items:center"><div class="np-art"><i class="ti ti-music" style="font-size:28px;color:#e040fb" aria-hidden="true"></i></div><div class="np-meta"><div class="np-track">Ada Yang Hilang</div><div class="np-artist">Peterpan</div><div class="np-dur">1:23 / 3:45 · 2005</div></div></div><div class="eq-wrap" id="eq-wrap">'+Array(14).fill(0).map(function(_,i){return'<div class="eq-bar" id="eq'+i+'" style="height:'+(20+Math.random()*30)+'px"></div>'}).join('')+'</div><div class="section-label">Baru Diputar</div><div class="discover-row"><div class="disc-card"><div class="disc-thumb">🎵<span class="disc-tag">cache</span></div><div class="disc-info"><div class="disc-title">Jika Kau Percaya</div><div class="disc-artist">Sheila On 7</div></div></div><div class="disc-card"><div class="disc-thumb">🎵</div><div class="disc-info"><div class="disc-title">Separuh Aku</div><div class="disc-artist">NOAH</div></div></div><div class="disc-card"><div class="disc-thumb">🎵<span class="disc-tag">cache</span></div><div class="disc-info"><div class="disc-title">Benar-Benar</div><div class="disc-artist">Peterpan</div></div></div><div class="disc-card"><div class="disc-thumb">🎵</div><div class="disc-info"><div class="disc-title">Makna Cinta</div><div class="disc-artist">Sheila On 7</div></div></div></div>';},
+  
+  search:function(){return'<div class="search-wrap"><i class="ti ti-search" aria-hidden="true"></i><input placeholder="Ketik nama lagu atau artis..."></div><div style="padding:0 14px 6px"><span style="font-size:11px;color:#6a6a8c">Hasil: "peterpan" (8 ditemukan)</span></div>'+[['Ada Yang Hilang','Peterpan','3:45',true],['Bintang Di Surga','Peterpan','4:12',false],['Menghapus Jejakmu','Peterpan','4:02',true],['Mimpi Yang Sempurna','Peterpan','3:33',false]].map(function(x){return'<div class="sr-item"><div class="sr-thumb"><i class="ti ti-music" style="font-size:18px;color:#6a6a8c" aria-hidden="true"></i></div><div class="sr-info"><div class="sr-title">'+x[0]+'</div><div class="sr-meta">'+x[1]+' · '+x[2]+'</div></div><span class="sr-badge '+(x[3]?'cache':'stream')+'">'+(x[3]?'✓ Cache':'☁ Stream')+'</span></div>'}).join('');},
+
+  radio:function(){
+    var onoff=isRadioOn;
+    return'<div class="radio-toggle"><div class="rt-left"><div class="rt-icon '+(onoff?'on':'off')+'" style="font-size:20px"><i class="ti ti-antenna" aria-hidden="true"></i></div><div><div class="rt-title">Radio Mode</div><div class="rt-sub">'+(onoff?'Menyetel lagu otomatis...':'Aktifkan untuk putar otomatis')+'</div></div></div><button class="toggle '+(onoff?'on':'off')+'" onclick="isRadioOn=!isRadioOn;switchTab(\'radio\')"><div class="toggle-dot"></div></button></div>'+(onoff?'<div class="next-card"><div class="next-header"><span class="next-label">Selanjutnya</span><button class="next-skip">⏭ Skip</button></div><div class="next-item"><div class="next-thumb"><i class="ti ti-music" style="font-size:16px;color:#6a6a8c" aria-hidden="true"></i></div><div class="next-info"><div class="next-title">Jika Kau Percaya</div><div class="next-meta">Sheila On 7 · 4:01</div></div></div></div>':'')+
+    '<div class="section-label">Benih Artis</div><div class="chip-wrap"><span class="chip active">Peterpan ×</span><span class="chip active">Sheila On 7 ×</span><span class="chip active">Dewa 19 ×</span><span class="chip active">NOAH ×</span><span class="chip active">Samsons ×</span><span class="chip">Ungu ×</span><span class="chip">Vierra ×</span><span class="chip">d\'Masiv ×</span><span class="chip chip-add"><i class="ti ti-plus" style="font-size:11px" aria-hidden="true"></i> Tambah</span></div>'+
+    '<div class="section-label">Acak Artis</div><div style="padding:0 14px 10px;display:flex;gap:8px"><button style="background:#1e1e38;border:1px solid #2e2e48;border-radius:10px;padding:8px 14px;color:#c0c0e0;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-dice" style="font-size:14px" aria-hidden="true"></i> Acak Ulang</button></div>';
+  },
+
+  queue:function(){
+    var tracks=[['Ada Yang Hilang','Peterpan','3:45',true],['Jika Kau Percaya','Sheila On 7','4:01',false],['Separuh Aku','NOAH','3:51',false],['Benar-Benar','Peterpan','4:10',false],['Kita Bisa','Sheila On 7','3:33',false]];
+    return tracks.map(function(t,i){return'<div class="qi'+(i===0?' cur':'')+'"><i class="ti ti-grip-vertical qi-drag" aria-hidden="true"></i><div class="qi-num'+(i===0?' playing':'')+'">'+( i===0?'▶':(i+1))+'</div><div class="qi-info"><div class="qi-title">'+t[0]+'</div><div class="qi-meta">'+t[1]+'</div></div><div class="qi-right"><span class="qi-dur">'+t[2]+'</span>'+(i>0?'<button class="qi-rm" aria-label="Hapus"><i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i></button>':'')+'</div></div>'}).join('')+
+    '<div class="lyrics-panel"><div class="lyric-hdr"><span><i class="ti ti-align-center" style="font-size:15px" aria-hidden="true"></i> Lirik Tersinkron</span><div class="lyric-offset"><span>Offset</span><button>−</button><span>+0.0s</span><button>+</button></div></div><div class="lyric-body"><div class="lyric-line">Dulu kau bilang</div><div class="lyric-line near">Kau tak kan tinggalkan</div><div class="lyric-line cur">Ada yang hilang dari dalam hatimu</div><div class="lyric-line near">Selain dirimu tak ada yang lain</div><div class="lyric-line">Yang mampu isi kekosongan ini</div></div></div>';
+  },
+
+  discover:function(){
+    return'<div class="section-label">Paling Sering Diputar</div><div class="disc-row2">'+[['Ada Yang Hilang','Peterpan','47×'],['Jika Kau Percaya','Sheila On 7','38×'],['Separuh Aku','NOAH','31×'],['Bintang 5','Dewa 19','28×']].map(function(x,i){return'<div class="fav-card"><div class="fav-num">'+(i+1)+'</div><div style="width:32px;height:32px;border-radius:6px;background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"><i class="ti ti-music" style="color:#6a6a8c" aria-hidden="true"></i></div><div class="fav-info"><div class="fav-title">'+x[0]+'</div><div class="fav-cnt">'+x[1]+' · '+x[2]+'</div></div></div>'}).join('')+'</div>'+
+    '<div class="section-label">Baru Diputar</div><div class="discover-row">'+[['Kita Bisa','Sheila On 7','cache'],['Benar-Benar','Peterpan','stream'],['Cinta Sejati','Kahitna','cache'],['Mimpi','Peterpan','stream'],['Separuh Aku','NOAH','cache']].map(function(x){return'<div class="disc-card"><div class="disc-thumb"><i class="ti ti-music" style="font-size:22px;color:#6a6a8c" aria-hidden="true"></i>'+(x[2]==='cache'?'<span class="disc-tag">cache</span>':'')+'</div><div class="disc-info"><div class="disc-title">'+x[0]+'</div><div class="disc-artist">'+x[1]+'</div></div></div>'}).join('')+'</div>'+
+    '<div class="section-label">Tersimpan Lokal (Cache)</div>'+
+    [['Ada Yang Hilang','Peterpan','3:45'],['Kita Bisa','Sheila On 7','3:33'],['Separuh Aku','NOAH','3:51']].map(function(t){return'<div class="sr-item"><div class="sr-thumb"><i class="ti ti-music" style="font-size:18px;color:#6a6a8c" aria-hidden="true"></i></div><div class="sr-info"><div class="sr-title">'+t[0]+'</div><div class="sr-meta">'+t[1]+' · '+t[2]+'</div></div><span class="sr-badge cache">✓ Cache</span></div>'}).join('');
+  }
+};
+
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.tab===tab);
+  });
+  document.getElementById('content').innerHTML=tabContent[tab]();
+  startEQ();
+}
+
+function startEQ(){
+  clearInterval(eqInterval);
+  if(activeTab!=='home')return;
+  eqInterval=setInterval(function(){
+    for(var i=0;i<14;i++){
+      var bar=document.getElementById('eq'+i);
+      if(!bar)continue;
+      if(isPlaying){var h=8+Math.random()*42;bar.style.height=h+'px';}
+      else{var c=parseFloat(bar.style.height)||10;bar.style.height=Math.max(4,c*0.85+1)+'px';}
+    }
+  },120);
+}
+
+switchTab('home');
+
+var seekTrack=document.getElementById('fm');
+(function seekInit(){
+  var pt=document.querySelector('.pb-track');
+  if(!pt){setTimeout(seekInit,100);return;}
+  pt.addEventListener('click',function(e){
+    var r=pt.getBoundingClientRect();
+    var pct=Math.round((e.clientX-r.left)/r.width*100);
+    document.getElementById('seek-fill').style.width=pct+'%';
+    document.getElementById('seek-thumb').style.left=pct+'%';
+  });
+})();
+</script>

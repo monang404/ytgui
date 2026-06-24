@@ -1,0 +1,202 @@
+/* ── Tab Discover ── */
+#tab-discover {
+    padding-bottom: 16px;
+}
+
+.disc-row2 {
+    display: flex;
+    gap: 10px;
+    padding: 0 14px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.disc-row2::-webkit-scrollbar { display: none; }
+
+.fav-card {
+    background: var(--fm-bg-card);
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius-sm);
+    min-width: 136px;
+    overflow: hidden;
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    transition: all var(--fm-transition-fast);
+}
+.fav-card:hover {
+    border-color: var(--fm-accent);
+    background: var(--fm-bg-elevated);
+}
+
+.fav-num {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--fm-border);
+    min-width: 26px;
+    text-align: center;
+}
+
+.fav-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--fm-bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.fav-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.fav-info { flex: 1; min-width: 0; }
+
+.fav-title {
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--fm-text-1);
+}
+
+.fav-cnt {
+    font-size: 10px;
+    color: var(--fm-text-5);
+    margin-top: 1px;
+}
+
+/* ── Radio Tab: seed chips + next card ── */
+.radio-next-card {
+    width: 100%;
+    background: var(--bg-glass);
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius-md);
+    overflow: hidden;
+}
+
+.radio-next-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--fm-border);
+}
+
+.radio-next-label {
+    font-size: 10px;
+    color: var(--fm-text-5);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    font-weight: 600;
+}
+
+.radio-next-skip {
+    background: none;
+    border: none;
+    font-size: 11px;
+    color: var(--fm-accent);
+    cursor: pointer;
+    font-family: var(--fm-font);
+    font-weight: 600;
+}
+
+.radio-next-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+}
+
+.radio-next-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--fm-radius-sm);
+    background: var(--fm-bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.radio-next-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--fm-radius-sm);
+}
+
+.radio-next-info { flex: 1; min-width: 0; }
+.radio-next-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fm-text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.radio-next-meta {
+    font-size: 11px;
+    color: var(--fm-text-5);
+    margin-top: 1px;
+}
+
+/* Seed chips */
+.chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 16px 8px;
+}
+
+.chip {
+    font-size: 11px;
+    background: var(--fm-bg-card);
+    border: 1px solid var(--fm-border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    color: var(--fm-text-4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all var(--fm-transition-fast);
+}
+
+.chip.active {
+    background: rgba(233, 69, 96, 0.12);
+    border-color: rgba(233, 69, 96, 0.4);
+    color: var(--fm-accent);
+}
+
+.chip:hover { border-color: var(--fm-accent); }
+
+.chip .rm {
+    color: var(--fm-text-5);
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+
+
+/* ══════════════════════════════════════
+   MISSING TAB & MODAL CSS
+   ══════════════════════════════════════ */
+.tab-panel { display: none; }
+#tab-home.active { display: flex; flex-direction: column; }
+#tab-search.active { display: block; }
+#tab-radio.active { display: flex; flex-direction: column; padding-bottom: 20px; }
+#tab-queue.active { display: block; }
+#tab-discover.active { display: block; }
+
+

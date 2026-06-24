@@ -18,6 +18,10 @@ class Database:
         self._schema_path = Path(__file__).parent / "schema.sql"
         self._conn = None
 
+    @property
+    def conn(self):
+        return self._conn
+
     async def init(self):
         """Initializes the database using the schema.sql file."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

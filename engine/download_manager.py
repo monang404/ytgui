@@ -24,7 +24,7 @@ class DownloadManager:
         
         command_bus.register(CMD_DOWNLOAD, self._on_download)
         
-    async def _on_download(self, track: TrackInfo | None = None):
+    async def _on_download(self, room_id: str, track: TrackInfo | None = None):  # TASK-0.4: tambah room_id sesuai CommandBus convention
         target = track or self.state.current_track
         if not target:
             await self.bus.publish(LogMessageEvent(message="Tidak ada lagu yang dipilih untuk di-download"))

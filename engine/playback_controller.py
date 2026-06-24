@@ -12,12 +12,10 @@ from core.events import (
     LogMessageEvent, QueueUpdatedEvent, TrackPauseChangedEvent
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
-from core.ports import AudioPlayerPort
+from core.ports import AudioPlayerPort, LyricsProvider, SponsorBlockProvider
 from cache.resolver import CacheResolver
-from integrations.sponsorblock import SponsorBlockHandler
-from integrations.lyrics import LyricsFetcher
-from engine.queue_mode import QueueMode
-from engine.radio_mode import RadioMode
+from engine.queue_manager import QueueMode
+from engine.radio_engine import RadioMode
 from core.task_utils import safe_create_task
 
 logger = structlog.get_logger(__name__)
@@ -30,8 +28,8 @@ class PlaybackController:
         state: AppState,
         mpv: AudioPlayerPort,
         resolver: CacheResolver,
-        sponsorblock: SponsorBlockHandler,
-        lyrics_fetcher: LyricsFetcher,
+        sponsorblock: SponsorBlockProvider,
+        lyrics_fetcher: LyricsProvider,
         queue_mode: QueueMode,
         radio_mode: RadioMode
     ):
@@ -111,6 +109,10 @@ class PlaybackController:
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:
+            if self.state.playback_mode == PlaybackMode.RADIO:
+                await self.radio_mode.on_deactivated()
+                self.state.playback_mode = PlaybackMode.QUEUE
+                await self.bus.publish(QueueUpdatedEvent())
             await self.play_track(track)
 
     async def _on_track_ended(self, event: TrackEndedEvent):
@@ -160,6 +162,7 @@ class PlaybackController:
                 await self.bus.publish(LogMessageEvent(message="Tidak ada lagu sebelumnya"))
 
     async def _on_stop(self, _data=None):
+        self._retry_count = 0  # TASK-0.2: reset retry state agar tidak bocor ke lagu berikutnya
         await self.mpv.pause()
         self.state.status = PlayerStatus.IDLE
         self.state.current_track = None
@@ -177,15 +180,23 @@ class PlaybackController:
             self.state.position = position
 
     async def _on_set_mode(self, mode: PlaybackMode):
-        if self.state.playback_mode != mode:
-            previous_mode = self.state.playback_mode
-            self.state.playback_mode = mode
-            if previous_mode == PlaybackMode.RADIO:
-                await self.radio_mode.on_deactivated()
-            if mode == PlaybackMode.RADIO:
-                await self.radio_mode.on_activated(self)
-            await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
-            await self.bus.publish(QueueUpdatedEvent())
+        async with self._lock:
+            if self.state.playback_mode != mode:
+                previous_mode = self.state.playback_mode
+                self.state.playback_mode = mode
+                
+                if previous_mode == PlaybackMode.RADIO:
+                    await self.radio_mode.on_deactivated()
+                    await self.mpv.pause()
+                    self.state.current_track = None
+                    self.state.status = PlayerStatus.IDLE
+                    await self._advance_to_next()
+                    
+                if mode == PlaybackMode.RADIO:
+                    await self.radio_mode.on_activated(self)
+                    
+                await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
+                await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_queue_select(self, index: int):
         async with self._lock:
@@ -208,9 +219,22 @@ class PlaybackController:
         await self.bus.publish(QueueUpdatedEvent())
         await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}"))
 
-    async def _on_radio_randomize(self, _data=None):
+    async def _on_queue_reorder(self, data: dict):
+        async with self._lock:
+            from_index = data.get("from_index")
+            to_index = data.get("to_index")
+            q = self.state.queue
+            if from_index is not None and to_index is not None:
+                if 0 <= from_index < len(q) and 0 <= to_index < len(q):
+                    item = q[from_index]
+                    del q[from_index]
+                    q.insert(to_index, item)
+                    await self.bus.publish(QueueUpdatedEvent())
+
+    async def _on_radio_randomize(self, data=None):
         async with self._lock:
             if self.state.playback_mode == PlaybackMode.RADIO:
+                seed = data.get("seed_artist") if data else None
                 self.state.radio_queue.clear()
                 
                 # Stop playing current track immediately to give instant "reset" feel
@@ -221,8 +245,8 @@ class PlaybackController:
                 await self.bus.publish(QueueUpdatedEvent())
                 
                 await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio..."))
-                # Panggil fetch dengan seed=None agar memaksa penggunaan seed acak dari list
-                await self.radio_mode._fetch_and_play_initial(self, seed_artist=None)
+                # Panggil fetch dengan seed jika ada, jika tidak None
+                await self.radio_mode._fetch_and_play_initial(self, seed_artist=seed)
             else:
                 await self.bus.publish(LogMessageEvent(message="Radio tidak aktif"))
 
@@ -243,3 +267,14 @@ class PlaybackController:
             await self.mpv.set_volume(self.state.volume)
         await self.bus.publish(LogMessageEvent(message=f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}"))
         await self.bus.publish(QueueUpdatedEvent())
+
+    async def _on_set_sponsorblock(self, enabled: bool):
+        self.state.sponsorblock_active = enabled
+        await self.bus.publish(LogMessageEvent(message=f"SponsorBlock: {'ON' if enabled else 'OFF'}"))
+        await self.bus.publish(QueueUpdatedEvent())
+
+    async def _on_lyrics_offset(self, data: dict):
+        offset = data.get("offset", 0.0)
+        self.state.lyrics_offset = float(offset)
+        from core.events import LyricsUpdatedEvent
+        await self.bus.publish(LyricsUpdatedEvent())

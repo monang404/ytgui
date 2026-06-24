@@ -2,8 +2,9 @@ import structlog
 from core.command_bus import (
     command_bus,
     CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK,
-    CMD_SET_MODE, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE, CMD_QUEUE_ADD,
-    CMD_RADIO_RANDOMIZE, CMD_SET_OUTPUT, CMD_VOLUME_UP, CMD_VOLUME_DOWN
+    CMD_SET_MODE, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE, CMD_QUEUE_ADD, CMD_QUEUE_REORDER,
+    CMD_RADIO_RANDOMIZE, CMD_SET_OUTPUT, CMD_SET_SPONSORBLOCK, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_VOLUME_SET,
+    CMD_LYRICS_OFFSET
 )
 from core.room_manager import RoomManager
 
@@ -26,11 +27,15 @@ class CommandRouter:
         command_bus.register(CMD_QUEUE_SELECT, self._route(lambda c, data: c._on_queue_select(data)))
         command_bus.register(CMD_QUEUE_REMOVE, self._route(lambda c, data: c._on_queue_remove(data)))
         command_bus.register(CMD_QUEUE_ADD, self._route(lambda c, data: c._on_queue_add(data)))
+        command_bus.register(CMD_QUEUE_REORDER, self._route(lambda c, data: c._on_queue_reorder(data)))
         command_bus.register(CMD_RADIO_RANDOMIZE, self._route(lambda c, data: c._on_radio_randomize(data)))
         command_bus.register(CMD_SET_OUTPUT, self._route(lambda c, data: c._on_set_output(data)))
+        command_bus.register(CMD_SET_SPONSORBLOCK, self._route(lambda c, data: c._on_set_sponsorblock(data)))
+        command_bus.register(CMD_LYRICS_OFFSET, self._route(lambda c, data: c._on_lyrics_offset(data)))
         
         command_bus.register(CMD_VOLUME_UP, self._route_volume(lambda v, data: v._on_volume_up(data)))
         command_bus.register(CMD_VOLUME_DOWN, self._route_volume(lambda v, data: v._on_volume_down(data)))
+        command_bus.register(CMD_VOLUME_SET, self._route_volume(lambda v, data: v._on_volume_set(data)))
 
     def _route(self, action):
         async def handler(room_id: str, data):

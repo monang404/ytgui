@@ -51,7 +51,7 @@ class AppState:
     position:        float = 0.0
     duration:        float = 0.0
     volume:          int   = 80
-    sponsorblock_active: bool = False
+    sponsorblock_active: bool = True
 
     # Queue (hanya aktif di QUEUE mode)
     queue:           deque = field(default_factory=deque)
@@ -61,7 +61,8 @@ class AppState:
     history:         deque = field(default_factory=lambda: deque(maxlen=50))
 
     # Lyrics
-    lyrics_lines:    list[tuple[float, str]] = field(default_factory=list)
+    lyrics_lines:    list[str] = field(default_factory=list)
+    lyrics_timestamps: list[float] = field(default_factory=list)
     lyrics_index:    int = 0
     lyrics_offset:   float = 0.0
 

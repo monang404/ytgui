@@ -1,56 +1,113 @@
 @echo off
-color 0A
-title YTGUI Web Server Startup
-echo ===================================================
-echo             Memulai YTGUI Web Server
-echo ===================================================
+color 0B
+
 echo.
-echo [1/3] Menyiapkan environment variables...
-set YTGUI_HOST=0.0.0.0
-set YTGUI_PORT=8765
+echo    __   __ _____  ____  _   _  _____    _____  __  __
+echo    \ \ / / ^|_   _^|/ ___^|^| ^| ^| ^|^|_   _^|  ^|  ___^|^|  \/  ^|
+echo     \ V /   ^| ^|  ^| ^|  _ ^| ^| ^| ^|  ^| ^|    ^| ^|_   ^| ^|\/^| ^|
+echo      ^| ^|    ^| ^|  ^| ^|_^| ^|^| ^|_^| ^|  ^| ^|    ^|  _^|  ^| ^|  ^| ^|
+echo      ^|_^|    ^|_^|   \____^| \___/   ^|_^|    ^|_^|    ^|_^|  ^|_^|
+echo.
+echo    ================================================================
+echo                      YTGUI Web Server Startup
+echo    ================================================================
+echo.
 
-:: Hilangkan tanda "::" di bawah ini untuk mengunci kredensial admin
-:: Jika dibiarkan terkunci, sistem akan men-generate password otomatis secara aman (di-hash)
-:: set YTGUI_ADMIN_USER=admin
-:: set YTGUI_ADMIN_PASS=password_rahasia_anda
-timeout /t 1 >nul
+:: ----------------------------------------------------------
+::  CONFIGURATION
+:: ----------------------------------------------------------
+set "YTGUI_HOST=0.0.0.0"
+set "YTGUI_PORT=8765"
 
-echo [2/3] Memeriksa dependensi Python...
-python -c "import aiohttp, aiosqlite, yt_dlp, syncedlyrics, structlog" >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo       [Peringatan] Dependensi belum lengkap! Pastikan Anda sudah menjalankan 'pip install -r requirements.txt'.
-    timeout /t 2 >nul
+:: Admin credentials (uncomment to set explicitly)
+:: set "YTGUI_ADMIN_USER=admin"
+:: set "YTGUI_ADMIN_PASS=your_secret_password"
+
+:: ----------------------------------------------------------
+::  STARTUP SEQUENCE
+:: ----------------------------------------------------------
+
+echo  [*] Initializing Environment Variables...
+ping 127.0.0.1 -n 2 > nul
+
+echo  [*] Checking Python Dependencies...
+set "DEPS_OK=1"
+for %%m in (aiohttp aiosqlite yt_dlp syncedlyrics structlog prometheus_client opentelemetry) do (
+    python -c "import %%m" > nul 2>&1
+    if errorlevel 1 (
+        echo      [-] Missing module: %%m
+        set "DEPS_OK=0"
+    )
+)
+
+if "%DEPS_OK%"=="1" (
+    echo      [+] All Python dependencies are satisfied.
 ) else (
-    echo       [OK] Dependensi lengkap.
+    echo.
+    echo  [!] WARNING: Some dependencies are missing.
+    echo      Please run: pip install -r requirements.txt
+    echo.
+    ping 127.0.0.1 -n 4 > nul
 )
-timeout /t 1 >nul
 
-echo [3/3] Memeriksa instalasi MPV...
-where mpv >nul 2>&1
+echo  [*] Verifying MPV Installation...
+where mpv > nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo       [Peringatan] MPV tidak terdeteksi di sistem PATH Anda! Aplikasi mungkin tidak dapat memutar musik.
-    timeout /t 2 >nul
+    echo      [-] MPV not found in system PATH.
+    echo          Download from: https://mpv.io/installation/
+    echo          Then add mpv.exe to your system PATH.
+    echo.
+    ping 127.0.0.1 -n 4 > nul
 ) else (
-    echo       [OK] MPV terdeteksi.
-)
-timeout /t 1 >nul
-
-echo.
-echo [Merapikan Sesi]
-echo Membersihkan Sesi sebelumnya..
-taskkill /F /IM mpv.exe >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :%YTGUI_PORT%') do (
-    taskkill /F /PID %%a >nul 2>&1
+    echo      [+] MPV detected.
 )
 
+echo  [*] Cleaning Up Previous Sessions...
+taskkill /F /IM mpv.exe > nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr /R ":%YTGUI_PORT% " 2^>nul') do (
+    taskkill /F /PID %%a > nul 2>&1
+)
+
+:: ----------------------------------------------------------
+::  ADMIN ACCESS INFO
+:: ----------------------------------------------------------
 echo.
-echo [Memulai Server] 
-echo Menyiapkan YTGUI (Bagas.FM) . . .
+echo  ----------------------------------------------------------------
+echo   Admin Access Information
+echo  ----------------------------------------------------------------
+if defined YTGUI_ADMIN_PASS (
+    echo   [i] Password loaded from environment variable YTGUI_ADMIN_PASS.
+) else (
+    if exist "cache\admin_password.txt" (
+        echo   [i] Password stored securely in: cache\admin_password.txt
+    ) else (
+        echo   [i] A new password will be auto-generated on first launch.
+    )
+)
+if defined YTGUI_ADMIN_USER (
+    echo   [i] Username: %YTGUI_ADMIN_USER%
+) else (
+    echo   [i] Username: admin
+)
+
+:: ----------------------------------------------------------
+::  SERVER STARTUP
+:: ----------------------------------------------------------
 echo.
-echo ===================================================
-echo  Akses Client : http://localhost:%YTGUI_PORT%/
-echo  Akses Admin  : http://localhost:%YTGUI_PORT%/admin
-echo ===================================================
-timeout /t 1 >nul
+echo    ================================================================
+echo       Client Interface : http://localhost:%YTGUI_PORT%/
+echo       Admin Interface  : http://localhost:%YTGUI_PORT%/admin
+echo       System Health    : http://localhost:%YTGUI_PORT%/health
+echo       Metrics          : http://localhost:%YTGUI_PORT%/metrics
+echo    ================================================================
+echo.
+echo  [*] Starting Server...
+ping 127.0.0.1 -n 2 > nul
+
 python main.py
+echo.
+if %ERRORLEVEL% neq 0 (
+    echo  [X] Server terminated with error code: %ERRORLEVEL%
+    echo      Please check the application logs for details.
+)
 pause

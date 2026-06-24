@@ -6,9 +6,13 @@ import pytest
 import asyncio
 import sys
 import os
+import json
+from pathlib import Path
 
 # Ensure project root is on PYTHONPATH
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 from core.log_config import setup_logging
 
@@ -64,3 +68,11 @@ def sample_track_3():
         duration=244,
         thumbnail=None,
     )
+
+
+@pytest.fixture
+def sample_track_json():
+    """Load raw yt-dlp dict from sample_track.json fixture file."""
+    filepath = FIXTURES_DIR / "sample_track.json"
+    with open(filepath, "r", encoding="utf-8") as f:
+        return json.load(f)
