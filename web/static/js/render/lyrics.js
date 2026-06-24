@@ -1,5 +1,5 @@
 function renderLyrics() {
-    if (!dom.lyricsPanel.classList.contains("active")) return;
+    if (!dom.lyricsSheet || !dom.lyricsSheet.classList.contains("open")) return;
 
     const lines = store.lyrics_lines;
     const idx = store.lyrics_index;

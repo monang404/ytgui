@@ -150,6 +150,7 @@ function initEvents() {
         dom.btnLyrics.addEventListener("click", () => {
             dom.lyricsSheet.classList.add("open");
             dom.mainOverlay.classList.add("open");
+            renderLyrics();
         });
     }
 
@@ -396,7 +397,6 @@ function initEvents() {
                 break;
             case "l":
             case "L":
-               if (e.key === "l" || e.key === "L") {
                 if (dom.lyricsSheet) {
                     const isOpen = dom.lyricsSheet.classList.contains("open");
                     if (isOpen) {
@@ -405,9 +405,9 @@ function initEvents() {
                     } else {
                         dom.lyricsSheet.classList.add("open");
                         dom.mainOverlay.classList.add("open");
+                        renderLyrics();
                     }
                 }
-            }    renderLyrics();
                 break;
             case "/":
                 e.preventDefault();
