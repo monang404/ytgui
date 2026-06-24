@@ -153,15 +153,6 @@ function renderRadio() {
             dom.nextCard.style.display = 'none';
         }
     }
-
-    renderSeedChips();
-}
-
-function renderSeedChips() {
-    if (!dom.chipWrap || dom.chipWrap.children.length > 0) return;
-    dom.chipWrap.innerHTML = SEED_ARTISTS.slice(0, 20).map(name => `
-        <span class="chip" data-seed="${escapeHtml(name)}">${escapeHtml(name)}</span>
-    `).join('');
 }
 
 function renderQueue() {

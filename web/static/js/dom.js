@@ -44,7 +44,7 @@ function initDOM() {
         nextTitle: $("next-title"),
         nextMeta: $("next-meta"),
         nextThumb: $("next-thumb"),
-        chipWrap: $("chip-wrap"),
+
         radioRandomizeBtn: $("radio-randomize-btn"),
         radioSkipBtn: $("radio-skip-btn"),
         queueList: $("queue-list"),

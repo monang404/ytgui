@@ -272,19 +272,6 @@ function initEvents() {
 
     // EVENT DELEGATION UNTUK DISCOVER / SEED / SEARCH
     document.addEventListener("click", (e) => {
-        // Chip clicks
-        const chip = e.target.closest(".chip");
-        if (chip && dom.chipWrap && dom.chipWrap.contains(chip)) {
-            if (store.userRole !== "admin") return;
-            const seed = chip.dataset.seed;
-            dom.chipWrap.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            if (store.playback_mode !== "RADIO") wsSend("set_mode", { mode: "RADIO" });
-            wsSend("radio_randomize", { seed_artist: seed });
-            showLogToast("Menyetel radio dari artis: " + seed);
-            return;
-        }
-
         // Recent / Favorite / Cached / Search Results cards
         const card = e.target.closest(".disc-card, .fav-card, .search-result-item");
         if (card && card.dataset.vid) {
