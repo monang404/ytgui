@@ -47,6 +47,7 @@ function initDOM() {
 
         radioRandomizeBtn: $("radio-randomize-btn"),
         radioSkipBtn: $("radio-skip-btn"),
+        radioQueueList: $("radio-queue-list"),
         queueList: $("queue-list"),
         queueFooter: $("queue-footer"),
         lyricsPanel: $("lyrics-panel"),

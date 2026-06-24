@@ -157,18 +157,36 @@ function renderRadio() {
 
 function renderQueue() {
     const isRadio = store.playback_mode === "RADIO";
-    const upcoming = isRadio ? store.radio_queue : store.queue;
+    
+    // Render the manual queue in Queue Tab
+    renderList(dom.queueList, store.queue, false, store.playback_mode === "QUEUE");
+    
+    // Render the radio queue in Radio Tab
+    if (dom.radioQueueList) {
+        renderList(dom.radioQueueList, store.radio_queue, true, isRadio);
+    }
 
+    const modeStr = isRadio
+        ? '<span style="color:var(--fm-green)">RADIO</span>'
+        : '<span style="color:var(--fm-text-5)">QUEUE</span>';
+    if (dom.queueFooter) {
+        dom.queueFooter.innerHTML = "Mode: " + modeStr;
+    }
+}
+
+function renderList(container, items, isRadioList, isCurrentActiveMode) {
+    if (!container) return;
+    
     const allItems = [];
-    if (store.current_track) {
+    if (isCurrentActiveMode && store.current_track) {
         allItems.push({ track: store.current_track, index: -1, isCurrent: true });
     }
-    upcoming.forEach((track, i) => allItems.push({ track, index: i, isCurrent: false }));
+    items.forEach((track, i) => allItems.push({ track, index: i, isCurrent: false }));
 
     if (allItems.length === 0) {
-        dom.queueList.innerHTML = '<div class="queue-empty">' + (isRadio ? "Radio sedang menyiapkan lagu..." : "Cari lagu atau aktifkan Radio") + '</div>';
+        container.innerHTML = '<div class="queue-empty">' + (isRadioList ? "Tekan 'Acak Ulang' untuk memulai radio" : "Cari lagu atau putar dari Discover") + '</div>';
     } else {
-        const existing = Array.from(dom.queueList.children);
+        const existing = Array.from(container.children);
         if (existing.length === 1 && existing[0].classList.contains('queue-empty')) {
             existing[0].remove();
             existing.shift();
@@ -178,20 +196,15 @@ function renderQueue() {
             let el = existing[i];
             if (!el) {
                 el = createQueueItemTemplate();
-                dom.queueList.appendChild(el);
+                container.appendChild(el);
             }
-            updateQueueItem(el, item.track, item.index, item.isCurrent, isRadio);
+            updateQueueItem(el, item.track, item.index, item.isCurrent, isRadioList);
         });
 
-        while (dom.queueList.children.length > allItems.length) {
-            dom.queueList.removeChild(dom.queueList.lastChild);
+        while (container.children.length > allItems.length) {
+            container.removeChild(container.lastChild);
         }
     }
-
-    const modeStr = isRadio
-        ? '<span style="color:var(--fm-green)">RADIO</span>'
-        : '<span style="color:var(--fm-text-5)">QUEUE</span>';
-    dom.queueFooter.innerHTML = "Mode: " + modeStr;
 }
 
 function createQueueItemTemplate() {
