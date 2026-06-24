@@ -5,7 +5,8 @@ function renderPlayerBar() {
     if (store.status === "LOADING") {
         dom.pbTrackInfo.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:5px; vertical-align:-2px;"></span> Memuat... ' + escapeHtml(t ? t.title : "");
     } else if (t) {
-        dom.pbTrackInfo.textContent = t.title + " — " + t.artist;
+        const title = typeof cleanTrackTitle === "function" ? cleanTrackTitle(t.title) : t.title;
+        dom.pbTrackInfo.textContent = title + " — " + t.artist;
     } else {
         dom.pbTrackInfo.textContent = "";
     }

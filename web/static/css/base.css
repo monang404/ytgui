@@ -100,22 +100,41 @@ html, body {
         display: none !important;
     }
     body:not([data-active-tab="home"]) #player-bar {
-        padding: 6px 12px 10px;
-        border-top: 1px solid var(--fm-border, #1e1e32);
+        position: absolute;
+        bottom: 65px;
+        left: 12px;
+        right: 12px;
+        background: var(--fm-bg-elevated, #1a1a2e);
+        border-radius: 12px;
+        padding: 8px 14px;
+        border: 1px solid var(--fm-border, #2e2e48);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 100;
+        min-height: 60px;
     }
     body:not([data-active-tab="home"]) #player-bar .pb-row1 {
         display: flex;
         flex: 1;
         margin-bottom: 0;
+        min-width: 0;
     }
     body:not([data-active-tab="home"]) #player-bar .pb-title {
         font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         max-width: none;
+    }
+    body:not([data-active-tab="home"]) #player-bar #pb-mode-badge {
+        display: none !important;
     }
     body:not([data-active-tab="home"]) #player-bar .pb-seek,
     body:not([data-active-tab="home"]) #player-bar .pb-sec,
     body:not([data-active-tab="home"]) #player-bar .vol-grp,
-    body:not([data-active-tab="home"]) #player-bar .pb-badges,
     body:not([data-active-tab="home"]) #player-bar .btn-prev,
     body:not([data-active-tab="home"]) #player-bar .btn-next,
     body:not([data-active-tab="home"]) #player-bar .btn-shuffle,
@@ -126,10 +145,8 @@ html, body {
         padding-top: 0;
         gap: 0;
         width: auto;
-        position: absolute;
-        right: 12px;
-        top: 0;
-        bottom: 0;
+        position: static;
+        flex-shrink: 0;
     }
     body:not([data-active-tab="home"]) #player-bar .main-ctrl {
         width: auto;
