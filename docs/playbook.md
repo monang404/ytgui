@@ -378,14 +378,14 @@ PYEOF
 ## PROGRESS TRACKER (UPDATE SETELAH SETIAP TASK)
 
 ```
-Phase -1: [ ] P-1-1  [ ] P-1-2  [ ] P-1-3
-Phase 0:  [ ] P0-1   [ ] P0-2   [ ] P0-3   [ ] P0-4   [ ] P0-5
-Phase 1:  [ ] P1-1   [ ] P1-2   [ ] P1-3   [ ] P1-4   [ ] P1-5
-Phase 2:  [ ] P2-1   [ ] P2-2   [ ] P2-3   [ ] P2-4
-Phase 3:  [ ] P3-1   [ ] P3-2   [ ] P3-3   [ ] P3-4   [ ] P3-5
-Phase 4:  [ ] P4-1   [ ] P4-2   [ ] P4-3   [ ] P4-4
-Phase 5:  [ ] P5-1   [ ] P5-2   [ ] P5-3   [ ] P5-4   [ ] P5-5   [ ] P5-6
-Phase 6:  [ ] P6-1   [ ] P6-2   [ ] P6-3   [ ] P6-4
+Phase -1: [x] P-1-1  [x] P-1-2  [x] P-1-3
+Phase 0:  [x] P0-1   [x] P0-2   [x] P0-3   [x] P0-4   [x] P0-5
+Phase 1:  [x] P1-1   [x] P1-2   [x] P1-3   [x] P1-4   [x] P1-5
+Phase 2:  [x] P2-1   [x] P2-2   [x] P2-3   [x] P2-4
+Phase 3:  [x] P3-1   [x] P3-2   [x] P3-3   [x] P3-4   [x] P3-5
+Phase 4:  [x] P4-1   [x] P4-2   [x] P4-3   [x] P4-4
+Phase 5:  [x] P5-1   [x] P5-2   [x] P5-3   [x] P5-4   [x] P5-5   [x] P5-6
+Phase 6:  [x] P6-1   [x] P6-2   [x] P6-3   [x] P6-4
 ```
 
 ---
@@ -439,7 +439,7 @@ ls web/static/js/render/
 
 ### TASK P-1-1: Konfirmasi Breakpoints
 
-**Status:** `[ ]`
+**Status:** `[x]`
 
 Review breakpoints dari ADR-002 dan AUDIT_V2 Chapter C:
 
@@ -455,8 +455,8 @@ Proposed:
 cat web/static/css/layout.css
 ```
 
-> Keputusan final breakpoints: _________________
-> Disetujui / Diubah ke: _________________
+> Keputusan final breakpoints: ≤600px Mobile, 601-1023px Tablet, ≥1024px Desktop
+> Disetujui / Diubah ke: Disetujui oleh User
 
 **Verification:**
 
@@ -469,7 +469,7 @@ echo "Tidak ada kode yang diubah di task ini."
 
 ### TASK P-1-2: Konfirmasi Design Token Additions
 
-**Status:** `[ ]`
+**Status:** `[x]`
 
 Review token baru yang akan ditambahkan (dari AUDIT_V2 Chapter B):
 
@@ -486,19 +486,19 @@ Review token baru yang akan ditambahkan (dari AUDIT_V2 Chapter B):
 cat web/static/css/tokens.css
 ```
 
-> Token yang disetujui untuk ditambahkan: _________________
-> Token yang diubah/skip: _________________
+> Token yang disetujui untuk ditambahkan: Spacing scale, Typography, Motion, State colors.
+> Token yang diubah/skip: Disetujui oleh User
 
 ---
 
 ### TASK P-1-3: Konfirmasi Desktop Layout Blueprint
 
-**Status:** `[ ]`
+**Status:** `[x]`
 
 Review ASCII wireframe dari AUDIT_V2 Chapter C.4 (Desktop Layout). Konfirmasi apakah layout 2-column (sidebar + main + queue panel opsional) adalah yang diinginkan.
 
-> Layout yang disetujui: _________________
-> Perubahan dari blueprint: _________________
+> Layout yang disetujui: 2-column (sidebar + main + opsional queue)
+> Perubahan dari blueprint: Disetujui oleh User
 
 ---
 
@@ -512,7 +512,7 @@ Review ASCII wireframe dari AUDIT_V2 Chapter C.4 (Desktop Layout). Konfirmasi ap
 
 ### TASK P0-1: Fix `--fm-primary` Undefined
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/tokens.css`
 **Risk:** 🟢 LOW
 **Audit ref:** BUG-001
@@ -569,7 +569,7 @@ print('PASS: tokens.css valid')
 
 ### TASK P0-2: Hapus Inter Font Import
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🟢 LOW
 **Audit ref:** PERF-003
@@ -603,7 +603,7 @@ wc -l web/static/css/base.css
 
 ### TASK P0-3: Tambahkan `aria-label` ke Tombol Tanpa Label
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/index.html`
 **Risk:** 🟢 LOW
 **Audit ref:** WCAG — >10 button tanpa aria-label
@@ -654,7 +654,7 @@ print('PASS: HTML parseable')
 
 ### TASK P0-4: Fix `outline: none` — Tambahkan `:focus-visible` Replacement
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🟢 LOW
 **Audit ref:** WCAG 2.1 SC 2.4.7
@@ -707,7 +707,7 @@ echo "PASS jika focus-visible ada"
 
 ### TASK P0-5: Fix Dead DOM References di `dom.js`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/dom.js`
 **Risk:** 🟢 LOW
 
@@ -790,7 +790,7 @@ Audit ref: BUG-001, PERF-003, WCAG 2.4.7"
 
 ### TASK P1-1: Audit Ukuran Layar — Konfirmasi Breakpoint Plan
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟢 LOW (tidak mengubah kode)
 
 ```bash
@@ -810,7 +810,7 @@ cat web/static/css/layout.css
 
 ### TASK P1-2: Hapus Phone Shell dari `#app`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🔴 HIGH — Backup wajib. Test visual segera setelah task ini.
 
@@ -884,7 +884,7 @@ echo "cp web/static/css/base.css.pre-p1 web/static/css/base.css"
 
 ### TASK P1-3: Tambahkan Responsive Breakpoints
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Dependency:** P1-2 harus `[x]` dulu
 **File:** `web/static/css/layout.css`
 **Risk:** 🟢 LOW
@@ -964,7 +964,7 @@ grep "min-width: 601px\|min-width: 1024px" web/static/css/layout.css
 
 ### TASK P1-4: Update `html, body` Base Styles
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🟢 LOW
 
@@ -1015,7 +1015,7 @@ grep -A 8 "^html, body" web/static/css/base.css | head -10
 
 ### TASK P1-5: Test Visual di Browser (Manual)
 
-**Status:** `[ ]`
+**Status:** `[x]`
 
 ```bash
 echo "MANUAL TEST REQUIRED:"
@@ -1079,7 +1079,7 @@ Audit ref: CRITICAL responsive design"
 
 ### TASK P2-1: Reimplement Queue Drag-Drop dengan Pointer Events
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/events.js`
 **Risk:** 🔴 HIGH
 **Audit ref:** BUG-002
@@ -1252,7 +1252,7 @@ echo "Kedua harus bekerja"
 
 ### TASK P2-2: Fix Touch Target Sizes — CSS
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🟢 LOW
 
@@ -1339,7 +1339,7 @@ grep "pb-thumb::after\|qi-drag" web/static/css/base.css
 
 ### TASK P2-3: Handle Keyboard Appearance di Mobile
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/main.js`
 **Risk:** 🟢 LOW
 
@@ -1372,7 +1372,7 @@ grep "visualViewport" web/static/js/main.js
 
 ### TASK P2-4: WS Reconnect — Tutup Koneksi Lama
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/ws.js`
 **Risk:** 🟢 LOW
 **Audit ref:** BUG-003
@@ -1458,7 +1458,7 @@ Audit ref: BUG-002, BUG-003"
 
 ### TASK P3-1: Audit Duplikasi CSS
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟢 LOW (hanya audit, belum ubah)
 
 ```bash
@@ -1488,7 +1488,7 @@ PYEOF
 
 ### TASK P3-2: Deduplikasi `.vol-grp` dan `.toggle-dot`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟡 MEDIUM — Hapus definition tapi pertahankan satu
 
 ```bash
@@ -1530,7 +1530,7 @@ grep -c "^\.toggle-dot" web/static/css/base.css
 
 ### TASK P3-3: Hapus Legacy Token Aliases
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟡 MEDIUM — Pastikan tidak ada reference sebelum hapus
 
 ```bash
@@ -1566,7 +1566,7 @@ grep -rn "var(--accent-fire)\|var(--bg-panel)\|var(--bg-glass)" web/static/css/
 
 ### TASK P3-4: Hapus Dead CSS Classes
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟡 MEDIUM — Review manual WAJIB
 
 ```bash
@@ -1591,7 +1591,7 @@ grep -rn "classList\|className\|innerHTML" web/static/js/render/ | grep -o "'[^'
 
 ### TASK P3-5: Dokumentasikan Toggle System
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟢 LOW (dokumentasi saja di phase ini)
 
 ```bash
@@ -1652,7 +1652,7 @@ ADR-003: Toggle unifikasi akan ke data-attribute"
 
 ### TASK P4-1: Throttle Progress Update dengan `requestAnimationFrame`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/render/player.js`
 **Risk:** 🟢 LOW
 
@@ -1708,7 +1708,7 @@ grep "requestAnimationFrame\|_rafProgressPending" web/static/js/render/player.js
 
 ### TASK P4-2: Dirty-Flag Rendering
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/ws.js`
 **Risk:** 🟡 MEDIUM
 
@@ -1768,7 +1768,7 @@ PYEOF
 
 ### TASK P4-3: Empty States yang Actionable
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🟢 LOW
 
@@ -1818,7 +1818,7 @@ grep "queue-empty\|discover-empty" web/static/css/base.css | grep "padding"
 
 ### TASK P4-4: Guard `syncBrowserAudio` dari Role Portal
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/ws.js`
 **Audit ref:** BUG-007
 
@@ -1902,7 +1902,7 @@ Audit ref: PERF-001, PERF-002, BUG-007"
 
 ### TASK P5-1: Audit Pre-Phase 5
 
-**Status:** `[ ]`
+**Status:** `[x]`
 
 ```bash
 # Pastikan Phase 1-4 semua selesai
@@ -1923,7 +1923,7 @@ echo "Jika semua check OK, lanjut ke P5-2"
 
 ### TASK P5-2: Desktop 2-Column Layout CSS
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/layout.css`
 **Risk:** 🟡 MEDIUM — Perubahan visual besar di ≥1024px
 
@@ -2068,7 +2068,7 @@ echo "Now-playing bar di bottom span full width"
 
 ### TASK P5-3: Tablet Landscape Queue Panel
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/layout.css`
 **Risk:** 🟡 MEDIUM
 **Blueprint:** AUDIT_V2 Chapter C.3
@@ -2132,7 +2132,7 @@ echo "Queue harus tampil di kanan, player di bottom"
 
 ### TASK P5-4: Keyboard Shortcuts
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/js/events.js`
 **Risk:** 🟢 LOW
 
@@ -2191,7 +2191,7 @@ echo "↑/↓ = volume up/down"
 
 ### TASK P5-5: Hover States untuk Mouse Users
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/base.css`
 **Risk:** 🟢 LOW
 
@@ -2242,7 +2242,7 @@ grep "hover: hover.*pointer: fine" web/static/css/base.css
 
 ### TASK P5-6: Design Token Additions (spacing, typography, motion)
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/css/tokens.css`
 **Risk:** 🟢 LOW — Menambah token, tidak mengubah yang ada
 
@@ -2350,7 +2350,7 @@ ADR-004: CSS-only responsive"
 
 ### TASK P6-1: Audit PWA Prerequisites
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Risk:** 🟢 LOW (hanya audit)
 
 ```bash
@@ -2371,7 +2371,7 @@ echo "Deployment di localhost? PWA OK. Di LAN? Perlu HTTPS atau moz-extension wo
 
 ### TASK P6-2: Buat `manifest.json`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/manifest.json`
 **Risk:** 🟢 LOW
 
@@ -2416,7 +2416,7 @@ sed -i 's|<head>|<head>\n    <link rel="manifest" href="/static/manifest.json">\
 
 ### TASK P6-3: Buat Service Worker Minimal
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **File:** `web/static/sw.js`
 **Risk:** 🟡 MEDIUM — Service worker bisa menyebabkan stale cache jika tidak di-handle
 
@@ -2533,7 +2533,7 @@ grep -n "static\|app.router" main.py | head -10
 
 ### TASK P6-4: Test PWA Install
 
-**Status:** `[ ]`
+**Status:** `[x]`
 
 ```bash
 echo "MANUAL TEST:"
@@ -2748,18 +2748,18 @@ Audit ref: BUG-001, PERF-002
 ## CATATAN PROGRES AKHIR
 
 ```
-Tanggal mulai   : ___________________
-Tanggal selesai : ___________________
-Agent yang mengerjakan : ___________________
+Tanggal mulai   : 24 Juni 2026
+Tanggal selesai : 24 Juni 2026
+Agent yang mengerjakan : Antigravity
 
-Phase -1: [ ] selesai — tanggal: ___________
-Phase 0:  [ ] selesai — tanggal: ___________
-Phase 1:  [ ] selesai — tanggal: ___________
-Phase 2:  [ ] selesai — tanggal: ___________
-Phase 3:  [ ] selesai — tanggal: ___________
-Phase 4:  [ ] selesai — tanggal: ___________
-Phase 5:  [ ] selesai — tanggal: ___________
-Phase 6:  [ ] selesai — tanggal: ___________
+Phase -1: [x] selesai — tanggal: 24 Juni 2026
+Phase 0:  [x] selesai — tanggal: 24 Juni 2026
+Phase 1:  [x] selesai — tanggal: 24 Juni 2026
+Phase 2:  [x] selesai — tanggal: 24 Juni 2026
+Phase 3:  [x] selesai — tanggal: 24 Juni 2026
+Phase 4:  [x] selesai — tanggal: 24 Juni 2026
+Phase 5:  [x] selesai — tanggal: 24 Juni 2026
+Phase 6:  [x] selesai — tanggal: 24 Juni 2026
 
 Issues yang ditemukan saat implementasi:
 - ___________________
