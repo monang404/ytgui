@@ -46,7 +46,32 @@ html, body {
 .pb-track{flex:1;height:3px;background:#2a2a3e;border-radius:2px;cursor:pointer;position:relative;touch-action:none}
 .pb-fill{height:100%;background:#e040fb;border-radius:2px}
 .pb-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;background:#e040fb;border-radius:50%;cursor:grab}
-.pb-ctrl{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.pb-ctrl {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px 8px;
+    padding-top: 6px;
+    position: relative;
+}
+.pb-ctrl .vol-grp {
+    width: 100%;
+    order: 3;
+    justify-content: center;
+}
+.pb-ctrl .main-ctrl {
+    order: 1;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+.pb-ctrl .pb-sec {
+    order: 2;
+    position: absolute;
+    right: 0;
+    top: 6px;
+}
 .vol-label{font-size:10px;color:#6a6a8c;min-width:28px}
 .main-ctrl{display:flex;align-items:center;gap:14px}
 .btn-prev,.btn-next{background:none;border:none;color:#b0b0c8;font-size:20px;cursor:pointer;padding:2px}
