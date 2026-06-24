@@ -40,7 +40,7 @@ class TestAppStateDurationField:
 
     def test_state_to_dict_contains_duration(self):
         """_state_to_dict() harus mengandung key 'duration'."""
-        from web.server import _state_to_dict
+        from server.serializers import state_to_dict as _state_to_dict
         state = AppState()
         state.duration = 300.0
         result = _state_to_dict(state)
@@ -48,7 +48,7 @@ class TestAppStateDurationField:
 
     def test_state_to_dict_duration_value(self):
         """_state_to_dict() harus mengembalikan nilai duration yang benar."""
-        from web.server import _state_to_dict
+        from server.serializers import state_to_dict as _state_to_dict
         state = AppState()
         state.duration = 212.5
         result = _state_to_dict(state)

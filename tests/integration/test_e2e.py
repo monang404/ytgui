@@ -10,7 +10,7 @@ Menggunakan aiohttp test client dan WebSocket mock untuk menguji alur:
 import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
-from web.server import create_app
+from server.app import create_app
 from core.room_manager import RoomManager
 from core.ports import DatabasePort, MediaExtractorPort
 from core.state import TrackInfo, AppState, PlayerStatus

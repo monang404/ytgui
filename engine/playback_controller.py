@@ -12,10 +12,8 @@ from core.events import (
     LogMessageEvent, QueueUpdatedEvent, TrackPauseChangedEvent
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
-from core.ports import AudioPlayerPort
+from core.ports import AudioPlayerPort, LyricsProvider, SponsorBlockProvider
 from cache.resolver import CacheResolver
-from integrations.sponsorblock import SponsorBlockHandler
-from integrations.lyrics import LyricsFetcher
 from engine.queue_mode import QueueMode
 from engine.radio_mode import RadioMode
 from core.task_utils import safe_create_task
@@ -30,8 +28,8 @@ class PlaybackController:
         state: AppState,
         mpv: AudioPlayerPort,
         resolver: CacheResolver,
-        sponsorblock: SponsorBlockHandler,
-        lyrics_fetcher: LyricsFetcher,
+        sponsorblock: SponsorBlockProvider,
+        lyrics_fetcher: LyricsProvider,
         queue_mode: QueueMode,
         radio_mode: RadioMode
     ):

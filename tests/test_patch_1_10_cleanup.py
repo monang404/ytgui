@@ -6,7 +6,7 @@ Verifikasi bahwa ada mekanisme cleanup untuk data rate limiting.
 import pytest
 import inspect
 
-from web.server import ConnectionManager
+from server.handlers.websocket import ConnectionManager
 
 
 class TestRateLimitCleanup:

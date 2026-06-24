@@ -10,8 +10,6 @@ from engine.queue_mode import QueueMode
 from engine.radio_mode import RadioMode
 from engine.volume_service import VolumeService
 from engine.playback_controller import PlaybackController
-from integrations.sponsorblock import SponsorBlockHandler
-from integrations.lyrics import LyricsFetcher
 from cache.resolver import CacheResolver
 
 logger = structlog.get_logger(__name__)
@@ -23,7 +21,7 @@ class Room:
     satu room tidak bocor ke room lain (isolasi penuh).
     """
     
-    def __init__(self, room_id: str, db, ytdlp, http_session):
+    def __init__(self, room_id: str, db, ytdlp, http_session, sponsorblock_factory, lyrics_factory):
         self.room_id = room_id
         self.state = AppState(room_id=room_id)
         
@@ -37,11 +35,11 @@ class Room:
         )
         
         self.resolver = CacheResolver(db, ytdlp)
-        self.sponsorblock = SponsorBlockHandler(
+        self.sponsorblock = sponsorblock_factory(
             self.mpv, state=self.state, session=http_session,
             event_bus=self.event_bus  # TASK-3.5: inject per-room bus
         )
-        self.lyrics_fetcher = LyricsFetcher(
+        self.lyrics_fetcher = lyrics_factory(
             self.state, session=http_session,
             event_bus=self.event_bus  # TASK-3.4: inject per-room bus
         )
@@ -75,10 +73,12 @@ class RoomManager:
     room baru dibuat.
     """
     
-    def __init__(self, db, ytdlp, http_session):
+    def __init__(self, db, ytdlp, http_session, sponsorblock_factory, lyrics_factory):
         self.db = db
         self.ytdlp = ytdlp
         self.http_session = http_session
+        self.sponsorblock_factory = sponsorblock_factory
+        self.lyrics_factory = lyrics_factory
         self.rooms: Dict[str, Room] = {}
         # TASK-3.6: Callbacks dipanggil saat room baru dibuat
         self._on_room_created_callbacks: List[Callable[[Room], None]] = []
@@ -92,7 +92,7 @@ class RoomManager:
     async def get_or_create_room(self, room_id: str) -> Room:
         if room_id not in self.rooms:
             logger.info(f"Creating new room: {room_id}")
-            room = Room(room_id, self.db, self.ytdlp, self.http_session)
+            room = Room(room_id, self.db, self.ytdlp, self.http_session, self.sponsorblock_factory, self.lyrics_factory)
             await room.start()
             self.rooms[room_id] = room
             # TASK-3.6: Notify server untuk subscribe per-room

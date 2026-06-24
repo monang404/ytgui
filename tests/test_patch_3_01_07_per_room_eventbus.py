@@ -125,7 +125,7 @@ class TestTask32RoomOwnEventBus:
         mock_ytdlp = MagicMock()
         mock_session = MagicMock()
 
-        manager = RoomManager(mock_db, mock_ytdlp, mock_session)
+        manager = RoomManager(mock_db, mock_ytdlp, mock_session, MagicMock(), MagicMock())
 
         created_rooms = []
         manager.on_room_created(lambda r: created_rooms.append(r.room_id))
@@ -392,7 +392,7 @@ class TestTask36ServerPerRoomSubscriptions:
     @pytest.mark.asyncio
     async def test_create_app_registers_subscription_callback(self):
         """create_app harus memanggil room_manager.on_room_created."""
-        from web.server import create_app
+        from server.app import create_app
         from core.room_manager import RoomManager
 
         mock_db = MagicMock()
@@ -413,7 +413,7 @@ class TestTask36ServerPerRoomSubscriptions:
     @pytest.mark.asyncio
     async def test_subscription_callback_subscribes_to_room_event_bus(self):
         """Callback yang didaftarkan benar-benar subscribe ke room.event_bus."""
-        from web.server import create_app
+        from server.app import create_app
         from core.room_manager import RoomManager
         from core.event_bus import EventBus
 

@@ -26,6 +26,9 @@ try:
 except OSError:
     pass
 
+from integrations.sponsorblock import SponsorBlockHandler
+from integrations.lyrics import LyricsFetcher
+
 async def main():
     state = AppState()
     
@@ -55,7 +58,7 @@ async def main():
     
     # 4. Initialize Room Manager
     print("  [4/5] Menyusun Room Manager (Multi-room)...")
-    room_manager = RoomManager(db, ytdlp, http_session)
+    room_manager = RoomManager(db, ytdlp, http_session, SponsorBlockHandler, LyricsFetcher)
     
     # Pre-create default room
     default_room = await room_manager.get_or_create_room("default")
@@ -121,7 +124,7 @@ async def main():
     
     # 8. Start Web Server
     try:
-        from web.server import create_app, run_server
+        from server.app import create_app, run_server
         
         app = create_app(room_manager, ytdlp, db)
         

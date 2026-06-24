@@ -94,14 +94,14 @@ def mock_db():
 class TestTask13MetricsProtection:
     @pytest.mark.asyncio
     async def test_metrics_rejects_external_ip(self, aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
-        from web.server import create_app
+        from server.app import create_app
         app = create_app(mock_room_manager, mock_ytdlp, mock_db)
         client = await aiohttp_client(app)
         
-        with patch("web.server.get_metrics_content") as mock_get:
+        with patch("server.handlers.http.get_metrics_content") as mock_get:
             with patch("aiohttp.web.BaseRequest.remote", new_callable=pytest.MonkeyPatch) as mock_remote:
                 # Simulasi external IP tidak bisa langsung di mock property karena BaseRequest.remote is read-only property
-                # Kita ubah approach: kita mock dictionary _localhost_ips sementara di module web.server
+                # Kita ubah approach: kita mock dictionary _localhost_ips sementara di module server.handlers.http
                 # Atau kita cukup memanggil client.get() tapi server akan melihat 127.0.0.1.
                 # Karena tidak mudah patch readonly property, kita patch dictionary
                 pass
@@ -114,11 +114,11 @@ class TestTask13MetricsProtection:
 
     @pytest.mark.asyncio
     async def test_metrics_accepts_localhost(self, aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
-        from web.server import create_app
+        from server.app import create_app
         app = create_app(mock_room_manager, mock_ytdlp, mock_db)
         client = await aiohttp_client(app)
 
-        with patch("web.server.get_metrics_content") as mock_get_content:
+        with patch("server.handlers.http.get_metrics_content") as mock_get_content:
             mock_get_content.return_value = ("metrics_data", "text/plain; charset=utf-8")
             
             # Default aiohttp test client connects via 127.0.0.1
@@ -130,8 +130,8 @@ class TestTask13MetricsProtection:
 
     @pytest.mark.asyncio
     async def test_metrics_accepts_valid_token_from_external(self, aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
-        from web.server import create_app
-        with patch("web.server.get_metrics_content") as mock_get_content:
+        from server.app import create_app
+        with patch("server.handlers.http.get_metrics_content") as mock_get_content:
             mock_get_content.return_value = ("metrics_data", "text/plain; charset=utf-8")
             
             with patch.dict(os.environ, {"YTGUI_METRICS_TOKEN": "secret"}):
@@ -148,7 +148,7 @@ class TestTask13MetricsProtection:
 class TestTask14RoomIdValidation:
     @pytest.mark.asyncio
     async def test_invalid_room_id_rejected(self, aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
-        from web.server import create_app
+        from server.app import create_app
         app = create_app(mock_room_manager, mock_ytdlp, mock_db)
         client = await aiohttp_client(app)
 
@@ -165,7 +165,7 @@ class TestTask14RoomIdValidation:
 
     @pytest.mark.asyncio
     async def test_valid_room_id_accepted(self, aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
-        from web.server import create_app
+        from server.app import create_app
         app = create_app(mock_room_manager, mock_ytdlp, mock_db)
         client = await aiohttp_client(app)
 
@@ -182,7 +182,7 @@ class TestTask14RoomIdValidation:
             m.event_bus = MagicMock()
             return m
         mock_room_manager.rooms = {f"room{i}": create_mock_room(i) for i in range(10)}
-        from web.server import create_app
+        from server.app import create_app
         app = create_app(mock_room_manager, mock_ytdlp, mock_db)
         client = await aiohttp_client(app)
 

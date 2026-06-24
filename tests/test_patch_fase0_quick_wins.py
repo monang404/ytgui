@@ -309,7 +309,7 @@ class TestTask05EvictRateLimitKeys:
 
     def _make_manager(self):
         """Buat ConnectionManager tanpa dependensi aiohttp."""
-        from web.server import ConnectionManager
+        from server.handlers.websocket import ConnectionManager
         return ConnectionManager()
 
     def test_login_attempts_key_evicted_when_empty(self):
