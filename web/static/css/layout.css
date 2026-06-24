@@ -78,6 +78,13 @@
     font-weight: 500;
   }
 
+  /* Perjelas tab aktif di desktop */
+  .nav-btn.active {
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 3px solid var(--fm-accent, #e040fb);
+    padding-left: 17px; /* 20px awal dikurangi 3px border */
+  }
+
   /* Header area */
   #app-header {
     grid-area: header;
