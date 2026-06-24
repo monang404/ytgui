@@ -104,6 +104,7 @@ function handleServerMessage(msg) {
 
             renderProgress();
             renderPlayBtn();
+            if (typeof renderNowPlaying === "function") renderNowPlaying();
             syncBrowserAudio();
             renderLyrics();
             break;

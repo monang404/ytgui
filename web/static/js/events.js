@@ -45,6 +45,7 @@ function initEvents() {
             store.status = store.status === "PLAYING" ? "PAUSED" : "PLAYING";
             window.lastToggleTime = Date.now();
             renderPlayBtn();
+            if (typeof renderNowPlaying === "function") renderNowPlaying();
             if (store.audio_output === "browser" && typeof syncBrowserAudio === "function") {
                 syncBrowserAudio();
             }
