@@ -466,6 +466,7 @@ function initQueueDragDrop() {
         dragSrcIndex = parseInt(item.dataset.index);
         item.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', dragSrcIndex);
     });
 
     dom.queueList.addEventListener('dragover', e => {

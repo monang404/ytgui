@@ -124,18 +124,19 @@ html, body {
 .next-info{flex:1;min-width:0}
 .next-title{font-size:13px;font-weight:500;color:#e8e8f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .next-meta{font-size:11px;color:#6a6a8c;margin-top:1px}
-.qi{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #141420;cursor:pointer}
-.qi.cur{background:#1a0a28}
-.qi-drag{color:#3a3a5a;font-size:16px;cursor:grab;flex-shrink:0}
-.qi-num{font-size:13px;color:#6a6a8c;min-width:18px;text-align:center;flex-shrink:0}
-.qi-num.playing{color:#e040fb}
+.queue-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--fm-border);transition:background var(--fm-transition-fast)}
+.queue-item:hover{background:var(--fm-bg-elevated)}
+.queue-item.current{background:rgba(224, 64, 251, 0.08)}
+.queue-item.dragging{opacity:0.5;background:var(--fm-bg-elevated)}
+.queue-item.drag-over{border-top:2px solid var(--fm-primary)}
+.qi-drag{color:var(--fm-text-5);font-size:16px;cursor:grab;flex-shrink:0;padding:4px}
+.qi-index{font-size:13px;color:var(--fm-text-5);min-width:18px;text-align:center;flex-shrink:0}
+.queue-item.current .qi-index{color:var(--fm-primary)}
 .qi-info{flex:1;min-width:0}
-.qi-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8e8f5}
-.qi-meta{font-size:11px;color:#6a6a8c;margin-top:1px}
-.qi-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.qi-dur{font-size:11px;color:#6a6a8c}
-.qi-rm{background:none;border:none;color:#5a5a7a;font-size:14px;cursor:pointer;padding:2px 4px;border-radius:4px}
-.qi-rm:hover{color:#e040fb;background:#1e1428}
+.qi-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fm-text-1)}
+.qi-dur{font-size:12px;color:var(--fm-text-4);margin-top:4px}
+.qi-remove{background:none;border:none;color:var(--fm-text-5);font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px;flex-shrink:0;transition:all var(--fm-transition-fast)}
+.qi-remove:hover{color:#ff4d4f;background:rgba(255, 77, 79, 0.1)}
 .lyrics-panel{border-top:1px solid #1e1e30}
 .lyric-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer}
 .lyric-hdr span{font-size:12px;color:#9a9abc;display:flex;align-items:center;gap:6px}
@@ -577,14 +578,8 @@ html, body {
     font-size: 16px;
     cursor: grab;
     flex-shrink: 0;
-    padding: 0 2px;
-    opacity: 0;
-    transition: opacity var(--fm-transition-fast);
+    padding: 0 4px;
     user-select: none;
-}
-
-.queue-item:hover .qi-drag {
-    opacity: 1;
 }
 
 .queue-item.current .qi-drag,
