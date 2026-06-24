@@ -12,7 +12,7 @@ function renderSearchResults(results) {
 
     results.forEach((track) => {
         const item = document.createElement("div");
-        item.className = "search-result-item";
+        item.className = "sr-item";
 
         const thumb = document.createElement("div");
         thumb.className = "sr-thumb";
