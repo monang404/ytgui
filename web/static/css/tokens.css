@@ -50,30 +50,5 @@
   /* Primary — alias untuk accent, dipakai oleh queue current indicator */
   --fm-primary:     var(--fm-accent);
 
-  /* ============================================================
-     LEGACY ALIASES — bridge untuk style.css yang masih pakai nama lama.
-     Hapus blok ini setelah Fase 1 CSS split selesai.
-     ============================================================ */
-  --accent-fire:       #e040fb;
-  --bg-panel:          #141426;
-  --bg-elevated:       #1e1e38;
-  --bg-void:           #0d0d1c;
-  --bg-glass:          rgba(20,20,38,0.92);
-  --accent-gold:       #f0b429;
-  --accent-blue:       #60a5fa;
-  --status-err:        #ef4444;
-  --text-primary:      #f0f0ff;
-  --text-muted:        #6a6a8c;
-  --text-dim:          #5a5a7a;
-  --border:            #1e1e32;
-  --font-family:       -apple-system, system-ui, sans-serif;
-  --radius-sm:         8px;
-  --radius-md:         12px;
-  --radius-lg:         16px;
-  --radius-xl:         20px;
-  --radius-full:       9999px;
-  --shadow-md:         0 2px 8px rgba(0,0,0,0.4);
-  --shadow-lg:         0 4px 16px rgba(0,0,0,0.5);
-  --transition-fast:   0.15s ease;
-  --transition-normal: 0.25s ease;
+
 }

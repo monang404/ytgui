@@ -78,7 +78,7 @@
 /* ── Radio Tab: seed chips + next card ── */
 .radio-next-card {
     width: 100%;
-    background: var(--bg-glass);
+    background: var(--fm-bg-card);
     border: 1px solid var(--fm-border);
     border-radius: var(--fm-radius-md);
     overflow: hidden;

@@ -1,32 +1,30 @@
+
+
+
 html, body {
     background: #000;
-    min-height: 100dvh;
-    min-height: 100vh; /* fallback */
-    margin: 0;
-    padding: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: -apple-system, system-ui, sans-serif;
     color: #fff;
-    overflow: hidden;
+}
+
+/* Ensure app covers full screen on small devices */
+@media (max-width: 480px) {
+    #app {
+        border-radius: 0 !important;
+        border: none !important;
+        max-width: 100% !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        margin: 0 !important;
+    }
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-#app{
-  width: 100%;
-  height: 100dvh;
-  height: 100vh; /* fallback untuk browser lama */
-  max-width: 100%;
-  margin: 0;
-  background: var(--fm-bg-deep, #0d0d1c);
-  border-radius: 0;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  color: #fff;
-  font-family: var(--fm-font, -apple-system, system-ui, sans-serif);
-  font-size: 14px;
-  position: relative;
-}
+#app{width:100%;max-width:375px;margin:0 auto;background:#0d0d1c;border-radius:36px;border:3px solid #1e1e32;height:690px;display:flex;flex-direction:column;overflow:hidden;color:#fff;font-family:-apple-system,system-ui,sans-serif;font-size:14px;position:relative}
 #app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 8px;flex-shrink:0}
 .fm-title{font-size:16px;font-weight:600;letter-spacing:.5px}
 .fm-hright{display:flex;align-items:center;gap:8px}
@@ -47,6 +45,9 @@ html, body {
 .pb-fill{height:100%;background:#e040fb;border-radius:2px}
 .pb-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;background:#e040fb;border-radius:50%;cursor:grab}
 .pb-ctrl{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.vol-grp{display:flex;align-items:center;gap:5px;flex:1}
+.vol-grp i{font-size:15px;color:#6a6a8c}
+.vol-grp input[type=range]{width:65px;height:3px;cursor:pointer;accent-color:#e040fb}
 .vol-label{font-size:10px;color:#6a6a8c;min-width:28px}
 .main-ctrl{display:flex;align-items:center;gap:14px}
 .btn-prev,.btn-next{background:none;border:none;color:#b0b0c8;font-size:20px;cursor:pointer;padding:2px}
@@ -112,7 +113,10 @@ html, body {
 .toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s}
 .toggle.on{background:#e040fb}
 .toggle.off{background:#2a2a3e}
-.toggle.on .toggle.off .chip-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px;margin-bottom:2px}
+.toggle-dot{position:absolute;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle.on .toggle-dot{left:23px}
+.toggle.off .toggle-dot{left:3px}
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px;margin-bottom:2px}
 .chip{font-size:11px;background:#1e1e38;border:1px solid #2e2e48;border-radius:20px;padding:4px 10px;color:#c0c0e0;cursor:pointer;display:flex;align-items:center;gap:4px}
 .chip.active{background:#3a1040;border-color:#e040fb44;color:#e040fb}
 .chip .rm{color:#6a6a8c;font-size:10px}
@@ -552,7 +556,18 @@ html, body {
    ══════════════════════════════════════ */
 
 /* ── Volume Slider ── */
+.vol-grp {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+}
 
+.vol-icon {
+    font-size: 15px;
+    color: var(--fm-text-5);
+    flex-shrink: 0;
+}
 
 .vol-slider {
     width: 70px;
@@ -716,7 +731,18 @@ html, body {
 }
 .ss-toggle[data-on="true"] { background: var(--fm-accent); }
 
-.ss-toggle[data-on="true"] 
+.toggle-dot {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left var(--fm-transition-normal);
+}
+.ss-toggle[data-on="true"] .toggle-dot { left: 23px; }
+
 /* Settings action buttons */
 .ss-out-btn, .ss-action-btn, .ss-view-btn {
     background: var(--fm-bg-elevated);
@@ -841,7 +867,7 @@ html, body {
 /* ── Radio Tab: seed chips + next card ── */
 .radio-next-card {
     width: 100%;
-    background: var(--fm-bg-card);
+    background: var(--bg-glass);
     border: 1px solid var(--fm-border);
     border-radius: var(--fm-radius-md);
     overflow: hidden;
@@ -985,65 +1011,4 @@ button:focus-visible {
   outline: 2px solid var(--fm-accent);
   outline-offset: 2px;
   border-radius: var(--fm-radius-xs);
-}
-
-/* ══════════════════════════════════════
-   TOUCH TARGET EXPANSION — Phase 2
-   Minimum 44×44px per HIG & Material Design
-   Gunakan ::after pseudo-element (non-destructive)
-   ══════════════════════════════════════ */
-
-.pb-thumb {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-.pb-thumb::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-}
-
-.offset-btn::after,
-.lyric-offset button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-}
-.offset-btn,
-.lyric-offset button {
-  position: relative;
-}
-
-.vol-slider {
-  height: 20px;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-}
-.vol-slider::-webkit-slider-thumb {
-  width: 20px;
-  height: 20px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--fm-accent);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.qi-drag {
-  padding: 12px 8px;
-  min-width: 32px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
