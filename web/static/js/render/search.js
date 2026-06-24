@@ -36,23 +36,27 @@ function renderSearchResults(results) {
 
         const title = document.createElement("div");
         title.className = "sr-title";
-        title.textContent = track.title;
+        title.textContent = typeof cleanTrackTitle === "function" ? cleanTrackTitle(track.title) : track.title;
 
         const meta = document.createElement("div");
         meta.className = "sr-meta";
-        meta.textContent = track.artist + " · " + formatTime(track.duration);
+        meta.textContent = track.artist + " • " + formatTime(track.duration);
 
         info.appendChild(title);
         info.appendChild(meta);
 
-        const badge = document.createElement("span");
-        badge.className = "sr-badge " + (track.local_path ? "cache" : "stream");
-        badge.textContent = track.local_path ? "✓ Cache" : "☁ Stream";
-        badge.style.display = "inline-block";
+        // 3-dots context menu button
+        const moreBtn = document.createElement("button");
+        moreBtn.className = "sr-more-btn";
+        moreBtn.innerHTML = '<i class="ti ti-dots-vertical"></i>';
+        moreBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent playing track
+            if (typeof showActionModal === "function") showActionModal(track);
+        });
 
         item.appendChild(thumb);
         item.appendChild(info);
-        item.appendChild(badge);
+        item.appendChild(moreBtn);
 
         dom.searchResults.appendChild(item);
     });

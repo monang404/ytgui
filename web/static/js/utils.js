@@ -30,3 +30,12 @@ function showLogToast(text) {
         dom.logToast.classList.remove("active");
     }, 3000);
 }
+
+window.cleanTrackTitle = function(title) {
+    if (!title) return "";
+    return title.replace(/[\[\(].*?(official|music video|lyric|audio|live|performance).*?[\]\)]/gi, '')
+                .replace(/#\S+/g, '')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/\s+-\s*$/, '')
+                .trim();
+};

@@ -1,10 +1,12 @@
 function renderPlayerBar() {
+    document.body.dataset.playerState = store.status || "IDLE";
     const t = store.current_track;
 
     if (store.status === "LOADING") {
         dom.pbTrackInfo.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:5px; vertical-align:-2px;"></span> Memuat... ' + escapeHtml(t ? t.title : "");
     } else if (t) {
-        dom.pbTrackInfo.textContent = t.title + " — " + t.artist;
+        const title = typeof cleanTrackTitle === "function" ? cleanTrackTitle(t.title) : t.title;
+        dom.pbTrackInfo.textContent = title + " — " + t.artist;
     } else {
         dom.pbTrackInfo.textContent = "";
     }
@@ -55,7 +57,18 @@ function renderPlayBtn() {
     }
 }
 
+let _rafProgressPending = false;
+
 function renderProgress() {
+    if (_rafProgressPending) return;
+    _rafProgressPending = true;
+    requestAnimationFrame(() => {
+        _rafProgressPending = false;
+        _renderProgressCore();
+    });
+}
+
+function _renderProgressCore() {
     if (window.isDraggingPb) return;
     const dur = store.current_track ? store.current_track.duration : 0;
     const pos = store.position || 0;

@@ -102,6 +102,7 @@ function initEvents() {
     }
 
     dom.btnDownload.addEventListener("click", () => {
+        if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
         if (store.userRole === "admin") wsSend("download");
     });
 
@@ -248,6 +249,7 @@ function initEvents() {
     }
 
     dom.btnHelp.addEventListener("click", () => {
+        if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
         dom.helpSheet.classList.add("open");
         dom.mainOverlay.classList.add("open");
     });
@@ -266,7 +268,7 @@ function initEvents() {
     // EVENT DELEGATION UNTUK DISCOVER / SEED / SEARCH
     document.addEventListener("click", (e) => {
         // Recent / Favorite / Cached / Search Results cards
-        const card = e.target.closest(".disc-card, .fav-card, .search-result-item");
+        const card = e.target.closest(".disc-card, .fav-card, .search-result-item, .sr-item");
         if (card && card.dataset.vid) {
             let track = null;
             if (card.classList.contains("search-result-item") && card.dataset.searchTrackStr) {
@@ -290,9 +292,20 @@ function initEvents() {
         }
     });
 
+    const searchClearBtn = document.getElementById("search-clear-btn");
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener("click", () => {
+            dom.searchInput.value = "";
+            searchClearBtn.style.display = "none";
+            dom.searchInput.dispatchEvent(new Event("input"));
+            dom.searchInput.focus();
+        });
+    }
+
     let searchTimer = null;
     let lastSearchQuery = "";
     dom.searchInput.addEventListener("input", (e) => {
+        if (searchClearBtn) searchClearBtn.style.display = e.target.value ? "block" : "none";
         const q = e.target.value.trim();
         if (searchTimer) clearTimeout(searchTimer);
         if (!q) {
@@ -490,44 +503,99 @@ function closeMainOverlay() {
     if (dom.helpSheet) dom.helpSheet.classList.remove("open");
 }
 
-let dragSrcIndex = null;
+// ── Queue Drag & Drop — Pointer Events (Mobile + Desktop) ──
+// ADR-001: Pointer Events API dipilih karena support touch + mouse dalam 1 API
+// Menggantikan HTML5 Drag API yang tidak bekerja di touch device (BUG-002)
+let _dragSrcIndex = null;
+let _dragEl = null;
+
 function initQueueDragDrop() {
-    dom.queueList.addEventListener('dragstart', e => {
-        const item = e.target.closest('.queue-item');
-        if (!item || !item.hasAttribute('data-index')) return;
-        dragSrcIndex = parseInt(item.dataset.index);
-        item.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', dragSrcIndex);
-    });
+    const list = dom.queueList;
+    if (!list) return;
 
-    dom.queueList.addEventListener('dragover', e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        const item = e.target.closest('.queue-item');
-        if (item && item.hasAttribute('data-index')) {
-            document.querySelectorAll('.queue-item.drag-over')
-                .forEach(el => el.classList.remove('drag-over'));
-            item.classList.add('drag-over');
-        }
-    });
-
-    dom.queueList.addEventListener('drop', e => {
-        e.preventDefault();
-        const item = e.target.closest('.queue-item');
-        if (!item || !item.hasAttribute('data-index') || dragSrcIndex === null) return;
-        const toIndex = parseInt(item.dataset.index);
-        if (toIndex !== dragSrcIndex) {
-            wsSend('queue_reorder', { from_index: dragSrcIndex, to_index: toIndex });
-        }
-        cleanupDrag();
-    });
-
-    dom.queueList.addEventListener('dragend', cleanupDrag);
+    list.addEventListener('pointerdown', _onDragStart, { passive: false });
+    document.addEventListener('pointermove', _onDragMove, { passive: false });
+    document.addEventListener('pointerup', _onDragEnd);
+    document.addEventListener('pointercancel', _onDragCancel);
 }
 
-function cleanupDrag() {
-    dragSrcIndex = null;
-    document.querySelectorAll('.queue-item.dragging, .queue-item.drag-over')
-        .forEach(el => el.classList.remove('dragging', 'drag-over'));
+function _onDragStart(e) {
+    if (store.userRole !== 'admin') return;
+    const handle = e.target.closest('.qi-drag');
+    if (!handle) return;
+
+    const item = handle.closest('.queue-item');
+    if (!item || !item.hasAttribute('data-index')) return;
+
+    e.preventDefault();
+    _dragSrcIndex = parseInt(item.dataset.index);
+    _dragEl = item;
+    item.classList.add('dragging');
+    item.setPointerCapture(e.pointerId);
+}
+
+function _onDragMove(e) {
+    if (_dragSrcIndex === null || !_dragEl) return;
+    e.preventDefault();
+
+    document.querySelectorAll('.queue-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target) {
+        const over = target.closest('.queue-item[data-index]');
+        if (over && over !== _dragEl) {
+            over.classList.add('drag-over');
+        }
+    }
+}
+
+function _onDragEnd(e) {
+    if (_dragSrcIndex === null) return;
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target) {
+        const over = target.closest('.queue-item[data-index]');
+        if (over && over !== _dragEl) {
+            const toIndex = parseInt(over.dataset.index);
+            if (toIndex !== _dragSrcIndex) {
+                wsSend('queue_reorder', { from_index: _dragSrcIndex, to_index: toIndex });
+            }
+        }
+    }
+    _cleanupDrag();
+}
+
+function _onDragCancel() {
+    _cleanupDrag();
+}
+
+function _cleanupDrag() {
+    if (_dragEl) _dragEl.classList.remove('dragging');
+    document.querySelectorAll('.queue-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+    _dragSrcIndex = null;
+    _dragEl = null;
+}
+
+// ── Keyboard Shortcuts — Phase 5 (Desktop) ──
+// Hanya aktif di desktop (pointer: fine = mouse)
+if (window.matchMedia('(pointer: fine)').matches) {
+    document.addEventListener('keydown', (e) => {
+        // Jangan intercept saat user mengetik di input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.code) {
+            case 'Space':
+                e.preventDefault();
+                cmd('play'); // Toggle play/pause
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                cmd('next');
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                cmd('prev');
+                break;
+        }
+    });
 }
