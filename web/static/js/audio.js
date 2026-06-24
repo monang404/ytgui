@@ -8,12 +8,18 @@ function getOrInitAudio() {
         localAudio.preload = "auto";
         localAudio.crossOrigin = "anonymous";
         localAudio.onerror = (e) => {
-            const errMsg = localAudio.error?.message || "unknown";
+            const err = localAudio.error;
+            if (!err) return;
+            if (err.code === 1) return; // MEDIA_ERR_ABORTED (e.g. changing src quickly)
+            if (err.code === 4 && localAudio.src.includes("data:audio")) return; // Ignore dummy audio error
+
+            const errMsg = err.message || ("code " + err.code);
             if (errMsg.includes("Empty src") || !localAudio.getAttribute("src")) {
                 return;
             }
-            console.error("Browser audio error:", e, errMsg);
-            showLogToast("⚠️ Error audio: " + errMsg);
+            console.warn("Browser audio error:", err.code, errMsg);
+            // Hanya tampilkan toast jika bukan dummy
+            showLogToast("⚠️ Audio stream info: " + errMsg);
         };
     }
     return localAudio;
