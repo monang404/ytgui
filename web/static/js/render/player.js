@@ -1,4 +1,5 @@
 function renderPlayerBar() {
+    document.body.dataset.playerState = store.status || "IDLE";
     const t = store.current_track;
 
     if (store.status === "LOADING") {

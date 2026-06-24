@@ -90,6 +90,58 @@ html, body {
 @media (min-width: 1024px) {
   .mobile-only { display: none !important; }
 }
+
+/* --- Global Player State Logic for Search Tab --- */
+@media (max-width: 1023px) {
+    body[data-active-tab="search"] #app-header {
+        display: none !important;
+    }
+    body[data-active-tab="search"][data-player-state="IDLE"] #player-bar {
+        display: none !important;
+    }
+    body[data-active-tab="search"] #player-bar {
+        padding: 6px 12px 10px;
+        border-top: 1px solid var(--fm-border, #1e1e32);
+    }
+    body[data-active-tab="search"] #player-bar .pb-row1 {
+        display: flex;
+        flex: 1;
+        margin-bottom: 0;
+    }
+    body[data-active-tab="search"] #player-bar .pb-title {
+        font-size: 14px;
+        max-width: none;
+    }
+    body[data-active-tab="search"] #player-bar .pb-seek,
+    body[data-active-tab="search"] #player-bar .pb-sec,
+    body[data-active-tab="search"] #player-bar .vol-grp,
+    body[data-active-tab="search"] #player-bar .pb-badges,
+    body[data-active-tab="search"] #player-bar .btn-prev,
+    body[data-active-tab="search"] #player-bar .btn-next,
+    body[data-active-tab="search"] #player-bar .btn-shuffle,
+    body[data-active-tab="search"] #player-bar .btn-repeat {
+        display: none !important;
+    }
+    body[data-active-tab="search"] #player-bar .pb-ctrl {
+        padding-top: 0;
+        gap: 0;
+        width: auto;
+        position: absolute;
+        right: 12px;
+        top: 0;
+        bottom: 0;
+    }
+    body[data-active-tab="search"] #player-bar .main-ctrl {
+        width: auto;
+        justify-content: flex-end;
+    }
+    body[data-active-tab="search"] #player-bar .btn-play {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+}
+
 .pb-sec button:hover{color:#ccc;background:#1e1e30}
 .pb-badges{display:flex;gap:5px;margin-top:5px;margin-bottom:4px}
 .pb-badge-sm{font-size:10px;padding:1px 6px;border-radius:3px}
@@ -125,20 +177,19 @@ html, body {
 .search-wrap input{flex:1;background:none;border:none;color:#fff;font-size:14px;outline:none}
 .search-wrap input::placeholder{color:#4a4a6a}
 #search-results{display:flex;flex-direction:column}
-.sr-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1a1a2a;cursor:pointer;transition:background .15s}
+.sr-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--fm-border, #1e1e32);cursor:pointer;transition:background .15s}
 .sr-item:hover{background:#141426}
 .sr-item.current{background:rgba(224,64,251,0.08)}
-.sr-thumb{width:44px;height:44px;border-radius:8px;background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
-.sr-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.sr-thumb{width:48px;height:48px;border-radius:6px;background:var(--fm-bg-elevated, #1a1a2e);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.sr-thumb img{width:100%;height:100%;object-fit:cover}
 .sr-thumb.playing{background:#3a1040}
 .sr-thumb .sr-eq{height:18px;width:22px}
 .sr-thumb .sr-eq span{width:3px;background:var(--fm-accent,#e040fb)}
 .sr-info{flex:1;min-width:0}
-.sr-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8e8f5}
-.sr-meta{font-size:11px;color:#6a6a8c;margin-top:2px}
-.sr-badge{font-size:10px;padding:2px 6px;border-radius:4px;flex-shrink:0}
-.sr-badge.cache{background:#122212;color:#00c870}
-.sr-badge.stream{background:#12141e;color:#6a6a8c}
+.sr-title{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;margin-bottom:2px}
+.sr-meta{font-size:12px;color:var(--fm-text-4, #9a9abc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-more-btn{background:none;border:none;color:var(--fm-text-4, #9a9abc);font-size:20px;padding:8px;cursor:pointer;flex-shrink:0;border-radius:6px}
+.sr-more-btn:active{background:var(--fm-bg-elevated, #1e1e32)}
 .radio-toggle{display:flex;align-items:center;justify-content:space-between;margin:12px 14px 0;background:#141426;border-radius:14px;padding:14px}
 .rt-left{display:flex;align-items:center;gap:10px}
 .rt-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}

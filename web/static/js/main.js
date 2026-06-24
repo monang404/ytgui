@@ -11,6 +11,7 @@
 
     window.switchTab = function(tab) {
         store.active_tab = tab;
+        document.body.dataset.activeTab = tab;
 
         TABS.forEach((t) => {
             const panel = dom["tab" + t.charAt(0).toUpperCase() + t.slice(1)];

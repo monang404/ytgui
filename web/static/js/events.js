@@ -290,9 +290,20 @@ function initEvents() {
         }
     });
 
+    const searchClearBtn = document.getElementById("search-clear-btn");
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener("click", () => {
+            dom.searchInput.value = "";
+            searchClearBtn.style.display = "none";
+            dom.searchInput.dispatchEvent(new Event("input"));
+            dom.searchInput.focus();
+        });
+    }
+
     let searchTimer = null;
     let lastSearchQuery = "";
     dom.searchInput.addEventListener("input", (e) => {
+        if (searchClearBtn) searchClearBtn.style.display = e.target.value ? "block" : "none";
         const q = e.target.value.trim();
         if (searchTimer) clearTimeout(searchTimer);
         if (!q) {
