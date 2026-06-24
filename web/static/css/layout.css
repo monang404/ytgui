@@ -190,11 +190,25 @@
 
 /* Desktop overrides for Player Bar Controls */
 @media (min-width: 1024px) {
+  #player-bar {
+    border-top: 1px solid var(--fm-border, #1e1e32);
+    padding: 10px 16px 12px;
+  }
+  .pb-row1 {
+    display: flex;
+  }
   .pb-ctrl {
     flex-wrap: nowrap;
     padding-top: 0;
   }
+  .pb-ctrl .main-ctrl {
+    max-width: none;
+    width: auto;
+    justify-content: center;
+    gap: 16px;
+  }
   .pb-ctrl .vol-grp {
+    display: flex;
     width: auto;
     order: 2;
     margin-top: 0;
@@ -202,5 +216,13 @@
   .pb-ctrl .pb-sec {
     position: static;
     order: 3;
+    max-width: none;
+    width: auto;
+    justify-content: flex-end;
+    padding-top: 0;
   }
+  
+  .btn-prev,.btn-next,.btn-shuffle,.btn-repeat{width:40px;height:40px;font-size:18px}
+  .btn-play{width:42px;height:42px;font-size:16px}
+  .pb-sec button{width:36px;height:36px;font-size:16px}
 }

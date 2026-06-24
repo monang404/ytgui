@@ -33,8 +33,8 @@
 }
 
 .vinyl-record {
-    width: 180px;
-    height: 180px;
+    width: 240px; /* Increased from 180px */
+    height: 240px;
     background: radial-gradient(circle, #000 30%, #111 40%, #000 50%, #111 60%, #000 70%, #111 80%, #050505 100%);
     border-radius: 50%;
     border: 4px solid var(--fm-border, #1e1e32);
@@ -100,6 +100,33 @@
     z-index: 1;
 }
 
+/* Main Track Info (below vinyl) */
+.main-track-info {
+    text-align: center;
+    padding: 12px 20px 0;
+}
+
+.mti-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+    /* Limit to 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mti-artist {
+    font-size: 14px;
+    color: var(--fm-text-4, #6a6a8c);
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Lyrics Container */
 .lyrics-wrap {
     flex: 1;
@@ -144,7 +171,7 @@
 
 /* Fallback empty lyrics state */
 .lyrics-empty {
-    font-size: 13px;
-    color: var(--fm-text-5, #5a5a7a);
-    font-style: italic;
+    font-size: 14px;
+    color: var(--fm-text-4, #6a6a8c);
+    font-weight: 400;
 }

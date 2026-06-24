@@ -61,37 +61,55 @@
     <header class="fm-header" id="app-header">
         <span class="fm-title">bagas.fm</span>
         <div class="fm-hright">
-            <button id="output-toggle-btn" class="out-btn" title="Ubah Output Suara">
-                <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> <span id="output-btn-text">Device</span>
-            </button>
-            <button id="logout-btn" class="out-btn" title="Keluar / Ganti Mode">
-                <i class="ti ti-logout" style="font-size:11px"></i> Keluar
-            </button>
-            <div class="status-indicator" style="display:flex; align-items:center; gap:6px;">
-                <div class="status-dot" id="status-dot"></div>
-                <span id="status-text" style="font-size:11px; color:#9a9abc">online</span>
+            <div class="header-actions desktop-only" style="display:flex; align-items:center; gap:12px;">
+                <button id="output-toggle-btn" class="out-btn" title="Ubah Output Suara">
+                    <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> <span id="output-btn-text">Device</span>
+                </button>
+                <button id="logout-btn" class="out-btn" title="Keluar / Ganti Mode">
+                    <i class="ti ti-logout" style="font-size:11px"></i> Keluar
+                </button>
+                <div class="status-indicator" style="display:flex; align-items:center; gap:6px;">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span id="status-text" style="font-size:11px; color:#9a9abc">online</span>
+                </div>
+            </div>
+            <!-- Menu toggle for mobile -->
+            <div class="mobile-menu-wrap mobile-only" style="position:relative;">
+                <button id="mobile-menu-btn" style="background:none;border:none;color:#fff;font-size:20px;padding:4px;"><i class="ti ti-dots-vertical"></i></button>
+                <div id="mobile-menu-dropdown" style="display:none; position:absolute; right:0; top:100%; background:var(--fm-bg-elevated, #1a1a2e); padding:12px; border-radius:8px; border:1px solid var(--fm-border, #2e2e48); z-index:1000; min-width:150px; flex-direction:column; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:6px; padding:4px;">
+                        <div class="status-dot" style="width:7px;height:7px;background:#00e5b0;border-radius:50%;"></div>
+                        <span style="font-size:12px; color:#9a9abc">online</span>
+                    </div>
+                    <button class="out-btn" onclick="document.getElementById('logout-btn').click()" style="width:100%;text-align:left;">
+                        <i class="ti ti-logout" style="font-size:12px"></i> Keluar
+                    </button>
+                </div>
             </div>
         </div>
+        <script>
+            document.getElementById('mobile-menu-btn').addEventListener('click', function(e) {
+                const dd = document.getElementById('mobile-menu-dropdown');
+                dd.style.display = dd.style.display === 'none' ? 'flex' : 'none';
+                e.stopPropagation();
+            });
+            document.addEventListener('click', function(e) {
+                const dd = document.getElementById('mobile-menu-dropdown');
+                if (dd && dd.style.display === 'flex' && !e.target.closest('.mobile-menu-wrap')) {
+                    dd.style.display = 'none';
+                }
+            });
+        </script>
     </header>
 
     <!-- ═══ Content Area ═══ -->
     <main class="content" id="content-area">
 
         <!-- Tab: Now Playing -->
-        <section id="tab-home" class="tab-panel active">
-            <div class="card" style="display:flex;gap:12px;align-items:center">
-                <div class="np-art" id="np-thumbnail">
-                    <i class="ti ti-music" id="np-thumb-icon" style="font-size:28px;color:#e040fb" aria-hidden="true"></i>
-                    <div class="eq-anim-icon" id="np-eq-anim" style="display:none;">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
-                <div class="np-meta">
-                    <div class="np-track" id="np-title">Belum ada lagu yang diputar</div>
-                    <div class="np-artist" id="np-artist">Cari lagu untuk memulai</div>
-                    <div class="np-dur" id="np-dur-meta"></div>
-                </div>
-            </div>
+        <section id="tab-home" class="tab-panel active full-player-view">
+            <!-- Hidden DOM elements required by app.js -->
+            <div id="np-thumbnail" style="display:none;"><i id="np-thumb-icon"></i><div id="np-eq-anim"><span></span><span></span><span></span></div></div>
+            <div id="np-dur-meta" style="display:none;"></div>
 
             <div class="vinyl-wrap" id="vinyl-wrap">
                 <div class="vinyl-record" id="vinyl-record">
@@ -100,6 +118,11 @@
                         <i id="vinyl-icon" class="ti ti-music"></i>
                     </div>
                 </div>
+            </div>
+
+            <div class="main-track-info">
+                <div class="mti-title" id="np-title">Belum ada lagu yang diputar</div>
+                <div class="mti-artist" id="np-artist">Cari lagu untuk memulai</div>
             </div>
 
             <div class="lyrics-wrap" id="lyrics-wrap">
@@ -192,9 +215,11 @@
                 <span class="vol-label" id="pb-vol-label">80%</span>
             </div>
             <div class="main-ctrl">
+                <button class="btn-shuffle" aria-label="Shuffle" id="btn-shuffle"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i></button>
                 <button class="btn-prev" aria-label="Previous" id="btn-prev"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>
                 <button class="btn-play" aria-label="Play/Pause" id="btn-play"><i class="ti ti-player-play" style="font-size:15px;color:#fff" aria-hidden="true"></i></button>
                 <button class="btn-next" aria-label="Next" id="btn-next"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
+                <button class="btn-repeat" aria-label="Repeat" id="btn-repeat"><i class="ti ti-repeat" aria-hidden="true"></i></button>
             </div>
             <div class="pb-sec">
                 <button id="btn-lyrics" title="Lirik" aria-label="Lirik Lagu"><i class="ti ti-microphone-2" aria-hidden="true"></i></button>
