@@ -1,84 +1,3 @@
-/* ============================================================
-   bagas.fm Design Tokens — SINGLE SOURCE OF TRUTH
-   Dibuat dari: bagas_fm_ui_mockup.html + 5 PNG mockup
-   JANGAN EDIT nilai di sini tanpa update mockup juga.
-   ============================================================ */
-:root {
-  /* Background */
-  --fm-bg-deep:     #0d0d1c;
-  --fm-bg-card:     #141426;
-  --fm-bg-elevated: #1e1e38;
-  --fm-bg-overlay:  #0f0f20;
-
-  /* Accent */
-  --fm-accent:      #e040fb;
-  --fm-accent-dim:  #c020d0;
-  --fm-accent-bg:   #2a1540;
-  --fm-cyan:        #00e5ff;
-  --fm-teal:        #00e5b0;
-  --fm-green:       #00c870;
-  --fm-warn:        #f0b429;
-  --fm-err:         #ef4444;
-  --fm-blue:        #60a5fa;
-
-  /* Text */
-  --fm-text-1:      #f0f0ff;
-  --fm-text-2:      #e8e8f5;
-  --fm-text-3:      #9a9abc;
-  --fm-text-4:      #6a6a8c;
-  --fm-text-5:      #5a5a7a;
-
-  /* Border */
-  --fm-border:      #1e1e32;
-  --fm-border-2:    #2e2e48;
-
-  /* Typography */
-  --fm-font:        -apple-system, system-ui, sans-serif;
-
-  /* Radius */
-  --fm-radius-xs:   4px;
-  --fm-radius-sm:   8px;
-  --fm-radius-md:   12px;
-  --fm-radius-lg:   16px;
-  --fm-radius-xl:   20px;
-  --fm-radius-pill: 20px;
-  --fm-radius-app:  36px;
-
-  /* Shadow */
-  --fm-shadow-sm:   0 2px 8px rgba(0,0,0,0.4);
-  --fm-shadow-md:   0 4px 16px rgba(0,0,0,0.5);
-
-  /* Transition */
-  --fm-transition-fast:   0.15s ease;
-  --fm-transition-normal: 0.25s ease;
-
-  /* ============================================================
-     LEGACY ALIASES — bridge untuk style.css yang masih pakai nama lama.
-     Hapus blok ini setelah Fase 1 CSS split selesai.
-     ============================================================ */
-  --accent-fire:       #e040fb;
-  --bg-panel:          #141426;
-  --bg-elevated:       #1e1e38;
-  --bg-void:           #0d0d1c;
-  --bg-glass:          rgba(20,20,38,0.92);
-  --accent-gold:       #f0b429;
-  --accent-blue:       #60a5fa;
-  --status-err:        #ef4444;
-  --text-primary:      #f0f0ff;
-  --text-muted:        #6a6a8c;
-  --text-dim:          #5a5a7a;
-  --border:            #1e1e32;
-  --font-family:       -apple-system, system-ui, sans-serif;
-  --radius-sm:         8px;
-  --radius-md:         12px;
-  --radius-lg:         16px;
-  --radius-xl:         20px;
-  --radius-full:       9999px;
-  --shadow-md:         0 2px 8px rgba(0,0,0,0.4);
-  --shadow-lg:         0 4px 16px rgba(0,0,0,0.5);
-  --transition-fast:   0.15s ease;
-  --transition-normal: 0.25s ease;
-}
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -273,19 +192,19 @@ html, body {
 }
 
 #help-modal {
-    background: var(--bg-panel);
-    border: 1px solid var(--accent-fire);
-    border-radius: var(--radius-xl);
+    background: var(--fm-bg-card);
+    border: 1px solid var(--fm-accent);
+    border-radius: var(--fm-radius-xl);
     padding: 24px;
     width: 90%;
     max-width: 340px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--fm-shadow-md);
     animation: modalSlideUp 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 #help-modal h3 {
     text-align: center;
-    color: var(--accent-fire);
+    color: var(--fm-accent);
     margin-bottom: 16px;
     font-size: 16px;
 }
@@ -298,33 +217,33 @@ html, body {
 #help-modal .shortcut-list li {
     padding: 5px 0;
     font-size: 13px;
-    color: var(--text-muted);
+    color: var(--fm-text-4);
     display: flex;
     gap: 12px;
 }
 
 #help-modal .shortcut-list li kbd {
-    background: var(--bg-elevated);
+    background: var(--fm-bg-elevated);
     padding: 1px 8px;
     border-radius: 4px;
     font-size: 12px;
     min-width: 28px;
     text-align: center;
-    color: var(--text-primary);
-    font-family: var(--font-family);
+    color: var(--fm-text-1);
+    font-family: var(--fm-font);
 }
 
 #help-modal button {
     width: 100%;
     padding: 12px;
     border: none;
-    border-radius: var(--radius-md);
-    background: var(--accent-fire);
+    border-radius: var(--fm-radius-md);
+    background: var(--fm-accent);
     color: #fff;
-    font-family: var(--font-family);
+    font-family: var(--fm-font);
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: background var(--fm-transition-fast);
 }
 
 #help-modal button:hover {
@@ -342,12 +261,12 @@ html, body {
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
-    border-radius: var(--radius-md);
+    border-radius: var(--fm-radius-md);
     font-size: 13px;
     font-weight: 500;
     z-index: 2000;
     animation: slideDown 300ms ease;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--fm-shadow-sm);
 }
 
 #connection-toast.active {
@@ -355,12 +274,12 @@ html, body {
 }
 
 #connection-toast.connecting {
-    background: var(--accent-gold);
+    background: var(--fm-warn);
     color: #000;
 }
 
 #connection-toast.disconnected {
-    background: var(--status-err);
+    background: var(--fm-err);
     color: #fff;
 }
 
@@ -383,15 +302,15 @@ html, body {
     left: 50%;
     transform: translateX(-50%);
     padding: 8px 16px;
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
+    border-radius: var(--fm-radius-md);
+    background: var(--fm-bg-elevated);
+    border: 1px solid var(--fm-border);
+    color: var(--fm-text-1);
     font-size: 12px;
     z-index: 500;
     max-width: 90%;
     text-align: center;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--fm-shadow-sm);
     animation: slideDown 200ms ease;
     pointer-events: none;
 }
@@ -408,9 +327,9 @@ html, body {
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 2.5px solid var(--border);
-    border-top-color: var(--accent-fire);
-    border-radius: var(--radius-full);
+    border: 2.5px solid var(--fm-border);
+    border-top-color: var(--fm-accent);
+    border-radius: var(--fm-radius-pill);
     animation: spin 0.7s linear infinite;
 }
 
@@ -447,7 +366,7 @@ html, body {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-xl);
+    border-radius: var(--fm-radius-xl);
     padding: 40px 30px;
     width: 100%;
     max-width: 440px;
@@ -469,7 +388,7 @@ html, body {
 }
 
 .portal-subtitle {
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     font-size: 13px;
     margin-bottom: 35px;
 }
@@ -483,13 +402,13 @@ html, body {
 .portal-btn {
     width: 100%;
     padding: 20px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--fm-radius-lg);
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
-    color: var(--text-primary);
+    color: var(--fm-text-1);
     text-align: left;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all var(--fm-transition-normal);
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -528,7 +447,7 @@ html, body {
 
 .portal-btn-desc {
     font-size: 11px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     line-height: 1.4;
 }
 
@@ -545,7 +464,7 @@ html, body {
 /* Form Login Admin */
 .portal-login-form {
     background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--radius-md);
+    border-radius: var(--fm-radius-md);
     padding: 16px;
     margin-top: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -566,29 +485,29 @@ html, body {
 .portal-login-form input {
     width: 100%;
     padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--border);
+    border-radius: var(--fm-radius-sm);
+    border: 1.5px solid var(--fm-border);
     background: rgba(0, 0, 0, 0.3);
     color: #fff;
     font-size: 13px;
     outline: none;
-    transition: border-color var(--transition-fast);
+    transition: border-color var(--fm-transition-fast);
 }
 
 .portal-login-form input:focus {
-    border-color: var(--accent-fire);
+    border-color: var(--fm-accent);
 }
 
 .portal-login-form button {
     width: 100%;
     padding: 10px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--fm-radius-sm);
     border: none;
-    background: var(--accent-fire);
+    background: var(--fm-accent);
     color: #fff;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: background var(--fm-transition-fast);
 }
 
 .portal-login-form button:hover {
@@ -596,7 +515,7 @@ html, body {
 }
 
 .login-error {
-    color: var(--status-err);
+    color: var(--fm-err);
     font-size: 11px;
     font-weight: 500;
     text-align: center;
@@ -608,11 +527,11 @@ html, body {
     border: 1px solid rgba(239, 68, 68, 0.2);
     color: #fca5a5;
     padding: 6px 12px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--fm-radius-sm);
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--fm-transition-fast);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -639,7 +558,7 @@ html, body {
 
 .vol-icon {
     font-size: 15px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     flex-shrink: 0;
 }
 
@@ -647,21 +566,21 @@ html, body {
     width: 70px;
     height: 3px;
     cursor: pointer;
-    accent-color: var(--accent-fire);
+    accent-color: var(--fm-accent);
     border-radius: 2px;
     outline: none;
-    background: var(--border);
+    background: var(--fm-border);
 }
 
 /* ── Queue Drag Handle ── */
 .qi-drag {
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     font-size: 16px;
     cursor: grab;
     flex-shrink: 0;
     padding: 0 2px;
     opacity: 0;
-    transition: opacity var(--transition-fast);
+    transition: opacity var(--fm-transition-fast);
     user-select: none;
 }
 
@@ -687,13 +606,13 @@ html, body {
     align-items: center;
     gap: 6px;
     font-size: 11px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
 }
 
 .offset-btn {
-    background: var(--bg-elevated);
+    background: var(--fm-bg-elevated);
     border: none;
-    color: var(--text-muted);
+    color: var(--fm-text-4);
     width: 22px;
     height: 22px;
     border-radius: 5px;
@@ -703,11 +622,11 @@ html, body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: all var(--transition-fast);
+    transition: all var(--fm-transition-fast);
 }
 
 .offset-btn:hover {
-    background: var(--accent-fire);
+    background: var(--fm-accent);
     color: white;
 }
 
@@ -716,7 +635,7 @@ html, body {
     text-align: center;
     font-variant-numeric: tabular-nums;
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--fm-text-4);
 }
 
 /* ── Settings Sheet (Bottom Drawer) ── */
@@ -727,12 +646,12 @@ html, body {
     right: 0;
     max-width: 480px;
     margin: 0 auto;
-    background: var(--bg-panel);
+    background: var(--fm-bg-card);
     border-radius: 20px 20px 0 0;
-    border-top: 1px solid var(--bg-elevated);
+    border-top: 1px solid var(--fm-bg-elevated);
     padding: 16px 20px 24px;
     transform: translateY(100%);
-    transition: transform var(--transition-normal);
+    transition: transform var(--fm-transition-normal);
     z-index: 200;
     max-height: 78vh;
     overflow-y: auto;
@@ -759,7 +678,7 @@ html, body {
 .ss-handle {
     width: 36px;
     height: 3px;
-    background: var(--bg-elevated);
+    background: var(--fm-bg-elevated);
     border-radius: 2px;
     margin: 0 auto 16px;
 }
@@ -768,7 +687,7 @@ html, body {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 12px;
-    color: var(--text-primary);
+    color: var(--fm-text-1);
 }
 
 .ss-row {
@@ -776,7 +695,7 @@ html, body {
     align-items: center;
     justify-content: space-between;
     padding: 12px 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--fm-border);
 }
 .ss-row:last-child { border-bottom: none; }
 
@@ -790,12 +709,12 @@ html, body {
 
 .ss-label-text {
     font-size: 13px;
-    color: var(--text-primary);
+    color: var(--fm-text-1);
 }
 
 .ss-label-sub {
     font-size: 11px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     margin-top: 1px;
 }
 
@@ -807,11 +726,11 @@ html, body {
     border: none;
     cursor: pointer;
     position: relative;
-    background: var(--bg-elevated);
-    transition: background var(--transition-normal);
+    background: var(--fm-bg-elevated);
+    transition: background var(--fm-transition-normal);
     flex-shrink: 0;
 }
-.ss-toggle[data-on="true"] { background: var(--accent-fire); }
+.ss-toggle[data-on="true"] { background: var(--fm-accent); }
 
 .toggle-dot {
     position: absolute;
@@ -821,51 +740,51 @@ html, body {
     height: 18px;
     background: #fff;
     border-radius: 50%;
-    transition: left var(--transition-normal);
+    transition: left var(--fm-transition-normal);
 }
 .ss-toggle[data-on="true"] .toggle-dot { left: 23px; }
 
 /* Settings action buttons */
 .ss-out-btn, .ss-action-btn, .ss-view-btn {
-    background: var(--bg-elevated);
+    background: var(--fm-bg-elevated);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--radius-sm);
+    border-radius: var(--fm-radius-sm);
     padding: 5px 12px;
-    color: var(--text-muted);
-    font-family: var(--font-family);
+    color: var(--fm-text-4);
+    font-family: var(--fm-font);
     font-size: 11px;
     cursor: pointer;
     white-space: nowrap;
-    transition: all var(--transition-fast);
+    transition: all var(--fm-transition-fast);
 }
 .ss-out-btn:hover, .ss-action-btn:hover, .ss-view-btn:hover {
-    color: var(--text-primary);
-    border-color: var(--accent-fire);
+    color: var(--fm-text-1);
+    border-color: var(--fm-accent);
     background: rgba(233, 69, 96, 0.08);
 }
 
 /* Download bar in settings */
 .ss-dl-bar-wrap {
-    background: var(--bg-void);
-    border-radius: var(--radius-sm);
+    background: var(--fm-bg-deep);
+    border-radius: var(--fm-radius-sm);
     padding: 8px 10px;
 }
 .ss-dl-label {
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--fm-text-4);
     margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
 }
 .ss-dl-bar {
     height: 4px;
-    background: var(--bg-elevated);
+    background: var(--fm-bg-elevated);
     border-radius: 2px;
 }
 .ss-dl-fill {
     height: 100%;
     border-radius: 2px;
-    background: linear-gradient(90deg, var(--accent-fire), var(--accent-blue));
+    background: linear-gradient(90deg, var(--fm-accent), var(--fm-blue));
     transition: width 0.4s ease;
 }
 
@@ -884,9 +803,9 @@ html, body {
 .disc-row2::-webkit-scrollbar { display: none; }
 
 .fav-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    background: var(--fm-bg-card);
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius-sm);
     min-width: 136px;
     overflow: hidden;
     cursor: pointer;
@@ -895,17 +814,17 @@ html, body {
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
-    transition: all var(--transition-fast);
+    transition: all var(--fm-transition-fast);
 }
 .fav-card:hover {
-    border-color: var(--accent-fire);
-    background: var(--bg-elevated);
+    border-color: var(--fm-accent);
+    background: var(--fm-bg-elevated);
 }
 
 .fav-num {
     font-size: 20px;
     font-weight: 800;
-    color: var(--border);
+    color: var(--fm-border);
     min-width: 26px;
     text-align: center;
 }
@@ -914,7 +833,7 @@ html, body {
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    background: var(--bg-elevated);
+    background: var(--fm-bg-elevated);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -937,12 +856,12 @@ html, body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--text-primary);
+    color: var(--fm-text-1);
 }
 
 .fav-cnt {
     font-size: 10px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     margin-top: 1px;
 }
 
@@ -950,8 +869,8 @@ html, body {
 .radio-next-card {
     width: 100%;
     background: var(--bg-glass);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius-md);
     overflow: hidden;
 }
 
@@ -960,12 +879,12 @@ html, body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px 8px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--fm-border);
 }
 
 .radio-next-label {
     font-size: 10px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     text-transform: uppercase;
     letter-spacing: 0.7px;
     font-weight: 600;
@@ -975,9 +894,9 @@ html, body {
     background: none;
     border: none;
     font-size: 11px;
-    color: var(--accent-fire);
+    color: var(--fm-accent);
     cursor: pointer;
-    font-family: var(--font-family);
+    font-family: var(--fm-font);
     font-weight: 600;
 }
 
@@ -991,8 +910,8 @@ html, body {
 .radio-next-thumb {
     width: 40px;
     height: 40px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
+    border-radius: var(--fm-radius-sm);
+    background: var(--fm-bg-elevated);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1004,21 +923,21 @@ html, body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: var(--radius-sm);
+    border-radius: var(--fm-radius-sm);
 }
 
 .radio-next-info { flex: 1; min-width: 0; }
 .radio-next-title {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--fm-text-1);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .radio-next-meta {
     font-size: 11px;
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     margin-top: 1px;
 }
 
@@ -1032,28 +951,28 @@ html, body {
 
 .chip {
     font-size: 11px;
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
+    background: var(--fm-bg-card);
+    border: 1px solid var(--fm-border);
     border-radius: 20px;
     padding: 4px 10px;
-    color: var(--text-muted);
+    color: var(--fm-text-4);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 4px;
-    transition: all var(--transition-fast);
+    transition: all var(--fm-transition-fast);
 }
 
 .chip.active {
     background: rgba(233, 69, 96, 0.12);
     border-color: rgba(233, 69, 96, 0.4);
-    color: var(--accent-fire);
+    color: var(--fm-accent);
 }
 
-.chip:hover { border-color: var(--accent-fire); }
+.chip:hover { border-color: var(--fm-accent); }
 
 .chip .rm {
-    color: var(--text-dim);
+    color: var(--fm-text-5);
     font-size: 10px;
     opacity: 0.7;
 }
@@ -1069,5 +988,4 @@ html, body {
 #tab-radio.active { display: flex; flex-direction: column; padding-bottom: 20px; }
 #tab-queue.active { display: block; }
 #tab-discover.active { display: block; }
-
 
