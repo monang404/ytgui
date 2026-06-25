@@ -19,19 +19,44 @@ function applyRoleUI() {
         document.body.classList.add("client-mode");
         switchTab("home");
         if(dom.queueList && dom.tabHome) dom.tabHome.appendChild(dom.queueList);
-        dom.logoutBtn.style.display = "none";
+        dom.logoutBtn.style.display = "flex";
     } else if (store.userRole === "admin") {
         dom.portalScreen.classList.remove("portal-active");
         dom.appContainer.classList.remove("portal-active");
         document.body.classList.remove("client-mode");
         if(dom.queueList && dom.queueFooter && dom.tabQueue) dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
-        dom.logoutBtn.style.display = "inline-flex";
+        dom.logoutBtn.style.display = "flex";
         switchTab("home");
     }
     renderHeader();
 }
 
 function logout() {
+    // 1. Stop local browser/client audio
+    if (typeof localAudio !== "undefined" && localAudio) {
+        try {
+            localAudio.pause();
+            localAudio.src = "";
+            localAudio.removeAttribute("src");
+            localAudio.load();
+        } catch (e) {
+            console.warn("Failed to stop browser audio:", e);
+        }
+    }
+    if (typeof _lastLoadedVideoId !== "undefined") {
+        _lastLoadedVideoId = null;
+    }
+
+    // 2. Stop server playback if admin
+    if (store.userRole === "admin") {
+        try {
+            wsSend("stop");
+        } catch (e) {
+            console.warn("Failed to send stop command:", e);
+        }
+    }
+
+    // 3. Clear store & local storage
     store.userRole = "portal";
     store.adminUsername = "";
     store.adminPassword = "";
@@ -39,13 +64,29 @@ function logout() {
     localStorage.removeItem("ytgui_admin_username");
     localStorage.removeItem("ytgui_admin_password");
     localStorage.removeItem("ytgui_session_token");
+
+    // 4. Close settings sheet UI if open
+    if (typeof closeSettings === "function") {
+        closeSettings();
+    }
+
+    // 5. Redirect or adjust view
     if (window.location.pathname !== "/admin") {
-        window.location.href = "/admin";
+        setTimeout(() => {
+            if (window.ws) {
+                try {
+                    window.ws.close();
+                } catch (e) {}
+            }
+            window.location.href = "/admin";
+        }, 150);
     } else {
         dom.portalClientBtn.style.display = "none";
         applyRoleUI();
         if (window.ws) {
-            window.ws.close();
+            try {
+                window.ws.close();
+            } catch (e) {}
         }
     }
 }

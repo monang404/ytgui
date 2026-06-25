@@ -73,9 +73,6 @@
                         <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i> <span
                             id="output-btn-text">Device</span>
                     </button>
-                    <button id="logout-btn" class="out-btn" title="Keluar / Ganti Mode">
-                        <i class="ti ti-logout" style="font-size:11px"></i> Keluar
-                    </button>
                     <div class="status-indicator" style="display:flex; align-items:center; gap:6px;">
                         <div class="status-dot" id="status-dot"></div>
                         <span id="status-text" style="font-size:11px; color:#9a9abc">online</span>
@@ -93,10 +90,6 @@
                             </div>
                             <span style="font-size:12px; color:#9a9abc">online</span>
                         </div>
-                        <button class="out-btn" onclick="document.getElementById('logout-btn').click()"
-                            style="width:100%;text-align:left;">
-                            <i class="ti ti-logout" style="font-size:12px"></i> Keluar
-                        </button>
                     </div>
                 </div>
             </div>
@@ -139,13 +132,6 @@
                 <header class="home-header" id="home-header-inner">
                     <div></div>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <button id="output-toggle-btn" class="out-btn" title="Ubah Output Suara">
-                            <i class="ti ti-device-mobile" style="font-size:11px" aria-hidden="true"></i>
-                            <span id="output-btn-text">Device</span>
-                        </button>
-                        <button id="logout-btn" class="out-btn mobile-only" title="Keluar">
-                            <i class="ti ti-logout" style="font-size:11px"></i>
-                        </button>
                     </div>
                 </header>
 
@@ -525,6 +511,17 @@
                     </div>
                 </div>
                 <button id="ss-history-btn" class="ss-action-btn">Lihat</button>
+            </div>
+
+            <div class="ss-row" id="logout-btn" style="cursor:pointer">
+                <div class="ss-label">
+                    <i class="ti ti-logout" aria-hidden="true" style="color:var(--red, #ff4a5a)"></i>
+                    <div>
+                        <div class="ss-label-text" style="color:var(--red, #ff4a5a)">Keluar</div>
+                        <div class="ss-label-sub">Keluar dari sesi / Ganti Mode</div>
+                    </div>
+                </div>
+                <i class="ti ti-chevron-right" style="color:#6a6a8c"></i>
             </div>
         </div>
 
