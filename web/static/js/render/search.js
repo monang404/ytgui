@@ -1,8 +1,5 @@
-const SR_EQ_MINI_HTML =
-    '<div class="eq-anim-icon sr-eq"><span></span><span></span><span></span></div>';
-
 function buildSrThumbHtml(track) {
-    return `<img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt="">`;
+    return `<img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt=""><div class="thumb-eq-overlay"><div class="eq-anim-icon"><span></span><span></span><span></span></div></div>`;
 }
 
 function renderSearchResults(results) {
@@ -37,10 +34,18 @@ function renderSearchResults(results) {
 
         const meta = document.createElement("div");
         meta.className = "sr-meta";
-        meta.textContent = track.artist + " • " + formatTime(track.duration);
+        let artistName = track.artist || "";
+        if (artistName.length > 25) {
+            artistName = artistName.substring(0, 22) + "...";
+        }
+        meta.textContent = artistName;
 
         info.appendChild(title);
         info.appendChild(meta);
+
+        const duration = document.createElement("div");
+        duration.className = "sr-duration";
+        duration.textContent = formatTime(track.duration);
 
         // 3-dots context menu button
         const moreBtn = document.createElement("button");
@@ -53,6 +58,7 @@ function renderSearchResults(results) {
 
         item.appendChild(thumb);
         item.appendChild(info);
+        item.appendChild(duration);
         item.appendChild(moreBtn);
 
         dom.searchResults.appendChild(item);
@@ -70,23 +76,7 @@ function updateSearchPlayingState() {
     dom.searchResults.querySelectorAll(".sr-item").forEach((item) => {
         const isCurrent = currentId && item.dataset.videoId === currentId;
         item.classList.toggle("current", !!isCurrent);
-
-        const thumb = item.querySelector(".sr-thumb");
-        if (!thumb) return;
-
-        if (isCurrent && isPlaying) {
-            thumb.innerHTML = SR_EQ_MINI_HTML;
-            thumb.classList.add("playing");
-        } else {
-            thumb.classList.remove("playing");
-            let track = null;
-            try {
-                track = JSON.parse(item.dataset.searchTrackStr);
-            } catch (_) {
-                return;
-            }
-            thumb.innerHTML = buildSrThumbHtml(track);
-        }
+        item.classList.toggle("playing", !!(isCurrent && isPlaying));
     });
     
     if (typeof window.loadLazyCovers === "function") {

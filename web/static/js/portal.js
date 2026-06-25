@@ -13,22 +13,19 @@ function applyRoleUI() {
         dom.portalScreen.classList.add("portal-active");
         dom.appContainer.classList.add("portal-active");
         document.body.classList.remove("client-mode");
-        if(dom.queueList && dom.queueFooter && dom.tabQueue) dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
         dom.logoutBtn.style.display = "none";
     } else if (store.userRole === "client") {
         dom.portalScreen.classList.remove("portal-active");
         dom.appContainer.classList.remove("portal-active");
         document.body.classList.add("client-mode");
-        switchTab("home");
-        if(dom.queueList && dom.tabHome) dom.tabHome.appendChild(dom.queueList);
+        switchTab("discover");
         dom.logoutBtn.style.display = "flex";
     } else if (store.userRole === "admin") {
         dom.portalScreen.classList.remove("portal-active");
         dom.appContainer.classList.remove("portal-active");
         document.body.classList.remove("client-mode");
-        if(dom.queueList && dom.queueFooter && dom.tabQueue) dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
         dom.logoutBtn.style.display = "flex";
-        switchTab("home");
+        switchTab("discover");
     }
     renderHeader();
 }

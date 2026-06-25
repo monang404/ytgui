@@ -1,1 +1,1 @@
-const TABS = ["home", "search", "radio", "queue", "discover"];
+const TABS = ["home", "search", "radio", "discover"];

@@ -15,7 +15,6 @@ function initDOM() {
         tabHome: $("tab-home"),
         tabSearch: $("tab-search"),
         tabRadio: $("tab-radio"),
-        tabQueue: $("tab-queue"),
         tabDiscover: $("tab-discover"),
         outputToggleBtn: $("output-toggle-btn"),
         statusDot: $("status-dot"),

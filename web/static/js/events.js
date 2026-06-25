@@ -279,8 +279,39 @@ function initEvents() {
 
     // EVENT DELEGATION UNTUK DISCOVER / SEED / SEARCH
     document.addEventListener("click", (e) => {
-        // Recent / Favorite / Cached / Search Results cards
-        const card = e.target.closest(".disc-card, .fav-card, .search-result-item, .sr-item");
+        // 1. Clicks on 3-dots button (.sr-more-btn)
+        const moreBtn = e.target.closest(".sr-more-btn");
+        if (moreBtn) {
+            const item = moreBtn.closest(".sr-item");
+            if (item) {
+                const trackStr = item.dataset.trackStr || item.dataset.searchTrackStr;
+                if (trackStr) {
+                    try {
+                        const track = JSON.parse(trackStr);
+                        showActionModal(track);
+                    } catch (err) { console.error(err); }
+                }
+            }
+            return;
+        }
+
+        // 2. Clicks on the sr-item row itself -> Play track
+        const srItem = e.target.closest(".sr-item");
+        if (srItem) {
+            const trackStr = srItem.dataset.trackStr || srItem.dataset.searchTrackStr;
+            if (trackStr) {
+                try {
+                    const track = JSON.parse(trackStr);
+                    if (store.userRole === "admin") {
+                        wsSend("play_track", track);
+                    }
+                } catch (err) { console.error(err); }
+            }
+            return;
+        }
+
+        // 3. Clicks on fav-card or disc-card
+        const card = e.target.closest(".disc-card, .fav-card, .search-result-item");
         if (card && card.dataset.vid) {
             let track = null;
             if (card.classList.contains("search-result-item") && card.dataset.searchTrackStr) {
@@ -312,6 +343,23 @@ function initEvents() {
             dom.searchInput.dispatchEvent(new Event("input"));
             dom.searchInput.focus();
         });
+    }
+
+    const searchHeader = document.getElementById("search-header");
+    if (searchHeader && dom.searchInput) {
+        const updateSearchHeaderCollapse = () => {
+            const hasValue = !!dom.searchInput.value.trim();
+            const isFocused = document.activeElement === dom.searchInput;
+            if (hasValue || isFocused) {
+                searchHeader.classList.add("collapsed");
+            } else {
+                searchHeader.classList.remove("collapsed");
+            }
+        };
+        dom.searchInput.addEventListener("input", updateSearchHeaderCollapse);
+        dom.searchInput.addEventListener("focus", updateSearchHeaderCollapse);
+        dom.searchInput.addEventListener("blur", updateSearchHeaderCollapse);
+        updateSearchHeaderCollapse();
     }
 
     let searchTimer = null;
@@ -390,6 +438,7 @@ function initEvents() {
             wsSend("queue_select", { index: parseInt(item.dataset.index) });
         }
     });
+
 
     initQueueDragDrop();
 

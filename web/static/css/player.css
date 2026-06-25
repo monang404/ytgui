@@ -256,6 +256,44 @@
   justify-content: center;
   color: var(--text-3);
   font-size: 18px;
+  position: relative;
+}
+
+/* EQ Overlay inside Thumbnail */
+.thumb-eq-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 14, 18, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.home-recent-item.current .thumb-eq-overlay,
+.sr-item.current .thumb-eq-overlay {
+  opacity: 1;
+}
+
+.thumb-eq-overlay .eq-anim-icon {
+  height: 12px;
+  width: 14px;
+  gap: 2.2px;
+}
+
+.thumb-eq-overlay .eq-anim-icon span {
+  width: 2.5px;
+  background: var(--accent); /* Yellow / Amber Accent */
+  animation-play-state: paused;
+}
+
+.home-recent-item.playing .thumb-eq-overlay .eq-anim-icon span,
+.sr-item.playing .thumb-eq-overlay .eq-anim-icon span {
+  animation-play-state: running;
 }
 
 .home-recent-thumb img {
@@ -389,4 +427,15 @@ body[data-active-tab="home"] #player-bar {
 .btn-shuffle:hover,
 .btn-repeat:hover {
   color: var(--accent) !important;
+}
+
+/* Radio queue items cursor & hover overrides (non-clickable) */
+#radio-queue-list .home-recent-item {
+  cursor: default;
+}
+#radio-queue-list .home-recent-item:hover {
+  background: transparent;
+}
+#radio-queue-list .home-recent-item.current:hover {
+  background: var(--accent-alpha);
 }
