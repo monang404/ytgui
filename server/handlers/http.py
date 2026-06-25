@@ -120,7 +120,7 @@ async def serve_stream(request):
 
                 await response.prepare(request)
 
-                async for chunk in upstream.content.iter_chunked(16384):
+                async for chunk in upstream.content.iter_chunked(65536):
                     await response.write(chunk)
 
                 await response.write_eof()

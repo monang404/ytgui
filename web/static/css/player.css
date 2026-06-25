@@ -67,12 +67,31 @@
 
 .home-art-frame.visualizer-active,
 .home-art-frame.playing {
+  /* UI-02 fix: box-shadow statis, glow beat dipindah ke ::before */
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.10),
     0 4px 8px rgba(0, 0, 0, 0.45),
-    0 18px 48px rgba(0, 0, 0, 0.65),
-    0 0 70px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), var(--beat-glow-opacity, 0.28));
-  transition: box-shadow var(--beat-glow-transition, 0.4s) ease;
+    0 18px 48px rgba(0, 0, 0, 0.65);
+  transition: box-shadow 0.55s cubic-bezier(0.0, 0.0, 0.2, 1);
+}
+
+/* UI-02 fix: ::before glow — opacity composited, tidak trigger repaint */
+/* Catatan: ::after sudah dipakai untuk gradient overlay, pakai ::before */
+.home-art-frame::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse,
+    rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), 0.3),
+    transparent 70%
+  );
+  opacity: var(--beat-glow-opacity, 0);
+  transition: opacity var(--beat-glow-transition, 0.4s) ease;
+  pointer-events: none;
+  z-index: -1;
+  will-change: opacity;
 }
 
 /* ── Ambient Background System ── */
@@ -96,11 +115,19 @@
   bottom: -20%;
   background-size: cover;
   background-position: center;
-  filter: blur(150px) brightness(var(--beat-bg-brightness, 0.25));
+  /* UI-01 fix: blur lebih ringan, GPU pre-allocate layer */
+  filter: blur(60px) brightness(var(--beat-bg-brightness, 0.25));
+  will-change: opacity, filter;
   opacity: 0;
-  transition: opacity 0.8s ease-in-out, filter var(--beat-glow-transition, 0.4s) ease;
+  transition: opacity 0.8s ease-in-out;
   animation: ambientDrift 25s infinite alternate ease-in-out;
+  animation-play-state: paused;
   transform: translate(0, 0);
+}
+
+/* UI-01 fix: aktifkan animasi hanya saat lagu bermain */
+body[data-player-state="PLAYING"] .ambient-bg-layer {
+  animation-play-state: running;
 }
 
 .ambient-bg-layer.active {

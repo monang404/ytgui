@@ -18,14 +18,14 @@ function applyRoleUI() {
         dom.portalScreen.classList.remove("portal-active");
         dom.appContainer.classList.remove("portal-active");
         document.body.classList.add("client-mode");
-        switchTab("discover");
+        switchTab("home");
         dom.logoutBtn.style.display = "flex";
     } else if (store.userRole === "admin") {
         dom.portalScreen.classList.remove("portal-active");
         dom.appContainer.classList.remove("portal-active");
         document.body.classList.remove("client-mode");
         dom.logoutBtn.style.display = "flex";
-        switchTab("discover");
+        switchTab("home");
     }
     renderHeader();
 }

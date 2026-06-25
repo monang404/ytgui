@@ -6,7 +6,6 @@ function getOrInitAudio() {
     if (!localAudio) {
         localAudio = new Audio();
         localAudio.preload = "auto";
-        localAudio.crossOrigin = "anonymous";
         localAudio.onerror = (e) => {
             const err = localAudio.error;
             if (!err) return;
@@ -26,7 +25,8 @@ function getOrInitAudio() {
                 if (!window.isDraggingPb) {
                     store.position = localAudio.currentTime;
                     renderProgress();
-                    renderPlayerBar();
+                    // renderPlayerBar() dihapus dari timeupdate (PERF-02)
+                    // dipanggil hanya dari WS event saat state berubah
                 }
                 if (typeof syncLocalLyrics === "function") {
                     syncLocalLyrics();
@@ -41,18 +41,25 @@ let audioCtx = null;
 let analyser = null;
 let dataArray = null;
 
+// BUG-01 fix: hindari createMediaElementSource di Android/iOS
 function initVisualizer() {
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) {
+        startFakeBeatLoop();
+        return;
+    }
+
     if (audioCtx || !localAudio) return;
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
+        audioCtx = new AudioContext({ latencyHint: 'playback' });
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 256;
-        
+
         const source = audioCtx.createMediaElementSource(localAudio);
         source.connect(analyser);
         analyser.connect(audioCtx.destination);
-        
+
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         startVisualizerLoop();
     } catch (e) {
@@ -60,10 +67,46 @@ function initVisualizer() {
     }
 }
 
+// Fake beat loop untuk mobile (BUG-01 fix): animasi tetap ada, audio tidak diganggu
+let _fakeBeatRaf = null;
+function startFakeBeatLoop() {
+    if (_fakeBeatRaf) return;
+    const BASE_INTERVAL = 500;
+    let lastBeat = 0;
+
+    function tick(ts) {
+        _fakeBeatRaf = requestAnimationFrame(tick);
+        if (store.status !== 'PLAYING') {
+            if (dom.tabHome) {
+                dom.tabHome.style.removeProperty('--beat-glow-opacity');
+                dom.tabHome.style.removeProperty('--beat-bg-brightness');
+                dom.tabHome.style.removeProperty('--beat-glow-transition');
+            }
+            return;
+        }
+        const elapsed = ts - lastBeat;
+        if (elapsed < BASE_INTERVAL) return;
+        lastBeat = ts;
+        if (!dom.tabHome) return;
+        dom.tabHome.style.setProperty('--beat-glow-opacity', '0.5');
+        dom.tabHome.style.setProperty('--beat-bg-brightness', '0.28');
+        dom.tabHome.style.setProperty('--beat-glow-transition', '0.15s');
+        setTimeout(() => {
+            if (!dom.tabHome) return;
+            dom.tabHome.style.setProperty('--beat-glow-opacity', '0.4');
+            dom.tabHome.style.setProperty('--beat-bg-brightness', '0.22');
+            dom.tabHome.style.setProperty('--beat-glow-transition', '0.4s');
+        }, 150);
+    }
+    _fakeBeatRaf = requestAnimationFrame(tick);
+}
+
+// PERF-01 fix: RAF berhenti saat tidak PLAYING
+let _vizRafId = null;
+
 function startVisualizerLoop() {
     if (!analyser || !dom.vinylRecord) return;
-    requestAnimationFrame(startVisualizerLoop);
-    
+
     const isBrowser = store.userRole === "client" || store.audio_output === "browser";
     if (!isBrowser || store.status !== "PLAYING") {
         if (dom.tabHome) {
@@ -71,27 +114,35 @@ function startVisualizerLoop() {
             dom.tabHome.style.removeProperty('--beat-bg-brightness');
             dom.tabHome.style.removeProperty('--beat-glow-transition');
         }
+        _vizRafId = null;
         return;
     }
-    
+
     analyser.getByteFrequencyData(dataArray);
-    
+
     let bassSum = 0;
     for (let i = 0; i < 10; i++) {
         bassSum += dataArray[i];
     }
     const bassAvg = bassSum / 10;
     const ratio = bassAvg / 255;
-    
+
     const glowOpacity = 0.4 + (ratio * 0.2);
     const bgBrightness = 0.2 + (ratio * 0.1);
     const transitionTime = ratio > 0.4 ? '0.2s' : '0.4s';
-    
+
     if (dom.tabHome) {
         dom.tabHome.style.setProperty('--beat-glow-opacity', glowOpacity.toFixed(3));
         dom.tabHome.style.setProperty('--beat-bg-brightness', bgBrightness.toFixed(3));
         dom.tabHome.style.setProperty('--beat-glow-transition', transitionTime);
     }
+
+    _vizRafId = requestAnimationFrame(startVisualizerLoop);
+}
+
+// Panggil saat status berubah ke PLAYING agar RAF aktif kembali
+function resumeVisualizerLoop() {
+    if (!_vizRafId && analyser) startVisualizerLoop();
 }
 
 function unlockBrowserAudio() {
@@ -105,13 +156,15 @@ function unlockBrowserAudio() {
     audio.volume = 0;
     const p = audio.play();
     if (p !== undefined) {
-        p.catch((err) => {
-            console.warn("Unlock play failed:", err);
-        }).finally(() => {
+        p.then(() => {
             audioUnlocked = true;
+            audio.pause();
+            audio.volume = 1;
             initVisualizer();
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            syncBrowserAudio(); 
+            syncBrowserAudio();
+        }).catch((err) => {
+            console.warn("Unlock play failed, will retry on next interaction:", err);
         });
     } else {
         audioUnlocked = true;
@@ -148,7 +201,8 @@ function syncBrowserAudio() {
         audio.src = expectedSrc;
         
         audio.oncanplay = () => {
-            if (store.position > 2 && Math.abs(audio.currentTime - store.position) > 2) {
+            // BUG-04 fix: threshold 5s, hindari flush buffer di awal playback
+            if (store.position > 5 && Math.abs(audio.currentTime - store.position) > 5) {
                 audio.currentTime = store.position;
             }
             audio.oncanplay = null;
@@ -181,6 +235,6 @@ function syncBrowserAudio() {
 }
 
 function initAudio() {
-    document.addEventListener("click", unlockBrowserAudio, { once: true });
-    document.addEventListener("touchstart", unlockBrowserAudio, { once: true });
+    document.addEventListener("click", unlockBrowserAudio);
+    document.addEventListener("touchstart", unlockBrowserAudio, { passive: true });
 }
