@@ -66,6 +66,7 @@ function initDOM() {
         btnDownload: $("btn-download"),
         btnHelp: $("btn-help"),
         btnLyrics: $("btn-lyrics"),
+        btnFavorite: $("btn-favorite"),
         pbCacheBadge: $("pb-cache-badge"),
         pbSbBadge: $("pb-sb-badge"),
         pbDlBadge: $("pb-dl-badge"),

@@ -12,6 +12,7 @@ def track_to_dict(track: Optional[TrackInfo]) -> Optional[dict]:
         "thumbnail": track.thumbnail,
         "is_cached": bool(track.local_path),
         "view_count": track.view_count,
+        "is_favorite": bool(getattr(track, "is_favorite", 0)),
     }
 
 def state_to_dict(state: AppState) -> dict:
@@ -50,4 +51,5 @@ def dict_to_track(data: dict) -> Optional[TrackInfo]:
         local_path=data.get("local_path"),
         stream_url=data.get("stream_url"),
         view_count=data.get("view_count"),
+        is_favorite=int(data.get("is_favorite", False)),
     )

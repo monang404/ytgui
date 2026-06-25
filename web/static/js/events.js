@@ -33,6 +33,14 @@ function initEvents() {
 
     dom.logoutBtn.addEventListener("click", logout);
 
+    if (dom.btnFavorite) {
+        dom.btnFavorite.addEventListener("click", () => {
+            if (store.userRole === "admin" && store.current_track) {
+                wsSend("toggle_favorite", { video_id: store.current_track.video_id });
+            }
+        });
+    }
+
     dom.outputToggleBtn.addEventListener("click", () => {
         if (store.userRole !== "admin") return;
         const newOutput = store.audio_output === "browser" ? "device" : "browser";

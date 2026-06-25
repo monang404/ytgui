@@ -37,6 +37,7 @@ class TrackInfo:
     stream_url_ts: Optional[int] = None
     play_count: Optional[int] = None
     last_played: Optional[int] = None
+    is_favorite: Optional[int] = 0
 
 @dataclass
 class AppState:

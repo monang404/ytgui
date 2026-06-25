@@ -153,6 +153,40 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
                 }
             }, ensure_ascii=False))
 
+        elif action == "toggle_favorite":
+            video_id = data.get("video_id")
+            if video_id:
+                is_fav = await db.toggle_favorite(video_id)
+                await ws.send_str(json.dumps({
+                    "type": "favorite_status",
+                    "data": {
+                        "video_id": video_id,
+                        "is_favorite": bool(is_fav)
+                    }
+                }, ensure_ascii=False))
+                
+                # Update current track if it's the one that got toggled
+                if state.current_track and state.current_track.video_id == video_id:
+                    state.current_track.is_favorite = is_fav
+                    await manager.broadcast({
+                        "type": "state",
+                        "data": state_to_dict(state)
+                    })
+                
+                # Broadcast updated discover data
+                ds = DiscoverService(db)
+                recent = await ds.get_recent(15)
+                favorites = await ds.get_favorites(15)
+                cached = await ds.get_cached(15)
+                await manager.broadcast({
+                    "type": "discover_data",
+                    "data": {
+                        "recent": [track_to_dict(t) for t in recent],
+                        "favorites": [track_to_dict(t) for t in favorites],
+                        "cached_tracks": [track_to_dict(t) for t in cached]
+                    }
+                })
+
         elif action == "play_track":
             track = dict_to_track(data)
             if track:

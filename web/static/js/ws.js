@@ -167,6 +167,12 @@ function handleServerMessage(msg) {
             renderDiscoverTab();
             renderRecentRow();
             break;
+        case "favorite_status":
+            if (store.current_track && store.current_track.video_id === msg.data.video_id) {
+                store.current_track.is_favorite = msg.data.is_favorite;
+                if (typeof renderNowPlaying === "function") renderNowPlaying();
+            }
+            break;
         case "log":
             showLogToast(msg.data);
             break;

@@ -79,6 +79,14 @@ function renderNowPlaying() {
     } else if (dom.npDurMeta) {
         dom.npDurMeta.textContent = '';
     }
+
+    if (dom.btnFavorite) {
+        if (t && t.is_favorite) {
+            dom.btnFavorite.classList.add("active");
+        } else {
+            dom.btnFavorite.classList.remove("active");
+        }
+    }
 }
 
 
