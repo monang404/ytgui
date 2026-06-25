@@ -23,109 +23,10 @@ from core.state import AppState, PlaybackMode, PlayerStatus
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
-#artis
-SEED_ARTISTS = [
-    "Nadin Amizah",
-    "Peterpan",
-    "NOAH",
-    "Dewa 19",
-    "Ungu",
-    "Nidji",
-    "Samsons",
-    "ST12",
-    "Setia Band",
-    "Wali",
-    "The Changcuters",
-    "Kotak",
-    "Geisha",
-    "Drive",
-    "d'Masiv",
-    "The Rain",
-    "Letto",
-    "Kerispatih",
-    "Vierra",
-    "Vierratale",
-    "Govinda",
-    "Ada Band",
-    "Radja",
-    "Kangen Band",
-    "J-Rocks",
-    "Andra and The Backbone",
-    "Padi Reborn",
-    "Armada",
-    "Cokelat",
-    "Gigi",
-    "Slank",
-    "Sheila On 7",
-    "Maliq & D'Essentials",
-    "The Groove",
-    "Kahitna",
-    "Juicy Luicy",
-    "Hindia",
-    "Lomba Sihir",
-    "Reality Club",
-    "Fourtwnty",
-    "Nadin Amizah",
-    "Ariel NOAH",
-    "Afgan",
-    "Judika",
-    "Glenn Fredly",
-    "Tompi",
-    "Marcell Siahaan",
-    "Ello",
-    "Virgoun",
-    "Rizky Febian",
-    "Ardhito Pramono",
-    "Tulus",
-    "Pamungkas",
-    "Budi Doremi",
-    "Mahalini",
-    "Tiara Andini",
-    "Lyodra",
-    "Ziva Magnolya",
-    "Sal Priadi",
-    "Fiersa Besari",
-    "Raim Laode",
-    "Bernadya",
-    "Ari Lasso",
-    "Once Mekel",
-    "Anji",
-    "Yovie Widianto",
-    "Rossa",
-    "Krisdayanti",
-    "Ruth Sahanaya",
-    "Bunga Citra Lestari",
-    "Yura Yunita",
-    "Isyana Sarasvati",
-    "Raisa",
-    "Citra Scholastika",
-    "Ghea Indrawari",
-    "Marion Jola",
-    "Brisia Jodie",
-    "Rinni Wulandari",
-    "Melly Goeslaw",
-    "Dewi Sandra",
-    "Beby Romeo",
-    "Maudy Ayunda",
-    "Putri Ariani",
-    "Keisya Levronka",
-    "Titi DJ",
-    "Fabio Asher",
-    "Yotari",
-    "Prince Husein",
-    "Awdella",
-    "Batas Senja",
-    "For Revenge",
-    "Last Child",
-    "Stand Here Alone",
-    "The Panturas",
-    "Feel Koplo",
-    "Stereowall",
-    "Perunggu",
-    "The Lantis",
-    "Coldiac",
-    "Denny Caknan",
-]
+# Fallback minimal — dipakai HANYA jika tabel artists di DB masih kosong
+# (misalnya belum pernah menjalankan import_artists.py).
+# Sumber artis utama dibaca dari DB saat RadioMode pertama kali diaktifkan.
+_FALLBACK_ARTISTS = ["Sheila On 7", "Dewa 19", "Tulus", "Nadin Amizah", "Raisa"]
 
 MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
 TRACKS_PER_ARTIST_TARGET = 3  # target track unik per artis dalam satu batch
@@ -166,16 +67,41 @@ class RadioMode:
     Subscribes to: (tidak ada)
     Publishes: QUEUE_UPDATED, LOG_MESSAGE
     """
-    def __init__(self, ytdlp: MediaExtractorPort, state: AppState):
+    def __init__(self, ytdlp: MediaExtractorPort, state: AppState, db=None):
         self.ytdlp = ytdlp
         self.state = state
+        self.db = db
         self._is_fetching = False
         self._bg_tasks = set()
-        # Rotasi artis tanpa pengulangan: urutan acak dari SEED_ARTISTS yang
+        # Pool artis — diisi dari DB saat pertama kali diaktifkan (lazy load).
+        # Setelah terisi, tidak query DB lagi kecuali di-reload manual.
+        self._seed_artists: list[str] = []
+        # Rotasi artis tanpa pengulangan: urutan acak dari _seed_artists yang
         # "dikonsumsi" dari depan tiap kali batch baru diambil. Begitu deck
         # ini habis, semua artis sudah pasti kebagian giliran sekali, lalu
         # deck dikocok ulang dari awal untuk putaran berikutnya.
         self._artist_rotation: list[str] = []
+
+    async def _ensure_artists_loaded(self) -> None:
+        """Load pool artis dari DB (lazy — hanya sekali selama instance hidup).
+        Kalau DB tidak tersedia atau tabel kosong, jatuh ke _FALLBACK_ARTISTS.
+        """
+        if self._seed_artists:
+            return
+        try:
+            if self.db and self.db.conn:
+                self._seed_artists = await self.db.get_all_artists()
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Gagal load artis dari DB: {e}")
+
+        if not self._seed_artists:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Tabel artists kosong atau DB tidak tersedia. "
+                "Jalankan: python data/import_artists.py --db cache/library.db --json data/artists.json"
+            )
+            self._seed_artists = list(_FALLBACK_ARTISTS)
 
     async def on_activated(self, controller: "PlaybackController") -> None:
         """Dipanggil saat user menyalakan Radio Mode.
@@ -185,8 +111,9 @@ class RadioMode:
         Radio SELALU langsung melakukan pencarian baru dan memutar lagu —
         tidak peduli apa yang sebelumnya terjadi di Queue Mode.
         """
+        await self._ensure_artists_loaded()
         self.state.radio_queue.clear()
-        seed_artist = random.choice(SEED_ARTISTS)
+        seed_artist = random.choice(self._seed_artists)
         task = safe_create_task(self._fetch_and_play_initial(controller, seed_artist), name="radio_initial")
         self._bg_tasks.add(task)
         task.add_done_callback(self._bg_tasks.discard)
@@ -210,7 +137,8 @@ class RadioMode:
                 task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
         else:
-            seed_artist = random.choice(SEED_ARTISTS)
+            await self._ensure_artists_loaded()
+            seed_artist = random.choice(self._seed_artists)
             await self._fetch_and_play_initial(controller, seed_artist)
 
     async def _prefetch_next(self, controller: "PlaybackController") -> None:
@@ -287,7 +215,7 @@ class RadioMode:
         """
         chosen: list[str] = []
 
-        if prioritized_artist and prioritized_artist in SEED_ARTISTS:
+        if prioritized_artist and prioritized_artist in self._seed_artists:
             chosen.append(prioritized_artist)
 
         slots_left = ARTISTS_PER_BATCH - len(chosen)
@@ -312,12 +240,12 @@ class RadioMode:
     def _next_artists_from_rotation(self, count: int, exclude: set[str]) -> list[str]:
         """Ambil `count` nama artis dari depan deck rotasi (tanpa pengulangan).
         Begitu deck kehabisan stok di tengah pengambilan, deck dikocok ulang
-        otomatis dari seluruh SEED_ARTISTS (minus exclude) dan dilanjutkan,
+        otomatis dari seluruh _seed_artists (minus exclude) dan dilanjutkan,
         supaya satu batch tidak pernah kekurangan slot."""
         picked: list[str] = []
         while len(picked) < count:
             if not self._artist_rotation:
-                self._artist_rotation = list(SEED_ARTISTS)
+                self._artist_rotation = list(self._seed_artists)
                 random.shuffle(self._artist_rotation)
             artist = self._artist_rotation.pop(0)
             if artist in exclude or artist in picked:

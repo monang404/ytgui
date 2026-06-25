@@ -153,6 +153,45 @@ class Database:
         await self._conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
         await self._conn.commit()
 
+    async def get_all_artists(self, kategori: str | None = None) -> list[str]:
+        """Ambil semua nama artis dari DB untuk seed radio mode.
+
+        Args:
+            kategori: filter 'individu' atau 'band'. None = semua.
+
+        Returns:
+            List nama artis (string), siap dipakai random.choice/shuffle.
+        """
+        if kategori:
+            query = "SELECT nama FROM artists WHERE kategori = ? ORDER BY id"
+            params = (kategori,)
+        else:
+            query = "SELECT nama FROM artists ORDER BY id"
+            params = ()
+
+        async with self._conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        return [row["nama"] for row in rows]
+
+    async def get_artist_seeds(self, artist_name: str, limit: int = 3) -> list[str]:
+        """Ambil judul lagu populer untuk satu artis (hint query yt-dlp).
+
+        Returns:
+            List judul lagu urut dari yang paling populer.
+        """
+        async with self._conn.execute("""
+            SELECT s.judul FROM artist_seeds s
+            JOIN artists a ON a.id = s.artist_id
+            WHERE a.nama = ?
+            ORDER BY s.urutan
+            LIMIT ?
+        """, (artist_name, limit)) as cursor:
+            rows = await cursor.fetchall()
+
+        return [row["judul"] for row in rows]
+
+
     async def toggle_favorite(self, video_id: str) -> int:
         """Toggles the favorite status of a track and returns the new state (0 or 1)."""
         async with self._conn.execute(

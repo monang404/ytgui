@@ -45,7 +45,7 @@ class Room:
         )
         
         self.queue_mode = QueueMode()
-        self.radio_mode = RadioMode(ytdlp, self.state)
+        self.radio_mode = RadioMode(ytdlp, self.state, db=db)
         
         # TASK-3.2: Inject per-room bus ke VolumeService dan PlaybackController
         self.volume_service = VolumeService(self.event_bus, self.mpv, self.state)

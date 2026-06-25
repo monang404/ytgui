@@ -25,3 +25,30 @@ CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
     expires_at INTEGER NOT NULL
 );
+
+-- Artists untuk Radio Mode seed
+-- Diisi via: python data/import_artists.py --db cache/library.db --json data/artists.json
+CREATE TABLE IF NOT EXISTS artists (
+    id           INTEGER PRIMARY KEY,
+    nama         TEXT    NOT NULL,
+    kategori     TEXT    CHECK(kategori IN ('individu','band')),
+    tahun_aktif  TEXT,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS artist_genres (
+    artist_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+    genre      TEXT    NOT NULL,
+    PRIMARY KEY (artist_id, genre)
+);
+
+CREATE TABLE IF NOT EXISTS artist_seeds (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+    judul      TEXT    NOT NULL,
+    urutan     INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_artists_kategori ON artists(kategori);
+CREATE INDEX IF NOT EXISTS idx_genres_genre     ON artist_genres(genre);
+CREATE INDEX IF NOT EXISTS idx_seeds_artist     ON artist_seeds(artist_id);
