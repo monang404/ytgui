@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS tracks (
     stream_url_ts INTEGER,       -- Unix timestamp when URL was fetched
     play_count   INTEGER DEFAULT 0,
     last_played  INTEGER,        -- Unix timestamp
+    is_favorite  INTEGER DEFAULT 0, -- 1 if liked, 0 otherwise
     created_at   INTEGER DEFAULT (strftime('%s','now'))
 );
 

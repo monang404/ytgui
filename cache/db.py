@@ -33,6 +33,13 @@ class Database:
             schema_sql = f.read()
         await self._conn.executescript(schema_sql)
         
+        # Migrasi: Tambahkan kolom is_favorite jika belum ada
+        try:
+            await self._conn.execute("ALTER TABLE tracks ADD COLUMN is_favorite INTEGER DEFAULT 0")
+            await self._conn.commit()
+        except Exception:
+            pass
+        
         # Eviction Policy: Hapus lagu yang tidak diputar > 30 hari, bukan favorit, dan belum di-download
         thirty_days_ago = int(time.time()) - (30 * 24 * 3600)
         await self._conn.execute(
@@ -56,6 +63,9 @@ class Database:
             row = await cursor.fetchone()
             if not row:
                 return None
+            is_fav = 0
+            if "is_favorite" in row.keys():
+                is_fav = row["is_favorite"] or 0
             return TrackInfo(
                 video_id=row["video_id"],
                 title=row["title"],
@@ -68,6 +78,7 @@ class Database:
                 stream_url_ts=row["stream_url_ts"],
                 play_count=row["play_count"],
                 last_played=row["last_played"],
+                is_favorite=is_fav,
             )
 
     async def upsert_track(self, track: TrackInfo, stream_url: str = None, local_path: str = None):
@@ -141,3 +152,23 @@ class Database:
         now = int(time.time())
         await self._conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
         await self._conn.commit()
+
+    async def toggle_favorite(self, video_id: str) -> int:
+        """Toggles the favorite status of a track and returns the new state (0 or 1)."""
+        async with self._conn.execute(
+            "SELECT is_favorite FROM tracks WHERE video_id = ?", (video_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if not row:
+                return 0
+            current_fav = 0
+            if "is_favorite" in row.keys():
+                current_fav = row["is_favorite"] or 0
+            new_fav = 1 if current_fav == 0 else 0
+            
+        await self._conn.execute(
+            "UPDATE tracks SET is_favorite = ? WHERE video_id = ?",
+            (new_fav, video_id)
+        )
+        await self._conn.commit()
+        return new_fav

@@ -4,8 +4,8 @@
   "description": "Personal YouTube Music Player",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d1c",
-  "theme_color": "#0d0d1c",
+  "background_color": "#090A0D",
+  "theme_color": "#090A0D",
   "orientation": "any",
   "icons": [
     {

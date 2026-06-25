@@ -29,7 +29,7 @@
         if (tab === "search") {
             setTimeout(() => dom.searchInput.focus(), 100);
         }
-        if (tab === "discover") {
+        if (tab === "discover" || tab === "home") {
             wsSend("discover");
         }
     };

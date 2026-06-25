@@ -52,7 +52,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    border-right: 1px solid var(--fm-border, #1e1e32);
+    border-right: 1px solid var(--fm-border, var(--border-1));
     padding: 20px 0;
     overflow-y: auto;
   }
@@ -81,7 +81,7 @@
   /* Perjelas tab aktif di desktop */
   .nav-btn.active {
     background: rgba(255, 255, 255, 0.04);
-    border-left: 3px solid var(--fm-accent, #e040fb);
+    border-left: 3px solid var(--fm-accent, var(--accent));
     padding-left: 17px; /* 20px awal dikurangi 3px border */
   }
 
@@ -102,7 +102,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid var(--fm-border, #1e1e32);
+    border-top: 1px solid var(--fm-border, var(--border-1));
     padding: 0 20px;
     gap: 16px;
   }
@@ -154,14 +154,14 @@
 
   #tab-queue {
     grid-area: queue;
-    border-left: 1px solid var(--fm-border, #1e1e32);
+    border-left: 1px solid var(--fm-border, var(--border-1));
     overflow-y: auto;
     display: block !important; /* Selalu tampil di landscape tablet */
   }
 
   #player-bar {
     grid-area: player;
-    border-top: 1px solid var(--fm-border, #1e1e32);
+    border-top: 1px solid var(--fm-border, var(--border-1));
   }
 
   /* Sembunyikan nav bar di tablet landscape — navigasi via swipe atau gesture */
@@ -191,7 +191,7 @@
 /* Desktop overrides for Player Bar Controls */
 @media (min-width: 1024px) {
   #player-bar {
-    border-top: 1px solid var(--fm-border, #1e1e32);
+    border-top: 1px solid var(--fm-border, var(--border-1));
     padding: 10px 16px 12px;
   }
   .pb-row1 {

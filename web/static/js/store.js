@@ -1,7 +1,7 @@
 const store = {
     status: "IDLE",
     playback_mode: "QUEUE",
-    audio_output: "device",
+    audio_output: "browser",
     userRole: "portal", // "portal" | "client" | "admin"
     adminUsername: "",
     adminPassword: "",

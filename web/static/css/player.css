@@ -1,178 +1,441 @@
-/* Animated EQ Icon in Now Playing Card */
-.eq-anim-icon {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 3px;
-    height: 16px;
-    width: 24px;
-}
-.eq-anim-icon span {
-    display: block;
-    width: 4px;
-    background: var(--fm-accent, #e040fb);
-    border-radius: 2px;
-    animation: eq-bounce 1s ease-in-out infinite alternate;
-}
-.eq-anim-icon span:nth-child(1) { animation-delay: 0.1s; height: 100%; }
-.eq-anim-icon span:nth-child(2) { animation-delay: 0.3s; height: 60%; }
-.eq-anim-icon span:nth-child(3) { animation-delay: 0.0s; height: 80%; }
+/* ══ BAGAS.FM player.css v2 ══ */
 
-@keyframes eq-bounce {
-    0% { transform: scaleY(0.3); transform-origin: bottom; }
-    100% { transform: scaleY(1); transform-origin: bottom; }
+/* ── Home Tab Layout ── */
+.full-player-view {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 1;
 }
 
-/* Vinyl Record Container */
-.vinyl-wrap {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
-    flex-shrink: 0;
+.full-player-view::-webkit-scrollbar {
+  display: none;
 }
 
-.vinyl-record {
-    width: 160px; /* Reduced from 240px */
-    height: 160px;
-    background: radial-gradient(circle, #000 30%, #111 40%, #000 50%, #111 60%, #000 70%, #111 80%, #050505 100%);
-    border-radius: 50%;
-    border: 4px solid var(--fm-border, #1e1e32);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.05);
-    position: relative;
-    /* Grooves effect */
-    background-image: repeating-radial-gradient(
-      circle at center,
-      #111,
-      #111 2px,
-      #0a0a0a 2px,
-      #0a0a0a 4px
-    );
-    animation: spin 6s linear infinite;
-    animation-play-state: paused;
+/* ── Home Header (inside tab) ── */
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s4) var(--s5) var(--s3);
+  flex-shrink: 0;
 }
 
-.vinyl-record.playing {
-    animation-play-state: running;
+.home-greeting {
+  font-size: var(--t-xs);
+  color: var(--text-2);
+  font-weight: var(--w-regular);
+  letter-spacing: 0.2px;
 }
 
-@keyframes spin {
-    100% { transform: rotate(360deg); }
+.home-brand {
+  font-size: var(--t-xl);
+  font-weight: var(--w-bold);
+  color: var(--text-1);
+  letter-spacing: -0.4px;
+  line-height: 1.2;
 }
 
-.vinyl-center {
-    width: 60px;
-    height: 60px;
-    background: var(--fm-bg-elevated, #1e1e38);
-    border-radius: 50%;
-    border: 2px solid #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    position: relative;
-    z-index: 2;
+/* ── Album Art Hero ── */
+.home-art-section {
+  display: flex;
+  justify-content: center;
+  padding: var(--s6) var(--s5) var(--s5);
+  flex-shrink: 0;
 }
 
-.vinyl-center::after {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: #000;
-    border-radius: 50%;
-    border: 2px solid #222;
+.home-art-frame {
+  width: 78%;
+  max-width: 300px;
+  aspect-ratio: 1 / 1;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: box-shadow 0.55s cubic-bezier(0.0, 0.0, 0.2, 1);
 }
 
-.vinyl-center img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
+.home-art-frame.visualizer-active,
+.home-art-frame.playing {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 4px 8px rgba(0, 0, 0, 0.45),
+    0 18px 48px rgba(0, 0, 0, 0.65),
+    0 0 70px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), var(--beat-glow-opacity, 0.28));
+  transition: box-shadow var(--beat-glow-transition, 0.4s) ease;
 }
 
-.vinyl-center i {
-    font-size: 20px;
-    color: var(--fm-accent, #e040fb);
-    z-index: 1;
+/* ── Ambient Background System ── */
+.ambient-bg-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--bg-primary);
 }
 
-/* Main Track Info (below vinyl) */
-.main-track-info {
-    text-align: center;
-    padding: 12px 20px 0;
+.ambient-bg-layer {
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(150px) brightness(var(--beat-bg-brightness, 0.25));
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out, filter var(--beat-glow-transition, 0.4s) ease;
+  animation: ambientDrift 25s infinite alternate ease-in-out;
+  transform: translate(0, 0);
+}
+
+.ambient-bg-layer.active {
+  opacity: 1;
+}
+
+.ambient-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(13, 15, 20, 0.4) 0%, rgba(13, 15, 20, 0.95) 55%, rgba(13, 15, 20, 1) 100%);
+}
+
+@keyframes ambientDrift {
+  0% {
+    transform: translate(-8px, -4px) scale(1.1);
+  }
+
+  50% {
+    transform: translate(8px, 4px) scale(1.15);
+  }
+
+  100% {
+    transform: translate(-4px, 8px) scale(1.1);
+  }
+}
+
+/* subtle gradient overlay di bawah artwork */
+.home-art-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 55%, rgba(9, 10, 13, 0.25) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.home-art-placeholder {
+  font-size: 72px;
+  color: var(--text-3);
+}
+
+/* ── Track Info Row ── */
+.home-track-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s3) var(--s10) var(--s3) var(--s10);
+}
+
+.home-track-info {
+  min-width: 0;
+  text-align: center;
 }
 
 .mti-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 4px;
-    /* Limit to 2 lines */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  font-size: var(--t-xl);
+  font-weight: var(--w-semibold);
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  text-transform: capitalize;
+  text-align: center;
 }
 
 .mti-artist {
-    font-size: 14px;
-    color: var(--fm-text-4, #6a6a8c);
-    font-weight: 400;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: var(--t-md);
+  color: var(--text-2);
+  font-weight: var(--w-regular);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 
-/* Lyrics Container */
+/* ── Favorite Button ── */
+.home-fav-btn {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 22px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+  transition: color var(--dur-fast) var(--ease);
+  position: absolute;
+  right: var(--s4);
+}
+
+.home-fav-btn:hover {
+  color: var(--accent);
+}
+
+.home-fav-btn.active {
+  color: var(--accent);
+}
+
+.home-fav-btn.active i::before {
+  content: "\ecd5";
+}
+
+/* ti-heart-filled */
+
+/* ── Recently Played Section ── */
+.home-recent-section {
+  flex: 1;
+}
+
+.home-recent-list {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--s8);
+}
+
+.home-recent-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s5);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.home-recent-item:hover {
+  background: var(--fm-color-hover);
+}
+
+.home-recent-item.current {
+  background: var(--accent-alpha);
+}
+
+.home-recent-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 18px;
+  position: relative;
+}
+
+/* EQ Overlay inside Thumbnail */
+.thumb-eq-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 14, 18, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.home-recent-item.current .thumb-eq-overlay,
+.sr-item.current .thumb-eq-overlay {
+  opacity: 1;
+}
+
+.thumb-eq-overlay .eq-anim-icon {
+  height: 12px;
+  width: 14px;
+  gap: 2.2px;
+}
+
+.thumb-eq-overlay .eq-anim-icon span {
+  width: 2.5px;
+  background: var(--accent); /* Yellow / Amber Accent */
+  animation-play-state: paused;
+}
+
+.home-recent-item.playing .thumb-eq-overlay .eq-anim-icon span,
+.sr-item.playing .thumb-eq-overlay .eq-anim-icon span {
+  animation-play-state: running;
+}
+
+.home-recent-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-recent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-recent-title {
+  font-size: var(--t-md);
+  font-weight: var(--w-medium);
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-recent-item.current .home-recent-title {
+  color: var(--accent);
+}
+
+.home-recent-artist {
+  font-size: var(--t-sm);
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+.home-recent-more {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 18px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.home-recent-more:hover {
+  color: var(--text-2);
+}
+
+/* ── Lyrics Inline ── */
 .lyrics-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 20px;
-    text-align: center;
-    overflow: hidden;
-    gap: 8px;
-    position: relative;
-    /* gradient fade top and bottom */
-    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  width: 100%;
+  text-align: center;
+  padding: var(--s3) var(--s6);
 }
 
 .lyrics-line {
-    font-size: 13px;
-    color: var(--fm-text-4, #6a6a8c);
-    transition: all 0.3s ease;
-    opacity: 0;
-    transform: translateY(10px);
-    line-height: 1.4;
-    white-space: pre-wrap;
-    min-height: 18px; /* placeholder height */
-}
-
-.lyrics-line.prev, .lyrics-line.next {
-    opacity: 0.6;
-    transform: translateY(0);
+  font-size: var(--t-md);
+  line-height: 1.6;
+  transition: opacity var(--dur-normal) var(--ease);
 }
 
 .lyrics-line.current {
-    font-size: 15px;
-    color: var(--fm-accent, #e040fb);
-    font-weight: 600;
-    opacity: 1;
-    transform: scale(1.05);
-    text-shadow: 0 0 10px rgba(224, 64, 251, 0.4);
+  color: var(--text-1);
+  font-weight: var(--w-medium);
+  font-size: var(--t-lg);
 }
 
-/* Fallback empty lyrics state */
-.lyrics-empty {
-    font-size: 14px;
-    color: var(--fm-text-4, #6a6a8c);
-    font-weight: 400;
+.lyrics-line.prev,
+.lyrics-line.next {
+  color: var(--text-3);
+  font-size: var(--t-sm);
+}
+
+/* ── Player Bar: Home mode ── */
+body[data-active-tab="home"] #app-header {
+  display: none !important;
+}
+
+/* ── Seek thumb visible on home (full player) ── */
+body[data-active-tab="home"] .pb-track {
+  height: 3px;
+}
+
+body[data-active-tab="home"] .pb-track:active .pb-thumb {
+  opacity: 1;
+}
+
+/* Workaround for Mini Player when player-bar is inside tab-home */
+body:not([data-active-tab="home"]) #tab-home {
+  display: flex !important;
+  height: 0;
+  overflow: visible;
+}
+
+body:not([data-active-tab="home"]) #tab-home>*:not(#player-bar) {
+  display: none !important;
+}
+
+/* Transparent player bar on home tab */
+body[data-active-tab="home"] #player-bar {
+  background: transparent;
+  border: none;
+  padding-top: 10px;
+  padding-bottom: 20px;
+}
+
+/* Fix player control symmetry */
+.pb-ctrl {
+  position: relative;
+}
+
+.pb-badges {
+  position: absolute !important;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Hover & active colors for player controls */
+.btn-prev,
+.btn-next {
+  color: #fff !important;
+}
+
+.btn-prev:hover,
+.btn-next:hover,
+.btn-shuffle:hover,
+.btn-repeat:hover {
+  color: var(--accent) !important;
+}
+
+/* Radio queue items cursor & hover overrides (non-clickable) */
+#radio-queue-list .home-recent-item {
+  cursor: default;
+}
+#radio-queue-list .home-recent-item:hover {
+  background: transparent;
+}
+#radio-queue-list .home-recent-item.current:hover {
+  background: var(--accent-alpha);
 }

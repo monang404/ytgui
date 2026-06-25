@@ -99,3 +99,29 @@ class TestUpsertTrackNoTempOverwrite:
         assert row.title == "Bohemian Rhapsody", "Metadata TIDAK BOLEH ditimpa 'Temp'"
         assert row.artist == "Queen"
         assert row.duration == 354
+
+    async def test_toggle_favorite(self, temp_db):
+        """test toggle_favorite toggles status correctly in database."""
+        track = TrackInfo(
+            video_id="test_fav_123",
+            title="Test Favorite",
+            artist="Queen",
+            duration=300,
+        )
+        await temp_db.upsert_track(track)
+        
+        # Default is_favorite should be 0
+        row = await temp_db.get_track("test_fav_123")
+        assert row.is_favorite == 0
+        
+        # Toggle -> 1
+        new_status = await temp_db.toggle_favorite("test_fav_123")
+        assert new_status == 1
+        row = await temp_db.get_track("test_fav_123")
+        assert row.is_favorite == 1
+        
+        # Toggle -> 0
+        new_status = await temp_db.toggle_favorite("test_fav_123")
+        assert new_status == 0
+        row = await temp_db.get_track("test_fav_123")
+        assert row.is_favorite == 0

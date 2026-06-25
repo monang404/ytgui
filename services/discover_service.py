@@ -32,21 +32,22 @@ class DiscoverService:
                         thumbnail=d["thumbnail"],
                         local_path=d["local_path"],
                         stream_url=d["stream_url"],
-                        view_count=d["view_count"]
+                        view_count=d["view_count"],
+                        is_favorite=d.get("is_favorite", 0)
                     ))
         except Exception:
             pass
         return tracks
 
     async def get_favorites(self, n: int) -> list[TrackInfo]:
-        """Mengambil n lagu dengan play_count tertinggi dari DB."""
+        """Mengambil n lagu dengan play_count tertinggi atau eksplisit difavoritkan dari DB."""
         if not getattr(self.db, '_conn', None):
             return []
             
         tracks = []
         try:
             async with self.db._conn.execute(
-                "SELECT * FROM tracks WHERE play_count > 0 ORDER BY play_count DESC LIMIT ?", (n,)
+                "SELECT * FROM tracks WHERE is_favorite = 1 OR play_count > 0 ORDER BY is_favorite DESC, play_count DESC LIMIT ?", (n,)
             ) as cursor:
                 async for row in cursor:
                     d = dict(row)
@@ -58,7 +59,8 @@ class DiscoverService:
                         thumbnail=d["thumbnail"],
                         local_path=d["local_path"],
                         stream_url=d["stream_url"],
-                        view_count=d["view_count"]
+                        view_count=d["view_count"],
+                        is_favorite=d.get("is_favorite", 0)
                     ))
         except Exception:
             pass
@@ -84,7 +86,8 @@ class DiscoverService:
                         thumbnail=d["thumbnail"],
                         local_path=d["local_path"],
                         stream_url=d["stream_url"],
-                        view_count=d["view_count"]
+                        view_count=d["view_count"],
+                        is_favorite=d.get("is_favorite", 0)
                     ))
         except Exception:
             pass
