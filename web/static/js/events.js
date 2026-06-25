@@ -1,18 +1,22 @@
 function initEvents() {
-    dom.portalClientBtn.addEventListener("click", () => {
-        store.userRole = "client";
-        localStorage.setItem("ytgui_user_role", "client");
-        applyRoleUI();
-        unlockBrowserAudio();
-        syncBrowserAudio();
-    });
+    if (dom.portalClientBtn) {
+        dom.portalClientBtn.addEventListener("click", () => {
+            store.userRole = "client";
+            localStorage.setItem("ytgui_user_role", "client");
+            applyRoleUI();
+            unlockBrowserAudio();
+            syncBrowserAudio();
+        });
+    }
 
-    dom.portalAdminBtn.addEventListener("click", () => {
-        dom.portalLoginForm.classList.toggle("hidden");
-        if (!dom.portalLoginForm.classList.contains("hidden")) {
-            dom.adminUsername.focus();
-        }
-    });
+    if (dom.portalAdminBtn) {
+        dom.portalAdminBtn.addEventListener("click", () => {
+            dom.portalLoginForm.classList.toggle("hidden");
+            if (!dom.portalLoginForm.classList.contains("hidden")) {
+                dom.adminUsername.focus();
+            }
+        });
+    }
 
     dom.adminSubmitBtn.addEventListener("click", () => {
         const user = dom.adminUsername.value.trim();

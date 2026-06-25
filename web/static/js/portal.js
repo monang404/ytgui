@@ -1,7 +1,9 @@
 function initPortal() {
     const role = localStorage.getItem("ytgui_user_role");
-    if (role) {
+    if (role && role !== "client") {
         store.userRole = role;
+    } else {
+        store.userRole = "portal";
     }
     applyRoleUI();
 }
@@ -81,7 +83,9 @@ function logout() {
             window.location.href = "/admin";
         }, 150);
     } else {
-        dom.portalClientBtn.style.display = "none";
+        if (dom.portalClientBtn) {
+            dom.portalClientBtn.style.display = "none";
+        }
         applyRoleUI();
         if (window.ws) {
             try {

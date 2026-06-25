@@ -31,23 +31,11 @@
     <div id="portal-screen" class="portal-active">
         <div class="portal-card">
             <h1 class="portal-title">bagas.fm</h1>
-            <p class="portal-subtitle">Silakan pilih mode akses untuk memutar musik</p>
+            <p class="portal-subtitle">Silakan masuk untuk mengakses kontrol musik</p>
 
             <div class="portal-options">
-                <button id="portal-client-btn" class="portal-btn client" aria-label="Masuk sebagai Client">
-                    <span class="portal-icon"><i class="ti ti-volume"></i></span>
-                    <span class="portal-btn-title">Mode Client</span>
-                    <span class="portal-btn-desc">Dengarkan audio langsung di browser ini secara real-time.</span>
-                </button>
-
-                <div class="portal-admin-wrapper">
-                    <button id="portal-admin-btn" class="portal-btn admin" aria-label="Masuk sebagai Admin">
-                        <span class="portal-icon"><i class="ti ti-bolt"></i></span>
-                        <span class="portal-btn-title">Mode Admin</span>
-                        <span class="portal-btn-desc">Akses kontrol penuh (putar, cari, atur antrean & volume).</span>
-                    </button>
-
-                    <div id="portal-login-form" class="portal-login-form hidden">
+                <div class="portal-admin-wrapper" style="width: 100%;">
+                    <div id="portal-login-form" class="portal-login-form">
                         <div class="login-input-group">
                             <input type="text" id="admin-username" placeholder="Username" autocomplete="off">
                         </div>
