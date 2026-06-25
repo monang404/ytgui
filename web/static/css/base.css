@@ -223,11 +223,11 @@ html, body {
 .vol-label { font-size: var(--t-xs); color: var(--text-3); min-width: 30px; font-variant-numeric: tabular-nums; }
 
 .vol-slider {
-  -webkit-appearance: none; width: 100px; height: 3px;
+  -webkit-appearance: none; appearance: none; width: 100px; height: 3px;
   background: var(--border-2); border-radius: var(--r-full); outline: none;
 }
 .vol-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 14px; height: 14px;
+  -webkit-appearance: none; appearance: none; width: 14px; height: 14px;
   background: var(--accent); border-radius: 50%; cursor: pointer;
 }
 

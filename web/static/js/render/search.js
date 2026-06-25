@@ -2,10 +2,7 @@ const SR_EQ_MINI_HTML =
     '<div class="eq-anim-icon sr-eq"><span></span><span></span><span></span></div>';
 
 function buildSrThumbHtml(track) {
-    if (track.thumbnail) {
-        return `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`;
-    }
-    return '<i class="ti ti-music"></i>';
+    return `<img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt="">`;
 }
 
 function renderSearchResults(results) {
@@ -91,6 +88,10 @@ function updateSearchPlayingState() {
             thumb.innerHTML = buildSrThumbHtml(track);
         }
     });
+    
+    if (typeof window.loadLazyCovers === "function") {
+        window.loadLazyCovers();
+    }
 }
 
 function playSearchTrack(track) {

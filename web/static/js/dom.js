@@ -30,6 +30,8 @@ function initDOM() {
         vinylRecord: $("vinyl-record"),
         vinylCover: $("vinyl-cover"),
         vinylIcon: $("vinyl-icon"),
+        ambientBg1: $("ambient-bg-1"),
+        ambientBg2: $("ambient-bg-2"),
         lyricsWrap: $("lyrics-wrap"),
         lyricsPrev: $("lyrics-prev"),
         lyricsCurrent: $("lyrics-current"),

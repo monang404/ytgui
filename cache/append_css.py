@@ -1,0 +1,10 @@
+with open('web/static/css/player.css', 'a', encoding='utf-8') as f:
+    f.write('\n/* Workaround for Mini Player when player-bar is inside tab-home */\n')
+    f.write('body:not([data-active-tab="home"]) #tab-home {\n')
+    f.write('    display: flex !important;\n')
+    f.write('    height: 0;\n')
+    f.write('    overflow: visible;\n')
+    f.write('}\n')
+    f.write('body:not([data-active-tab="home"]) #tab-home > *:not(#player-bar) {\n')
+    f.write('    display: none !important;\n')
+    f.write('}\n')

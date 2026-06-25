@@ -5,7 +5,8 @@
   display: flex; flex-direction: column;
   overflow-y: auto; overflow-x: hidden;
   scrollbar-width: none;
-  background: var(--bg-primary);
+  position: relative;
+  z-index: 1;
 }
 .full-player-view::-webkit-scrollbar { display: none; }
 
@@ -36,15 +37,65 @@
 }
 
 .home-art-frame {
-  width: 80%;
-  max-width: 300px;
+  width: 85%;
+  max-width: 340px;
   aspect-ratio: 1 / 1;
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
   background: var(--bg-elevated);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 6px 20px rgba(0,0,0,0.35);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0,0,0,0.5),
+    0 0 60px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), 0.15);
   display: flex; align-items: center; justify-content: center;
   position: relative;
+  transition: box-shadow 0.6s ease;
+}
+
+.home-art-frame.visualizer-active, .home-art-frame.playing {
+  box-shadow: 
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      0 8px 32px rgba(0,0,0,0.6),
+      0 0 80px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), var(--beat-glow-opacity, 0.25));
+  transition: box-shadow var(--beat-glow-transition, 0.4s) ease;
+}
+
+/* ── Ambient Background System ── */
+.ambient-bg-container {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--bg-primary);
+}
+
+.ambient-bg-layer {
+  position: absolute;
+  top: -20%; left: -20%; right: -20%; bottom: -20%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(150px) brightness(var(--beat-bg-brightness, 0.25));
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out, filter var(--beat-glow-transition, 0.4s) ease;
+  animation: ambientDrift 25s infinite alternate ease-in-out;
+  transform: translate(0, 0);
+}
+
+.ambient-bg-layer.active {
+  opacity: 1;
+}
+
+.ambient-bg-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, rgba(13, 15, 20, 0.4) 0%, rgba(13, 15, 20, 0.95) 55%, rgba(13, 15, 20, 1) 100%);
+}
+
+@keyframes ambientDrift {
+  0% { transform: translate(-8px, -4px) scale(1.1); }
+  50% { transform: translate(8px, 4px) scale(1.15); }
+  100% { transform: translate(-4px, 8px) scale(1.1); }
 }
 
 /* subtle gradient overlay di bawah artwork */

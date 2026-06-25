@@ -2,10 +2,32 @@ function renderNowPlaying() {
     const t = store.current_track;
 
     if (dom.vinylCover) {
-        if (t && t.thumbnail) {
-            dom.vinylCover.src = t.thumbnail;
-            dom.vinylCover.style.display = "block";
-            if (dom.vinylIcon) dom.vinylIcon.style.display = "none";
+        if (t && t.video_id) {
+            dom.vinylCover.style.display = "none";
+            if (dom.vinylIcon) dom.vinylIcon.style.display = "block";
+            window.getCoverArt(t).then(url => {
+                if (url && store.current_track && store.current_track.video_id === t.video_id) {
+                    dom.vinylCover.src = url;
+                    dom.vinylCover.style.display = "block";
+                    if (dom.vinylIcon) dom.vinylIcon.style.display = "none";
+                    if (typeof window.extractDominantColor === "function" && dom.tabHome) {
+                        window.extractDominantColor(dom.vinylCover, (color) => {
+                            if (color && color.r !== undefined) {
+                                dom.tabHome.style.setProperty("--color-r", color.r);
+                                dom.tabHome.style.setProperty("--color-g", color.g);
+                                dom.tabHome.style.setProperty("--color-b", color.b);
+                            }
+                        });
+                    }
+                    if (dom.ambientBg1 && dom.ambientBg2) {
+                        const activeBg = dom.ambientBg1.classList.contains('active') ? dom.ambientBg1 : dom.ambientBg2;
+                        const inactiveBg = activeBg === dom.ambientBg1 ? dom.ambientBg2 : dom.ambientBg1;
+                        inactiveBg.style.backgroundImage = `url(${url})`;
+                        inactiveBg.classList.add('active');
+                        activeBg.classList.remove('active');
+                    }
+                }
+            });
         } else {
             dom.vinylCover.src = "";
             dom.vinylCover.style.display = "none";
@@ -17,9 +39,18 @@ function renderNowPlaying() {
         if (store.status === "PLAYING") {
             dom.npThumbIcon.style.display = "none";
             dom.npEqAnim.style.display = "flex";
+            if (dom.vinylRecord) {
+                const isBrowser = store.userRole === "client" || store.audio_output === "browser";
+                dom.vinylRecord.classList.add(isBrowser ? "visualizer-active" : "playing");
+                dom.vinylRecord.classList.remove(isBrowser ? "playing" : "visualizer-active");
+            }
         } else {
             dom.npThumbIcon.style.display = "block";
             dom.npEqAnim.style.display = "none";
+            if (dom.vinylRecord) {
+                dom.vinylRecord.classList.remove("playing");
+                dom.vinylRecord.classList.remove("visualizer-active");
+            }
         }
     }
 
@@ -63,7 +94,7 @@ function renderDiscoverTab() {
                 <div class="fav-card" data-vid="${escapeHtml(track.video_id || '')}">
                     <div class="fav-num">${i + 1}</div>
                     <div class="fav-thumb">
-                        ${track.thumbnail ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">` : '<i class="ti ti-music"></i>'}
+                        <img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt="">
                     </div>
                     <div class="fav-info">
                         <div class="fav-title">${title}</div>
@@ -83,7 +114,7 @@ function renderDiscoverTab() {
                 return `
                 <div class="sr-item" data-vid="${escapeHtml(track.video_id || '')}">
                     <div class="sr-thumb">
-                        ${track.thumbnail ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">` : '<i class="ti ti-music"></i>'}
+                        <img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt="">
                         ${track.local_path ? '<span class="disc-tag">cache</span>' : ''}
                     </div>
                     <div class="sr-info">
@@ -104,7 +135,7 @@ function renderDiscoverTab() {
                 return `
                 <div class="sr-item" data-vid="${escapeHtml(track.video_id || '')}">
                     <div class="sr-thumb">
-                        ${track.thumbnail ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">` : '<i class="ti ti-music"></i>'}
+                        <img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt="">
                     </div>
                     <div class="sr-info">
                         <div class="sr-title">${title}</div>
@@ -251,13 +282,12 @@ function renderRecentRow() {
     const currentId = store.current_track && store.current_track.video_id;
     container.innerHTML = items.slice(0, 5).map(track => {
         const title = typeof cleanTrackTitle === 'function' ? escapeHtml(cleanTrackTitle(track.title)) : escapeHtml(track.title);
-        const thumb = track.thumbnail
-            ? `<img src="${escapeHtml(track.thumbnail)}" alt="" loading="lazy">`
-            : '<i class="ti ti-music-note"></i>';
         const isCurrent = track.video_id && track.video_id === currentId;
         return `
         <div class="home-recent-item${isCurrent ? ' current' : ''}" data-vid="${escapeHtml(track.video_id || '')}">
-            <div class="home-recent-thumb">${thumb}</div>
+            <div class="home-recent-thumb">
+                <img class="lazy-cover" data-vid="${escapeHtml(track.video_id || '')}" data-title="${escapeHtml(track.title || '')}" data-artist="${escapeHtml(track.artist || '')}" data-thumb="${escapeHtml(track.thumbnail || '')}" src="" alt="">
+            </div>
             <div class="home-recent-info">
                 <div class="home-recent-title">${title}</div>
                 <div class="home-recent-artist">${escapeHtml(track.artist || '')}</div>
@@ -267,6 +297,10 @@ function renderRecentRow() {
             </button>
         </div>`;
     }).join('');
+
+    if (typeof window.loadLazyCovers === "function") {
+        window.loadLazyCovers();
+    }
 
     /* Click handlers */
     container.querySelectorAll('.home-recent-item').forEach(el => {
