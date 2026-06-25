@@ -44,8 +44,12 @@ function wsConnect() {
             if (token) {
                 wsSend("auth", { token: token });
             }
-            const savedOutput = localStorage.getItem("ytgui_audio_output") || "device";
+            const savedOutput = localStorage.getItem("ytgui_audio_output") || "browser";
             wsSend("set_output", { output: savedOutput });
+        } else if (store.userRole === "client") {
+            if (store.active_tab === "home" || store.active_tab === "discover") {
+                wsSend("discover");
+            }
         }
         renderHeader();
     };
@@ -91,6 +95,10 @@ function handleServerMessage(msg) {
                 dom.portalLoginForm.classList.add("hidden");
                 applyRoleUI();
                 showLogToast("Akses Admin Diterima!");
+                if (store.active_tab === "home" || store.active_tab === "discover") {
+                    showLogToast("Meminta data lagu...");
+                    wsSend("discover");
+                }
                 renderFullState();
             } else {
                 dom.loginErrorMsg.textContent = msg.data.message || "Login gagal.";
@@ -152,7 +160,8 @@ function handleServerMessage(msg) {
             renderSearchResults(msg.data);
             break;
         case "discover_data":
-            store.discover_recent   = msg.data.recent   || [];
+            showLogToast("Menerima data lagu! " + (msg.data.recent ? msg.data.recent.length : 0) + " items");
+            store.discover_recent = msg.data.recent || [];
             store.discover_favorites = msg.data.favorites || [];
             store.discover_cached   = msg.data.cached_tracks || [];
             renderDiscoverTab();
@@ -207,7 +216,7 @@ function renderHeader() {
         dom.statusText.textContent = "offline";
     }
 
-    const out = store.audio_output || "device";
+    const out = store.audio_output || "browser";
     if (out === "browser") {
         dom.outputToggleBtn.textContent = "💻 BROWSER";
         dom.outputToggleBtn.classList.add("browser");

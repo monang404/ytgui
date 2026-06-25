@@ -26,6 +26,7 @@ function applyRoleUI() {
         document.body.classList.remove("client-mode");
         if(dom.queueList && dom.queueFooter && dom.tabQueue) dom.tabQueue.insertBefore(dom.queueList, dom.queueFooter);
         dom.logoutBtn.style.display = "inline-flex";
+        switchTab("home");
     }
     renderHeader();
 }
