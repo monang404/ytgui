@@ -2,68 +2,86 @@
 
 /* ── Home Tab Layout ── */
 .full-player-view {
-  display: flex; flex-direction: column;
-  overflow-y: auto; overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: none;
   position: relative;
   z-index: 1;
 }
-.full-player-view::-webkit-scrollbar { display: none; }
+
+.full-player-view::-webkit-scrollbar {
+  display: none;
+}
 
 /* ── Home Header (inside tab) ── */
 .home-header {
-  display: flex; align-items: center;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   padding: var(--s4) var(--s5) var(--s3);
   flex-shrink: 0;
 }
 
 .home-greeting {
-  font-size: var(--t-xs); color: var(--text-2);
-  font-weight: var(--w-regular); letter-spacing: 0.2px;
+  font-size: var(--t-xs);
+  color: var(--text-2);
+  font-weight: var(--w-regular);
+  letter-spacing: 0.2px;
 }
 
 .home-brand {
-  font-size: var(--t-xl); font-weight: var(--w-bold);
-  color: var(--text-1); letter-spacing: -0.4px;
+  font-size: var(--t-xl);
+  font-weight: var(--w-bold);
+  color: var(--text-1);
+  letter-spacing: -0.4px;
   line-height: 1.2;
 }
 
 /* ── Album Art Hero ── */
 .home-art-section {
-  display: flex; justify-content: center;
-  padding: var(--s2) var(--s5) var(--s5);
+  display: flex;
+  justify-content: center;
+  padding: var(--s6) var(--s5) var(--s5);
   flex-shrink: 0;
 }
 
 .home-art-frame {
-  width: 85%;
-  max-width: 340px;
+  width: 78%;
+  max-width: 300px;
   aspect-ratio: 1 / 1;
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
   background: var(--bg-elevated);
-  box-shadow: 
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 8px 32px rgba(0,0,0,0.5),
-    0 0 60px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), 0.15);
-  display: flex; align-items: center; justify-content: center;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
-  transition: box-shadow 0.6s ease;
+  transition: box-shadow 0.55s cubic-bezier(0.0, 0.0, 0.2, 1);
 }
 
-.home-art-frame.visualizer-active, .home-art-frame.playing {
-  box-shadow: 
-      0 0 0 1px rgba(255, 255, 255, 0.1),
-      0 8px 32px rgba(0,0,0,0.6),
-      0 0 80px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), var(--beat-glow-opacity, 0.25));
+.home-art-frame.visualizer-active,
+.home-art-frame.playing {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 4px 8px rgba(0, 0, 0, 0.45),
+    0 18px 48px rgba(0, 0, 0, 0.65),
+    0 0 70px rgba(var(--color-r, 255), var(--color-g, 255), var(--color-b, 255), var(--beat-glow-opacity, 0.28));
   transition: box-shadow var(--beat-glow-transition, 0.4s) ease;
 }
 
 /* ── Ambient Background System ── */
 .ambient-bg-container {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
@@ -72,7 +90,10 @@
 
 .ambient-bg-layer {
   position: absolute;
-  top: -20%; left: -20%; right: -20%; bottom: -20%;
+  top: -20%;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
   background-size: cover;
   background-position: center;
   filter: blur(150px) brightness(var(--beat-bg-brightness, 0.25));
@@ -88,45 +109,67 @@
 
 .ambient-bg-overlay {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(to bottom, rgba(13, 15, 20, 0.4) 0%, rgba(13, 15, 20, 0.95) 55%, rgba(13, 15, 20, 1) 100%);
 }
 
 @keyframes ambientDrift {
-  0% { transform: translate(-8px, -4px) scale(1.1); }
-  50% { transform: translate(8px, 4px) scale(1.15); }
-  100% { transform: translate(-4px, 8px) scale(1.1); }
+  0% {
+    transform: translate(-8px, -4px) scale(1.1);
+  }
+
+  50% {
+    transform: translate(8px, 4px) scale(1.15);
+  }
+
+  100% {
+    transform: translate(-4px, 8px) scale(1.1);
+  }
 }
 
 /* subtle gradient overlay di bawah artwork */
 .home-art-frame::after {
   content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(to bottom, transparent 55%, rgba(9,10,13,0.25) 100%);
-  border-radius: inherit; pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 55%, rgba(9, 10, 13, 0.25) 100%);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .home-art-placeholder {
-  font-size: 72px; color: var(--text-3);
+  font-size: 72px;
+  color: var(--text-3);
 }
 
 /* ── Track Info Row ── */
 .home-track-row {
-  display: flex; align-items: center;
-  padding: var(--s3) var(--s5);
-  gap: var(--s3);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s3) var(--s10) var(--s3) var(--s10);
 }
 
-.home-track-info { flex: 1; min-width: 0; }
+.home-track-info {
+  min-width: 0;
+  text-align: center;
+}
 
 .mti-title {
   font-size: var(--t-xl);
   font-weight: var(--w-semibold);
   color: var(--text-1);
   letter-spacing: -0.3px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.3;
   text-transform: capitalize;
+  text-align: center;
 }
 
 .mti-artist {
@@ -134,120 +177,216 @@
   color: var(--text-2);
   font-weight: var(--w-regular);
   margin-top: 3px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 
 /* ── Favorite Button ── */
 .home-fav-btn {
-  background: none; border: none;
-  color: var(--text-3); font-size: 22px;
-  cursor: pointer; width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm); flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 22px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
   transition: color var(--dur-fast) var(--ease);
+  position: absolute;
+  right: var(--s4);
 }
-.home-fav-btn:hover { color: var(--accent); }
-.home-fav-btn.active { color: var(--accent); }
-.home-fav-btn.active i::before { content: "\ecd5"; } /* ti-heart-filled */
+
+.home-fav-btn:hover {
+  color: var(--accent);
+}
+
+.home-fav-btn.active {
+  color: var(--accent);
+}
+
+.home-fav-btn.active i::before {
+  content: "\ecd5";
+}
+
+/* ti-heart-filled */
 
 /* ── Recently Played Section ── */
-.home-recent-section { flex: 1; }
+.home-recent-section {
+  flex: 1;
+}
 
-.home-recent-list { display: flex; flex-direction: column; padding-bottom: var(--s8); }
+.home-recent-list {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--s8);
+}
 
 .home-recent-item {
-  display: flex; align-items: center;
-  gap: var(--s3); padding: var(--s3) var(--s5);
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s5);
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease);
 }
-.home-recent-item:hover { background: var(--fm-color-hover); }
-.home-recent-item.current { background: var(--accent-alpha); }
+
+.home-recent-item:hover {
+  background: var(--fm-color-hover);
+}
+
+.home-recent-item.current {
+  background: var(--accent-alpha);
+}
 
 .home-recent-thumb {
-  width: 46px; height: 46px;
-  border-radius: 10px; overflow: hidden;
-  background: var(--bg-elevated); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-3); font-size: 18px;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 18px;
 }
-.home-recent-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-.home-recent-info { flex: 1; min-width: 0; }
+.home-recent-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-recent-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .home-recent-title {
-  font-size: var(--t-md); font-weight: var(--w-medium); color: var(--text-1);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--t-md);
+  font-weight: var(--w-medium);
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.home-recent-item.current .home-recent-title { color: var(--accent); }
+
+.home-recent-item.current .home-recent-title {
+  color: var(--accent);
+}
 
 .home-recent-artist {
-  font-size: var(--t-sm); color: var(--text-2); margin-top: 2px;
+  font-size: var(--t-sm);
+  color: var(--text-2);
+  margin-top: 2px;
 }
 
 .home-recent-more {
-  background: none; border: none; color: var(--text-3);
-  font-size: 18px; cursor: pointer;
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm); flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 18px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
   transition: color var(--dur-fast) var(--ease);
 }
-.home-recent-more:hover { color: var(--text-2); }
+
+.home-recent-more:hover {
+  color: var(--text-2);
+}
 
 /* ── Lyrics Inline ── */
 .lyrics-wrap {
-  width: 100%; text-align: center;
+  width: 100%;
+  text-align: center;
   padding: var(--s3) var(--s6);
 }
+
 .lyrics-line {
-  font-size: var(--t-md); line-height: 1.6;
+  font-size: var(--t-md);
+  line-height: 1.6;
   transition: opacity var(--dur-normal) var(--ease);
 }
-.lyrics-line.current { color: var(--text-1); font-weight: var(--w-medium); font-size: var(--t-lg); }
-.lyrics-line.prev, .lyrics-line.next { color: var(--text-3); font-size: var(--t-sm); }
+
+.lyrics-line.current {
+  color: var(--text-1);
+  font-weight: var(--w-medium);
+  font-size: var(--t-lg);
+}
+
+.lyrics-line.prev,
+.lyrics-line.next {
+  color: var(--text-3);
+  font-size: var(--t-sm);
+}
 
 /* ── Player Bar: Home mode ── */
-body[data-active-tab="home"] #app-header { display: none !important; }
+body[data-active-tab="home"] #app-header {
+  display: none !important;
+}
 
 /* ── Seek thumb visible on home (full player) ── */
-body[data-active-tab="home"] .pb-track { height: 3px; }
-body[data-active-tab="home"] .pb-track:active .pb-thumb { opacity: 1; }
+body[data-active-tab="home"] .pb-track {
+  height: 3px;
+}
+
+body[data-active-tab="home"] .pb-track:active .pb-thumb {
+  opacity: 1;
+}
 
 /* Workaround for Mini Player when player-bar is inside tab-home */
 body:not([data-active-tab="home"]) #tab-home {
-    display: flex !important;
-    height: 0;
-    overflow: visible;
+  display: flex !important;
+  height: 0;
+  overflow: visible;
 }
-body:not([data-active-tab="home"]) #tab-home > *:not(#player-bar) {
-    display: none !important;
+
+body:not([data-active-tab="home"]) #tab-home>*:not(#player-bar) {
+  display: none !important;
 }
 
 /* Transparent player bar on home tab */
 body[data-active-tab="home"] #player-bar {
-    background: transparent;
-    border: none;
-    padding-top: 10px;
-    padding-bottom: 20px;
+  background: transparent;
+  border: none;
+  padding-top: 10px;
+  padding-bottom: 20px;
 }
 
 /* Fix player control symmetry */
 .pb-ctrl {
-    position: relative;
+  position: relative;
 }
+
 .pb-badges {
-    position: absolute !important;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+  position: absolute !important;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* Hover & active colors for player controls */
-.btn-prev, .btn-next {
-    color: #fff !important;
+.btn-prev,
+.btn-next {
+  color: #fff !important;
 }
-.btn-prev:hover, .btn-next:hover,
-.btn-shuffle:hover, .btn-repeat:hover {
-    color: var(--accent) !important;
+
+.btn-prev:hover,
+.btn-next:hover,
+.btn-shuffle:hover,
+.btn-repeat:hover {
+  color: var(--accent) !important;
 }
