@@ -43,7 +43,7 @@ class Database:
         # Eviction Policy: Hapus lagu yang tidak diputar > 30 hari, bukan favorit, dan belum di-download
         thirty_days_ago = int(time.time()) - (30 * 24 * 3600)
         await self._conn.execute(
-            "DELETE FROM tracks WHERE last_played < ? AND play_count = 0 AND local_path IS NULL",
+            "DELETE FROM tracks WHERE last_played < ? AND play_count = 0 AND local_path IS NULL AND (is_favorite = 0 OR is_favorite IS NULL)",
             (thirty_days_ago,)
         )
         await self._conn.commit()

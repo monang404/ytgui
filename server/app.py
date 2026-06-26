@@ -51,8 +51,12 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
         room = room_manager.rooms.get(event.room_id)
         if not room: return
         track = event.track
-        if track and track.video_id:
-            safe_create_task(_prefetch_stream_url(track.video_id), name=f"prefetch_{track.video_id}")
+        # B-03: prefetch URL untuk track BERIKUTNYA di queue, bukan track yang baru main
+        # (current track sudah di-resolve oleh CacheResolver sesaat sebelumnya)
+        if room.state.queue:
+            _next = room.state.queue[0]
+            if _next and _next.video_id:
+                safe_create_task(_prefetch_stream_url(_next.video_id), name=f"prefetch_next_{_next.video_id}")
             
         await manager.broadcast({
             "type": "state",

@@ -44,6 +44,7 @@ class PlaybackController:
         self.radio_mode = radio_mode
 
         self._lock = asyncio.Lock()
+        self._play_lock = asyncio.Lock()  # A-05: proteksi race condition di play_track
         self._retry_count = 0
 
         # Subscribe
@@ -54,8 +55,9 @@ class PlaybackController:
         self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
 
     async def play_track(self, track: TrackInfo):
-        # Push current to history if it exists
-        if self.state.current_track:
+        async with self._play_lock:  # A-05: cegah concurrent play_track race
+         # Push current to history if it exists
+         if self.state.current_track:
             self.state.history.append(self.state.current_track)
 
         self.state.current_track = track
@@ -125,6 +127,10 @@ class PlaybackController:
 
         if reason == "eof":
             await self._on_next(next_data)
+        elif reason == "stop":
+            # Intentional stop — sync server state ke IDLE
+            if self.state.status not in (PlayerStatus.IDLE,):
+                self.state.status = PlayerStatus.IDLE
         elif reason == "error":
             self.state.status = PlayerStatus.ERROR
             await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran"))
@@ -190,7 +196,7 @@ class PlaybackController:
                     await self.mpv.pause()
                     self.state.current_track = None
                     self.state.status = PlayerStatus.IDLE
-                    await self._advance_to_next()
+                    # B-02: tidak auto-advance saat keluar RADIO — biarkan user mulai manual
                     
                 if mode == PlaybackMode.RADIO:
                     await self.radio_mode.on_activated(self)

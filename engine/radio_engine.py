@@ -71,7 +71,7 @@ class RadioMode:
         self.ytdlp = ytdlp
         self.state = state
         self.db = db
-        self._is_fetching = False
+        self._fetch_lock = asyncio.Lock()  # A-06: ganti _is_fetching bool — atomic, tidak bisa stuck
         self._bg_tasks = set()
         # Pool artis — diisi dari DB saat pertama kali diaktifkan (lazy load).
         # Setelah terisi, tidak query DB lagi kecuali di-reload manual.
@@ -146,20 +146,18 @@ class RadioMode:
         (bukan queue). Sama seperti _fetch_and_play_initial, batch ini
         diambil dari beberapa artis sekaligus lalu di-interleave supaya
         tidak monoton satu artis berturut-turut."""
-        if self._is_fetching:
+        if self._fetch_lock.locked():  # A-06: atomic check, tidak bisa double-fetch
             return
-        self._is_fetching = True
-        try:
-            new_tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
-            if new_tracks:
-                self.state.radio_queue.extend(new_tracks)
-                while len(self.state.radio_queue) > 30:
-                    self.state.radio_queue.pop()
-                await controller.bus.publish(QueueUpdatedEvent())
-        except Exception as e:
-            await controller.bus.publish(LogMessageEvent(message=f"Prefetch Error: {str(e)}"))
-        finally:
-            self._is_fetching = False
+        async with self._fetch_lock:  # A-06: tidak bisa stuck — konteks manager otomatis release
+            try:
+                new_tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
+                if new_tracks:
+                    self.state.radio_queue.extend(new_tracks)
+                    while len(self.state.radio_queue) > 30:
+                        self.state.radio_queue.pop()
+                    await controller.bus.publish(QueueUpdatedEvent())
+            except Exception as e:
+                await controller.bus.publish(LogMessageEvent(message=f"Prefetch Error: {str(e)}"))
 
     async def _fetch_and_play_initial(self, controller: "PlaybackController", seed_artist: Optional[str] = None) -> None:
         """Cari & putar lagu radio baru — dipakai saat Radio baru diaktifkan

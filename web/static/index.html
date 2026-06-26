@@ -4,7 +4,12 @@
 <head>
     <link rel="manifest" href="/static/manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- C-14: non-blocking font load -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="YTGUI — YouTube music player for Termux with search, radio, queue, and lyrics">
     <meta name="theme-color" content="#090A0D">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -483,7 +488,7 @@
                 </div>
             </div>
             <div class="lyrics-panel" id="lyrics-panel" style="border:none; padding: 0;">
-                <div class="lyric-body" id="lyrics-content" style="height: 60vh; overflow-y: auto;">
+                <div class="lyric-body" id="lyrics-content" style="height: 60dvh; overflow-y: auto;">
                     <div class="lyric-line near" style="text-align:center; padding:20px; color:#6a6a8c;">Tidak ada lirik
                     </div>
                 </div>

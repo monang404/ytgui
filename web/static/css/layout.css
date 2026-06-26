@@ -10,7 +10,8 @@
 /* ─── Tablet (601px – 1023px) ─── */
 @media (min-width: 601px) {
   #app {
-    max-width: 600px;
+    /* C-02: gunakan lebih banyak ruang di tablet, bukan cuma 600px kolom sempit */
+    max-width: 768px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
   }
@@ -164,10 +165,19 @@
     border-top: 1px solid var(--fm-border, var(--border-1));
   }
 
-  /* Sembunyikan nav bar di tablet landscape — navigasi via swipe atau gesture */
+  /* C-03: kompres nav bar — jangan sembunyikan total, tidak ada swipe gesture */
   #nav-bar {
-    display: none;
+    height: auto;
+    min-height: 44px;
   }
+  .nav-btn {
+    flex-direction: row;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .nav-btn .nav-icon { font-size: 14px; }
+  .nav-btn span { font-size: 11px; }
 }
 
 /* ─── Orientation: Landscape di Mobile ─── */
@@ -178,6 +188,13 @@
 }
 
 /* ─── Safe Area Insets (iPhone notch / Android nav bar) ─── */
+@supports (padding: env(safe-area-inset-top)) {
+  /* C-04: iPhone notch / Dynamic Island */
+  #app-header {
+    padding-top: calc(var(--s4) + env(safe-area-inset-top));
+  }
+}
+
 @supports (padding: env(safe-area-inset-bottom)) {
   #nav-bar {
     padding-bottom: calc(5px + env(safe-area-inset-bottom));
@@ -225,4 +242,20 @@
   .btn-prev,.btn-next,.btn-shuffle,.btn-repeat{width:40px;height:40px;font-size:18px}
   .btn-play{width:42px;height:42px;font-size:16px}
   .pb-sec button{width:36px;height:36px;font-size:16px}
+}
+
+/* C-05: Settings sheet pada desktop — anchored ke kanan bawah konten, bukan fixed ke viewport */
+@media (min-width: 1024px) {
+  .settings-sheet {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    left: auto;
+    max-width: 400px;
+    border-radius: var(--r-lg);
+    margin: 0;
+  }
+  .settings-sheet.open {
+    bottom: 80px;
+  }
 }

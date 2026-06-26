@@ -152,6 +152,7 @@ class MpvController:
 
     async def close(self):
         """Graceful cleanup."""
+        self._shutting_down = True  # A-03b: cegah reconnect-publish saat shutdown normal
         self.is_connected = False
         if self._observer_task:
             self._observer_task.cancel()
@@ -196,6 +197,15 @@ class MpvController:
                     fut.cancel()
             self._pending.clear()
             logger.warning("mpv observer loop ended — connection lost.")
+            # A-03: notify PlaybackController supaya tidak silent-dead
+            if not getattr(self, "_shutting_down", False):
+                from core.events import TrackEndedEvent
+                import asyncio as _aio
+                try:
+                    loop = _aio.get_running_loop()
+                    loop.create_task(self._bus.publish(TrackEndedEvent(reason="error")))
+                except RuntimeError:
+                    pass  # loop sudah stop, tidak perlu publish
 
     async def _handle_event(self, msg: dict):
         if "request_id" in msg:

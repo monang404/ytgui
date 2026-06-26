@@ -1,5 +1,5 @@
 /* ══ BAGAS.FM base.css v2 ══ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* C-14: Google Fonts dipindah ke <link> di HTML head untuk non-blocking load */
 
 html, body {
   background: var(--bg-primary);
@@ -9,6 +9,7 @@ html, body {
   font-family: var(--font);
   color: var(--text-1);
   overflow: hidden;
+  overscroll-behavior: none;  /* C-12: cegah scroll-bleed di iOS Safari */
   -webkit-font-smoothing: antialiased;
 }
 

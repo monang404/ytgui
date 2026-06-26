@@ -29,8 +29,11 @@ class Room:
         self.event_bus = EventBus()
         
         # Room-specific components — semua mendapat bus yang sama (per-room)
+        # A-04: port unik per-room agar multi-room Windows tidak conflict
+        _win_port = str(12345 + (abs(hash(room_id)) % 800))
         self.mpv = MpvController(
             socket_path=f"/tmp/mpv-socket-{room_id}",
+            tcp_port=_win_port,
             event_bus=self.event_bus  # TASK-3.3: inject per-room bus
         )
         
