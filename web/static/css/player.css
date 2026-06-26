@@ -465,4 +465,7 @@ body[data-active-tab="home"] #player-bar {
 }
 #radio-queue-list .home-recent-item.current:hover {
   background: var(--accent-alpha);
-}
+}.pb-progress-track { min-height: 44px; touch-action: none; }
+.pb-thumb { width: 22px; height: 22px; margin-top: -9px; }
+.pb-progress-track { min-height: 44px; touch-action: none; }
+.pb-thumb { width: 22px; height: 22px; margin-top: -9px; }

@@ -44,6 +44,9 @@ if (window.visualViewport) {
         const app = document.getElementById('app');
         if (app) {
             app.style.height = window.visualViewport.height + 'px';
+            document.documentElement.style.setProperty("--sat", "env(safe-area-inset-top)");
+            document.documentElement.style.setProperty("--sab", "env(safe-area-inset-bottom)");
+            document.documentElement.style.setProperty("--sab", "env(safe-area-inset-bottom)");
         }
     });
 }
@@ -56,3 +59,18 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.warn('SW registration failed:', err));
     });
 }
+    
+// Mobile Swipe for Next/Prev
+let touchStartX = 0;
+document.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) touchStartX = e.touches[0].screenX;
+});
+document.addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1) {
+        const touchEndX = e.changedTouches[0].screenX;
+        if (Math.abs(touchEndX - touchStartX) > 80) {
+            if (touchEndX < touchStartX) cmd('next');
+            else cmd('prev');
+        }
+    }
+});

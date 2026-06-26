@@ -79,4 +79,9 @@
   height: 4px;
   background: var(--accent);
   border-radius: 50%;
+}@media (max-width: 480px) {
+    .discover-section, .fav-card, .sr-item { flex: 1 1 100%; min-width: 0; }
+}
+@media (max-width: 480px) {
+    .discover-section, .fav-card, .sr-item { flex: 1 1 100%; min-width: 0; }
 }
