@@ -119,6 +119,7 @@ class PlaybackController:
 
     async def _on_track_ended(self, event: TrackEndedEvent):
         reason = event.reason
+        logger.info(f"[AUTOPLAY] Track ended with reason: {reason}")
         
         # Build payload for next to prevent double-skip if track changes concurrently
         next_data = {}
@@ -126,6 +127,7 @@ class PlaybackController:
             next_data["video_id"] = self.state.current_track.video_id
 
         if reason == "eof":
+            await asyncio.sleep(0.35)
             await self._on_next(next_data)
         elif reason == "stop":
             # Intentional stop — sync server state ke IDLE
