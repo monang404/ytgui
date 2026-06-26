@@ -139,6 +139,7 @@ function handleServerMessage(msg) {
             }
 
             renderProgress();
+            forceUpdateProgress();
             renderPlayBtn();
             if (statusChanged) {
                 if (typeof renderNowPlaying === "function") renderNowPlaying();
@@ -206,6 +207,8 @@ function renderFullState() {
     renderHeader();
     renderNowPlaying();
     renderProgress();
+            forceUpdateProgress();
+        _renderProgressCore();
     renderPlayerBar();
     renderRadio();
     renderQueue();

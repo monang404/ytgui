@@ -376,3 +376,42 @@ html, body {
   width: 22px;
   height: 22px;
 }
+
+/* FIX PROGRESS BAR THUMB - CENTERED */
+  min-height: 44px;
+  touch-action: none;
+}
+
+.pb-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border: 2px solid #090A0D;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(242, 181, 68, 0.6);
+  z-index: 10;
+  transition: left 0.05s linear;
+  pointer-events: none;
+}
+
+.pb-track:hover .pb-thumb,
+body[data-active-tab="home"] .pb-track .pb-thumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
+  box-shadow: 0 0 8px rgba(242, 181, 68, 0.6);
+  z-index: 10;
+  transition: left 0.08s linear;
+  pointer-events: none;
+}
+
+.pb-track:hover .pb-thumb,
+body[data-active-tab="home"] .pb-track .pb-thumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
