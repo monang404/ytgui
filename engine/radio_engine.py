@@ -23,17 +23,14 @@ from core.state import AppState, PlaybackMode, PlayerStatus
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
-# Fallback minimal — dipakai HANYA jika tabel artists di DB masih kosong
-# (misalnya belum pernah menjalankan import_artists.py).
-# Sumber artis utama dibaca dari DB saat RadioMode pertama kali diaktifkan.
 _FALLBACK_ARTISTS = ["Sheila On 7", "Dewa 19", "Tulus", "Nadin Amizah", "Raisa"]
 
-MAX_TRACK_DURATION = 600  # 10 menit — hindari kompilasi panjang / livestream
-TRACKS_PER_ARTIST_TARGET = 3  # target track unik per artis dalam satu batch
-ARTISTS_PER_BATCH = 4  # jumlah artis berbeda yang diambil sekaligus per batch (4x3 = 12 lagu/sesi)
+MAX_TRACK_DURATION = 600        # 10 menit — hindari kompilasi / livestream
+TRACKS_PER_ARTIST_TARGET = 3   # target track unik per artis dalam satu batch
+ARTISTS_PER_BATCH = 4          # artis per batch normal (4×3 = 12 lagu)
+ARTISTS_QUICK = 2              # artis untuk fetch cepat pertama (2×3 = 6 lagu)
+SEED_LIMIT = 2                 # max judul populer dari DB per artis
 
-# Kata-kata noise yang sering muncul di judul upload YouTube dan tidak
-# relevan untuk membedakan "lagu yang sama" vs "lagu yang berbeda".
 _TITLE_NOISE_WORDS = frozenset({
     "official", "music", "video", "audio", "lyric", "lyrics", "mv",
     "cover", "live", "performance", "hd", "hq", "remastered", "remaster",
@@ -43,32 +40,19 @@ _TITLE_NOISE_WORDS = frozenset({
 
 
 def _normalize_title(title: str) -> str:
-    """Normalisasi judul track agar varian upload (official video, lyric
-    video, audio only, cover, live, dll) dari lagu yang sama bisa
-    dikenali sebagai duplikat walau video_id-nya berbeda.
-    """
     if not title:
         return ""
     t = title.lower()
-    # Buang isi dalam kurung/bracket, biasanya berisi noise: "(Official Video)", "[Lyrics]"
     t = re.sub(r"[\(\[\{].*?[\)\]\}]", " ", t)
-    # Buang karakter non alfanumerik (selain spasi)
     t = re.sub(r"[^a-z0-9\s]", " ", t)
-    # Buang kata-kata noise umum
     words = [w for w in t.split() if w not in _TITLE_NOISE_WORDS]
     return " ".join(words).strip()
 
 
 def _track_task(task_set: set, coro, name: str):
-    """Buat task, daftarkan discard callback SEBELUM masuk ke set,
-    lalu cek apakah task sudah done (edge case loop sangat cepat).
-    Mengembalikan task agar caller bisa cancel jika perlu.
-    """
     task = safe_create_task(coro, name=name)
-    # Callback didaftarkan sebelum add() — dijamin terpanggil
     task.add_done_callback(task_set.discard)
     task_set.add(task)
-    # Jika task sudah selesai saat baris ini dieksekusi, discard manual
     if task.done():
         task_set.discard(task)
     return task
@@ -76,31 +60,31 @@ def _track_task(task_set: set, coro, name: str):
 
 class RadioMode:
     """
-    Purpose: Mengelola pemutaran lagu secara otomatis dan berkelanjutan (Radio Mode).
-    Radio menyimpan seluruh lagunya di state.radio_queue, terpisah total
-    dari state.queue milik Queue Mode.
-    Subscribes to: (tidak ada)
-    Publishes: QUEUE_UPDATED, LOG_MESSAGE
+    Strategi pre-fetch agresif:
+    - _standby: playlist cadangan 12 lagu yang disiapkan di background
+    - Radio ON / klik Acak:
+        1. Kalau _standby sudah ada → pakai langsung (0 detik)
+        2. Kalau belum → fetch cepat 2 artis dulu (~5 detik), langsung putar,
+           lalu background fetch 2 artis lagi untuk genapi 12
+    - Begitu _standby dipakai, langsung siapkan cadangan baru di background
+    - Saat queue tinggal ≤ 5 lagu → prefetch otomatis ke _standby
     """
+
     def __init__(self, ytdlp: MediaExtractorPort, state: AppState, db=None):
         self.ytdlp = ytdlp
         self.state = state
         self.db = db
-        self._fetch_lock = asyncio.Lock()  # A-06: ganti _is_fetching bool — atomic, tidak bisa stuck
-        self._bg_tasks = set()
-        # Pool artis — diisi dari DB saat pertama kali diaktifkan (lazy load).
-        # Setelah terisi, tidak query DB lagi kecuali di-reload manual.
+        self._fetch_lock = asyncio.Lock()
+        self._bg_tasks: set = set()
         self._seed_artists: list[str] = []
-        # Rotasi artis tanpa pengulangan: urutan acak dari _seed_artists yang
-        # "dikonsumsi" dari depan tiap kali batch baru diambil. Begitu deck
-        # ini habis, semua artis sudah pasti kebagian giliran sekali, lalu
-        # deck dikocok ulang dari awal untuk putaran berikutnya.
         self._artist_rotation: list[str] = []
+        # Playlist cadangan — diisi di background, dipakai saat user klik
+        self._standby: list = []
+        self._standby_lock = asyncio.Lock()
+
+    # ── bootstrap ─────────────────────────────────────────────
 
     async def _ensure_artists_loaded(self) -> None:
-        """Load pool artis dari DB (lazy — hanya sekali selama instance hidup).
-        Kalau DB tidak tersedia atau tabel kosong, jatuh ke _FALLBACK_ARTISTS.
-        """
         if self._seed_artists:
             return
         try:
@@ -113,146 +97,170 @@ class RadioMode:
         if not self._seed_artists:
             import logging
             logging.getLogger(__name__).warning(
-                "Tabel artists kosong atau DB tidak tersedia. "
-                "Jalankan: python data/import_artists.py --db cache/library.db --json data/artists.json"
+                "Tabel artists kosong. Jalankan import_artists.py"
             )
             self._seed_artists = list(_FALLBACK_ARTISTS)
 
-    async def on_activated(self, controller: "PlaybackController") -> None:
-        """Dipanggil saat user menyalakan Radio Mode.
+    # ── lifecycle ─────────────────────────────────────────────
 
-        Sesuai konstitusi, Radio harus "Start immediately" dan bekerja
-        independen dari Queue. Karena itu setiap kali Radio dinyalakan,
-        Radio SELALU langsung melakukan pencarian baru dan memutar lagu —
-        tidak peduli apa yang sebelumnya terjadi di Queue Mode.
-        """
+    async def on_activated(self, controller: "PlaybackController") -> None:
         await self._ensure_artists_loaded()
         self.state.radio_queue.clear()
-        # Reset deck rotasi agar tiap sesi baru benar-benar dikocok ulang
         self._artist_rotation = []
-        seed_artist = random.choice(self._seed_artists)
-        _track_task(self._bg_tasks, self._fetch_and_play_initial(controller, seed_artist), name="radio_initial")
+        _track_task(self._bg_tasks, self._start(controller), name="radio_start")
 
     async def on_deactivated(self) -> None:
-        """Dipanggil saat user mematikan Radio Mode. Bersihkan sisa state
-        Radio agar sesi berikutnya selalu mulai dari kondisi yang bersih,
-        dan tidak membocorkan lagu radio ke dalam Queue Mode."""
         self.state.radio_queue.clear()
         for task in list(self._bg_tasks):
             task.cancel()
         self._bg_tasks.clear()
+        # Jangan buang _standby — bisa dipakai kalau radio dinyalakan lagi
+
+    # ── next (dipanggil saat track habis) ─────────────────────
 
     async def next(self, controller: "PlaybackController") -> None:
-        """Dipanggil oleh PlaybackController saat track berakhir di Radio Mode."""
         if self.state.radio_queue:
             track = self.state.radio_queue.popleft()
+            # Kalau queue mulai tipis, pastikan standby sedang disiapkan
             if len(self.state.radio_queue) <= 5:
-                _track_task(self._bg_tasks, self._prefetch_next(controller), name="radio_prefetch")
+                _track_task(self._bg_tasks, self._ensure_standby(controller), name="radio_ensure_standby")
             await controller.play_track(track)
         else:
-            await self._ensure_artists_loaded()
-            seed_artist = random.choice(self._seed_artists)
-            await self._fetch_and_play_initial(controller, seed_artist)
+            # Queue habis — ambil dari standby atau fetch ulang
+            _track_task(self._bg_tasks, self._start(controller), name="radio_refill")
 
-    async def _prefetch_next(self, controller: "PlaybackController") -> None:
-        """Ambil batch track berikutnya di background, taruh ke radio_queue
-        (bukan queue). Sama seperti _fetch_and_play_initial, batch ini
-        diambil dari beberapa artis sekaligus lalu di-interleave supaya
-        tidak monoton satu artis berturut-turut."""
-        if self._fetch_lock.locked():  # A-06: atomic check, tidak bisa double-fetch
+    # ── inti: start dengan standby atau fetch cepat ───────────
+
+    async def _start(self, controller: "PlaybackController") -> None:
+        """
+        Urutan prioritas:
+        1. Standby sudah ada → pakai langsung (instan)
+        2. Belum ada → fetch cepat ARTISTS_QUICK artis, putar segera,
+           lalu background fetch sisa untuk genapi dan isi standby berikutnya
+        """
+        async with self._standby_lock:
+            if self._standby:
+                tracks = self._standby
+                self._standby = []
+            else:
+                tracks = None
+
+        if tracks:
+            # Langsung pakai standby
+            self.state.radio_queue.clear()
+            self.state.radio_queue.extend(tracks[1:])
+            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+            await controller.play_track(tracks[0])
+            # Siapkan standby berikutnya di background
+            _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
             return
-        async with self._fetch_lock:  # A-06: tidak bisa stuck — konteks manager otomatis release
+
+        # Fetch cepat: ARTISTS_QUICK artis dulu, langsung putar
+        try:
+            quick_tracks = await asyncio.wait_for(
+                self._gather_batch(max_artists=ARTISTS_QUICK),
+                timeout=20.0
+            )
+        except (asyncio.TimeoutError, Exception):
+            quick_tracks = []
+
+        if quick_tracks:
+            self.state.radio_queue.clear()
+            self.state.radio_queue.extend(quick_tracks[1:])
+            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+            await controller.play_track(quick_tracks[0])
+            # Background: fetch sisa artis dan masukkan ke queue + siapkan standby
+            _track_task(self._bg_tasks, self._backfill_and_standby(controller), name="radio_backfill")
+        else:
+            await controller.bus.publish(LogMessageEvent(
+                message="Radio: Tidak ada hasil ditemukan.", room_id=controller.room_id
+            ))
+
+    async def _backfill_and_standby(self, controller: "PlaybackController") -> None:
+        """Fetch sisa artis (ARTISTS_PER_BATCH - ARTISTS_QUICK) lalu
+        tambahkan ke queue yang sedang berjalan. Setelah itu siapkan standby."""
+        if self._fetch_lock.locked():
+            return
+        async with self._fetch_lock:
             try:
-                new_tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
-                if new_tracks:
-                    self.state.radio_queue.extend(new_tracks)
+                extra = await asyncio.wait_for(
+                    self._gather_batch(max_artists=ARTISTS_PER_BATCH - ARTISTS_QUICK),
+                    timeout=30.0
+                )
+                if extra:
+                    self.state.radio_queue.extend(extra)
                     while len(self.state.radio_queue) > 30:
                         self.state.radio_queue.pop()
                     await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
-            except Exception as e:
-                await controller.bus.publish(LogMessageEvent(message=f"Prefetch Error: {str(e)}", room_id=controller.room_id))
+            except Exception:
+                pass
 
-    async def _fetch_and_play_initial(self, controller: "PlaybackController", seed_artist: Optional[str] = None) -> None:
-        """Cari & putar lagu radio baru — dipakai saat Radio baru diaktifkan
-        atau saat radio_queue habis. Selalu langsung memutar (tidak menunggu).
+        # Setelah backfill selesai, langsung siapkan standby berikutnya
+        _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
 
-        seed_artist dipertahankan demi kompatibilitas signature (dipanggil
-        dari playback_controller.py dengan seed_artist=None saat tombol
-        randomize ditekan), tapi nilainya tidak lagi dipakai langsung
-        sebagai satu-satunya sumber — pengambilan tetap dilakukan sebagai
-        batch dari beberapa artis sekaligus supaya hasil pertama yang
-        diputar pun sudah konsisten dengan strategi anti-bosen yang baru.
-        """
-        try:
+    async def _build_standby(self, controller: "PlaybackController") -> None:
+        """Siapkan playlist cadangan 12 lagu di background.
+        Tidak akan jalan kalau standby sudah ada atau sedang dibangun."""
+        async with self._standby_lock:
+            if self._standby:
+                return  # sudah ada, tidak perlu rebuild
+
+        if self._fetch_lock.locked():
+            return
+        async with self._fetch_lock:
             try:
-                tracks = await asyncio.wait_for(self._gather_batch(prioritized_artist=seed_artist), timeout=30.0)
-            except asyncio.TimeoutError:
-                await controller.bus.publish(LogMessageEvent(message="Pencarian radio timeout (30s), mencoba artis lain...", room_id=controller.room_id))
-                tracks = []
+                tracks = await asyncio.wait_for(
+                    self._gather_batch(max_artists=ARTISTS_PER_BATCH),
+                    timeout=30.0
+                )
+                if tracks:
+                    async with self._standby_lock:
+                        self._standby = tracks
+            except Exception:
+                pass
 
-            if not tracks:
-                # Coba sekali lagi dengan batch artis yang benar-benar baru
-                try:
-                    tracks = await asyncio.wait_for(self._gather_batch(), timeout=30.0)
-                except asyncio.TimeoutError:
-                    await controller.bus.publish(LogMessageEvent(message="Pencarian radio kembali timeout, coba lagi nanti.", room_id=controller.room_id))
-                    tracks = []
+    async def _ensure_standby(self, controller: "PlaybackController") -> None:
+        """Pastikan standby sedang disiapkan kalau belum ada."""
+        async with self._standby_lock:
+            if self._standby:
+                return
+        _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby2")
 
-            if tracks:
-                self.state.radio_queue.clear()
-                self.state.radio_queue.extend(tracks[1:])
-                await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
-                await controller.play_track(tracks[0])
-            else:
-                await controller.bus.publish(LogMessageEvent(message="Radio: Tidak ada hasil lagu ditemukan.", room_id=controller.room_id))
-        except Exception as e:
-            await controller.bus.publish(LogMessageEvent(message=f"Radio Error: {str(e)}", room_id=controller.room_id))
+    # ── dipanggil dari playback_controller saat tombol Acak ───
 
-    async def _gather_batch(self, prioritized_artist: Optional[str] = None) -> list:
-        """Ambil track dari beberapa artis berbeda (ARTISTS_PER_BATCH) sekaligus,
-        dedup judul per artis, lalu interleave round-robin hasilnya supaya
-        urutan akhir bervariasi (tidak ada 2 lagu artis sama menumpuk
-        berurutan, kecuali memang sudah kehabisan variasi).
+    async def _fetch_and_play_initial(
+        self, controller: "PlaybackController", seed_artist: Optional[str] = None
+    ) -> None:
+        """Entry point untuk tombol Acak — sama dengan _start tapi
+        reset rotasi dulu agar artis benar-benar fresh."""
+        self._artist_rotation = []
+        async with self._standby_lock:
+            self._standby = []  # buang standby lama, minta yang fresh
+        await self._start(controller)
 
-        Pemilihan artis memakai mekanisme rotasi tanpa pengulangan
-        (lihat _next_artists_from_rotation): dengan pool besar (99 artis),
-        ini menjamin semua artis kebagian giliran tampil dulu sebelum ada
-        yang diulang, bukan cuma "kemungkinan besar rata" seperti random
-        sample independen.
+    # ── batch & search ────────────────────────────────────────
 
-        Kalau prioritized_artist diberikan, artis itu dipastikan masuk
-        dalam batch (mengisi salah satu slot), sisanya diambil dari deck
-        rotasi.
-        """
+    async def _gather_batch(
+        self, prioritized_artist: Optional[str] = None, max_artists: int = ARTISTS_PER_BATCH
+    ) -> list:
         chosen: list[str] = []
-
         if prioritized_artist and prioritized_artist in self._seed_artists:
             chosen.append(prioritized_artist)
-
-        slots_left = ARTISTS_PER_BATCH - len(chosen)
+        slots_left = max_artists - len(chosen)
         if slots_left > 0:
             chosen.extend(self._next_artists_from_rotation(slots_left, exclude=set(chosen)))
 
-        # Kumpulkan track per artis secara paralel
         results_per_artist = await asyncio.gather(
             *[self._search_artist(artist) for artist in chosen],
             return_exceptions=True,
         )
-
-        per_artist_tracks: list[list] = []
-        for res in results_per_artist:
-            if isinstance(res, Exception):
-                per_artist_tracks.append([])
-            else:
-                per_artist_tracks.append(res)
-
+        per_artist_tracks: list[list] = [
+            r if not isinstance(r, Exception) else []
+            for r in results_per_artist
+        ]
         return self._interleave(per_artist_tracks)
 
     def _next_artists_from_rotation(self, count: int, exclude: set[str]) -> list[str]:
-        """Ambil `count` nama artis dari depan deck rotasi (tanpa pengulangan).
-        Begitu deck kehabisan stok di tengah pengambilan, deck dikocok ulang
-        otomatis dari seluruh _seed_artists (minus exclude) dan dilanjutkan,
-        supaya satu batch tidak pernah kekurangan slot."""
         picked: list[str] = []
         while len(picked) < count:
             if not self._artist_rotation:
@@ -266,16 +274,13 @@ class RadioMode:
 
     async def _search_artist(self, artist: str) -> list:
         """Cari track untuk satu artis.
-        Strategi query (prioritas):
-        1. Jika DB punya lagu_populer untuk artis ini, cari tiap judul
-           secara individual: "{judul} {artis}" agar hasil lebih presisi.
-        2. Fallback ke query generik "{artis} music" kalau seed kosong.
+        Prioritas: judul populer dari DB (max SEED_LIMIT query paralel).
+        Fallback: query generik "{artist} music".
         """
-        # Ambil seed judul dari DB
         seed_titles: list[str] = []
         if self.db and self.db.conn:
             try:
-                seed_titles = await self.db.get_artist_seeds(artist, limit=TRACKS_PER_ARTIST_TARGET + 2)
+                seed_titles = await self.db.get_artist_seeds(artist, limit=SEED_LIMIT)
             except Exception:
                 pass
 
@@ -284,20 +289,16 @@ class RadioMode:
         unique_tracks: list = []
 
         if seed_titles:
-            # Strategi 1: cari per judul populer secara paralel
             async def _search_one(judul: str):
-                q = f"{judul} {artist}"
                 async with _RADIO_SEARCH_SEM:
-                    return await self.ytdlp.search(q, max_results=5)
+                    return await self.ytdlp.search(f"{judul} {artist}", max_results=5)
 
             results_nested = await asyncio.gather(
                 *[_search_one(j) for j in seed_titles],
                 return_exceptions=True,
             )
-            candidate_lists: list[list] = [
-                r for r in results_nested if not isinstance(r, Exception)
-            ]
-            for i in range(max((len(lst) for lst in candidate_lists), default=0)):
+            candidate_lists = [r for r in results_nested if not isinstance(r, Exception)]
+            for i in range(max((len(l) for l in candidate_lists), default=0)):
                 for lst in candidate_lists:
                     if i < len(lst):
                         t = lst[i]
@@ -316,10 +317,9 @@ class RadioMode:
                     break
 
         if len(unique_tracks) < TRACKS_PER_ARTIST_TARGET:
-            # Strategi 2 (fallback): query generik
             async with _RADIO_SEARCH_SEM:
-                fallback_results = await self.ytdlp.search(f"{artist} music", max_results=15)
-            for t in fallback_results:
+                fallback = await self.ytdlp.search(f"{artist} music", max_results=15)
+            for t in fallback:
                 if t.video_id in existing:
                     continue
                 if not (0 < t.duration < MAX_TRACK_DURATION):
@@ -332,15 +332,10 @@ class RadioMode:
                 if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
                     break
 
-        # Tidak di-shuffle: urutan seed DB sudah bermakna (populer duluan)
         return unique_tracks[:TRACKS_PER_ARTIST_TARGET]
 
     @staticmethod
     def _interleave(per_artist_tracks: list[list]) -> list:
-        """Gabungkan beberapa list track per-artis dengan round-robin:
-        ambil satu-satu giliran dari tiap artis (Artis1, Artis2, Artis3,
-        Artis1, ...). Kalau satu artis sudah habis stoknya, sisanya lanjut
-        gilir dari artis-artis yang masih ada."""
         result = []
         max_len = max((len(lst) for lst in per_artist_tracks), default=0)
         for i in range(max_len):

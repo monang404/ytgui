@@ -174,7 +174,16 @@ function initEvents() {
     });
 
     dom.radioRandomizeBtn.addEventListener("click", () => {
-        if (store.userRole === "admin") wsSend("radio_randomize");
+        if (store.userRole !== "admin") return;
+        // Optimistic update: reset UI langsung tanpa nunggu server
+        store.radio_queue = [];
+        store.current_track = null;
+        store.status = "LOADING";
+        store.position = 0;
+        if (typeof renderRadio === "function") renderRadio();
+        if (typeof renderQueue === "function") renderQueue();
+        if (typeof renderNowPlaying === "function") renderNowPlaying();
+        wsSend("radio_randomize");
     });
 
 

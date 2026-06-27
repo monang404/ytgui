@@ -246,26 +246,30 @@ class PlaybackController:
                     await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
 
     async def _on_radio_randomize(self, data=None):
+        # Reset state di dalam lock (cepat), fetch di luar lock (background)
+        seed = None
+        should_fetch = False
         async with self._lock:
             if self.state.playback_mode == PlaybackMode.RADIO:
                 seed = data.get("seed_artist") if data else None
                 self.state.radio_queue.clear()
-                
-                # Stop playing current track immediately to give instant "reset" feel
                 await self.mpv.pause()
                 self.state.current_track = None
                 self.state.status = PlayerStatus.LOADING
                 self.state.position = 0.0
-                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
-                
-                # Reset rotasi artis agar sesi acak benar-benar fresh
                 self.radio_mode._artist_rotation = []
-                
+                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
                 await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio...", room_id=self.room_id))
-                # Panggil fetch dengan seed jika ada, jika tidak None
-                await self.radio_mode._fetch_and_play_initial(self, seed_artist=seed)
+                should_fetch = True
             else:
                 await self.bus.publish(LogMessageEvent(message="Radio tidak aktif", room_id=self.room_id))
+
+        if should_fetch:
+            from core.task_utils import safe_create_task
+            safe_create_task(
+                self.radio_mode._fetch_and_play_initial(self, seed_artist=seed),
+                name="radio_randomize_fetch"
+            )
 
     async def _on_pause_changed(self, event: TrackPauseChangedEvent):
         if event.is_paused:
