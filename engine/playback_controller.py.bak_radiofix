@@ -256,12 +256,9 @@ class PlaybackController:
                 self.state.current_track = None
                 self.state.status = PlayerStatus.LOADING
                 self.state.position = 0.0
-                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+                await self.bus.publish(QueueUpdatedEvent())
                 
-                # Reset rotasi artis agar sesi acak benar-benar fresh
-                self.radio_mode._artist_rotation = []
-                
-                await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio...", room_id=self.room_id))
+                await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio..."))
                 # Panggil fetch dengan seed jika ada, jika tidak None
                 await self.radio_mode._fetch_and_play_initial(self, seed_artist=seed)
             else:

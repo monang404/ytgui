@@ -128,8 +128,6 @@ class RadioMode:
         """
         await self._ensure_artists_loaded()
         self.state.radio_queue.clear()
-        # Reset deck rotasi agar tiap sesi baru benar-benar dikocok ulang
-        self._artist_rotation = []
         seed_artist = random.choice(self._seed_artists)
         _track_task(self._bg_tasks, self._fetch_and_play_initial(controller, seed_artist), name="radio_initial")
 
@@ -265,74 +263,30 @@ class RadioMode:
         return picked
 
     async def _search_artist(self, artist: str) -> list:
-        """Cari track untuk satu artis.
-        Strategi query (prioritas):
-        1. Jika DB punya lagu_populer untuk artis ini, cari tiap judul
-           secara individual: "{judul} {artis}" agar hasil lebih presisi.
-        2. Fallback ke query generik "{artis} music" kalau seed kosong.
-        """
-        # Ambil seed judul dari DB
-        seed_titles: list[str] = []
-        if self.db and self.db.conn:
-            try:
-                seed_titles = await self.db.get_artist_seeds(artist, limit=TRACKS_PER_ARTIST_TARGET + 2)
-            except Exception:
-                pass
+        """Cari track untuk satu artis, filter durasi + exclusion, lalu
+        dedup berdasarkan judul yang dinormalisasi (biar 'Rasa Ini' versi
+        official video/lyric/audio tidak terhitung sebagai 3 lagu beda).
+        Mengembalikan sekitar TRACKS_PER_ARTIST_TARGET track unik
+        (bisa kurang kalau memang stoknya tipis)."""
+        async with _RADIO_SEARCH_SEM:
+            query = f"{artist} music"
+            results = await self.ytdlp.search(query, max_results=15)
+            existing = self._build_exclusion_set()
 
-        existing = self._build_exclusion_set()
         seen_titles: set[str] = set()
-        unique_tracks: list = []
+        unique_tracks = []
+        for t in results:
+            if t.video_id in existing:
+                continue
+            if not (0 < t.duration < MAX_TRACK_DURATION):
+                continue
+            norm = _normalize_title(t.title)
+            if norm and norm in seen_titles:
+                continue
+            seen_titles.add(norm)
+            unique_tracks.append(t)
 
-        if seed_titles:
-            # Strategi 1: cari per judul populer secara paralel
-            async def _search_one(judul: str):
-                q = f"{judul} {artist}"
-                async with _RADIO_SEARCH_SEM:
-                    return await self.ytdlp.search(q, max_results=5)
-
-            results_nested = await asyncio.gather(
-                *[_search_one(j) for j in seed_titles],
-                return_exceptions=True,
-            )
-            candidate_lists: list[list] = [
-                r for r in results_nested if not isinstance(r, Exception)
-            ]
-            for i in range(max((len(lst) for lst in candidate_lists), default=0)):
-                for lst in candidate_lists:
-                    if i < len(lst):
-                        t = lst[i]
-                        if t.video_id in existing:
-                            continue
-                        if not (0 < t.duration < MAX_TRACK_DURATION):
-                            continue
-                        norm = _normalize_title(t.title)
-                        if norm and norm in seen_titles:
-                            continue
-                        seen_titles.add(norm)
-                        unique_tracks.append(t)
-                        if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
-                            break
-                if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
-                    break
-
-        if len(unique_tracks) < TRACKS_PER_ARTIST_TARGET:
-            # Strategi 2 (fallback): query generik
-            async with _RADIO_SEARCH_SEM:
-                fallback_results = await self.ytdlp.search(f"{artist} music", max_results=15)
-            for t in fallback_results:
-                if t.video_id in existing:
-                    continue
-                if not (0 < t.duration < MAX_TRACK_DURATION):
-                    continue
-                norm = _normalize_title(t.title)
-                if norm and norm in seen_titles:
-                    continue
-                seen_titles.add(norm)
-                unique_tracks.append(t)
-                if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
-                    break
-
-        # Tidak di-shuffle: urutan seed DB sudah bermakna (populer duluan)
+        random.shuffle(unique_tracks)
         return unique_tracks[:TRACKS_PER_ARTIST_TARGET]
 
     @staticmethod
