@@ -51,15 +51,12 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
         room = room_manager.rooms.get(event.room_id)
         if not room: return
         track = event.track
-        # B-03: prefetch URL untuk track BERIKUTNYA di queue atau radio_queue
+        # B-03: prefetch URL untuk track BERIKUTNYA di queue, bukan track yang baru main
         # (current track sudah di-resolve oleh CacheResolver sesaat sebelumnya)
-        _next = None
         if room.state.queue:
             _next = room.state.queue[0]
-        elif room.state.radio_queue:
-            _next = room.state.radio_queue[0]
-        if _next and _next.video_id:
-            safe_create_task(_prefetch_stream_url(_next.video_id), name=f"prefetch_next_{_next.video_id}")
+            if _next and _next.video_id:
+                safe_create_task(_prefetch_stream_url(_next.video_id), name=f"prefetch_next_{_next.video_id}")
             
         await manager.broadcast({
             "type": "state",

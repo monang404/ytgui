@@ -23,6 +23,7 @@ from core.state import AppState, PlaybackMode, PlayerStatus
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
+_FALLBACK_ARTISTS = ["Sheila On 7", "Dewa 19", "Tulus", "Nadin Amizah", "Raisa"]
 
 MAX_TRACK_DURATION = 600        # 10 menit — hindari kompilasi / livestream
 TRACKS_PER_ARTIST_TARGET = 3   # target track unik per artis dalam satu batch
@@ -94,12 +95,11 @@ class RadioMode:
             logging.getLogger(__name__).warning(f"Gagal load artis dari DB: {e}")
 
         if not self._seed_artists:
-            # Tidak ada fallback hardcode — DB harus diisi dulu
-            # Error ini akan ditangkap oleh _start dan dikirim ke frontend
-            raise RuntimeError(
-                "Tabel artists kosong. Jalankan: python data/import_artists.py "
-                "--db cache/library.db --json data/artists.json"
+            import logging
+            logging.getLogger(__name__).warning(
+                "Tabel artists kosong. Jalankan import_artists.py"
             )
+            self._seed_artists = list(_FALLBACK_ARTISTS)
 
     # ── lifecycle ─────────────────────────────────────────────
 
@@ -161,13 +161,6 @@ class RadioMode:
                 self._gather_batch(max_artists=ARTISTS_QUICK),
                 timeout=20.0
             )
-        except RuntimeError as e:
-            # DB artists kosong — kirim pesan jelas ke frontend
-            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
-            await controller.bus.publish(LogMessageEvent(
-                message=f"Radio: {e}", room_id=controller.room_id
-            ))
-            return
         except (asyncio.TimeoutError, Exception):
             quick_tracks = []
 

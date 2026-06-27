@@ -207,7 +207,6 @@ class PlaybackController:
                     # B-02: tidak auto-advance saat keluar RADIO — biarkan user mulai manual
                     
                 if mode == PlaybackMode.RADIO:
-                    self.state.status = PlayerStatus.LOADING  # B-FIX: signal ke frontend bahwa radio sedang fetch
                     await self.radio_mode.on_activated(self)
                     
                 await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}", room_id=self.room_id))
