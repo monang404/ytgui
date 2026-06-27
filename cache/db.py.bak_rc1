@@ -215,26 +215,21 @@ class Database:
 
 
     async def toggle_favorite(self, video_id: str) -> int:
-        """Toggles the favorite status of a track dan kembalikan state baru (0 atau 1).
-        Atomic: satu UPDATE statement — tidak ada SELECT+UPDATE race condition.
-        """
-        # Cek dulu apakah track ada
-        async with self._conn.execute(
-            "SELECT 1 FROM tracks WHERE video_id = ?", (video_id,)
-        ) as cursor:
-            if not await cursor.fetchone():
-                return 0
-
-        # Atomic toggle dalam satu statement: 1-0=1, 1-1=0
-        await self._conn.execute(
-            "UPDATE tracks SET is_favorite = 1 - COALESCE(is_favorite, 0) WHERE video_id = ?",
-            (video_id,)
-        )
-        await self._conn.commit()
-
-        # Baca nilai baru setelah update
+        """Toggles the favorite status of a track and returns the new state (0 or 1)."""
         async with self._conn.execute(
             "SELECT is_favorite FROM tracks WHERE video_id = ?", (video_id,)
         ) as cursor:
             row = await cursor.fetchone()
-            return int(row["is_favorite"] or 0) if row else 0
+            if not row:
+                return 0
+            current_fav = 0
+            if "is_favorite" in row.keys():
+                current_fav = row["is_favorite"] or 0
+            new_fav = 1 if current_fav == 0 else 0
+            
+        await self._conn.execute(
+            "UPDATE tracks SET is_favorite = ? WHERE video_id = ?",
+            (new_fav, video_id)
+        )
+        await self._conn.commit()
+        return new_fav

@@ -27,7 +27,6 @@ class MpvController:
         self._writer = None
         self._request_id = 0
         self._pending: dict[int, asyncio.Future] = {}
-        self._req_lock = asyncio.Lock()  # RC-02: lindungi increment _request_id
         self._observer_task = None
         self.is_connected = False
         self._mpv_process = None
@@ -260,9 +259,8 @@ class MpvController:
     async def _command(self, cmd: list) -> int:
         if not self.is_connected or not self._writer:
             return 0
-        async with self._req_lock:  # RC-02: atomic increment
-            self._request_id += 1
-            req_id = self._request_id
+        self._request_id += 1
+        req_id = self._request_id
         payload = json.dumps({"command": cmd, "request_id": req_id}) + "\n"
         try:
             self._writer.write(payload.encode())
@@ -274,12 +272,11 @@ class MpvController:
     async def _get_property(self, prop: str):
         if not self.is_connected:
             return None
+        self._request_id += 1
+        req_id = self._request_id
         loop = asyncio.get_running_loop()  # HIGH-03 fix
-        async with self._req_lock:  # RC-02: atomic increment + pending register
-            self._request_id += 1
-            req_id = self._request_id
-            fut = loop.create_future()
-            self._pending[req_id] = fut
+        fut = loop.create_future()
+        self._pending[req_id] = fut
         payload = json.dumps({"command": ["get_property", prop], "request_id": req_id}) + "\n"
         try:
             self._writer.write(payload.encode())
