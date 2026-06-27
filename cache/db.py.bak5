@@ -40,36 +40,14 @@ class Database:
         except Exception:
             pass
         
-        logger.info(f"Database initialized at {self.db_path}")
-        # Eviction dijalankan terpisah agar tidak memblok startup event loop.
-        # Panggil evict_stale_tracks() secara terjadwal (misalnya 1x/hari)
-        # dari server/app.py, bukan di sini.
-
-    async def evict_stale_tracks(self) -> int:
-        """Hapus track yang benar-benar tidak aktif:
-        - Tidak pernah diputar (play_count = 0)
-        - Tidak pernah di-cache stream dalam 30 hari terakhir
-        - Bukan favorit dan bukan file lokal
-        Mengembalikan jumlah baris yang dihapus.
-        """
+        # Eviction Policy: Hapus lagu yang tidak diputar > 30 hari, bukan favorit, dan belum di-download
         thirty_days_ago = int(time.time()) - (30 * 24 * 3600)
-        cursor = await self._conn.execute(
-            """DELETE FROM tracks
-               WHERE play_count = 0
-                 AND local_path IS NULL
-                 AND (is_favorite = 0 OR is_favorite IS NULL)
-                 AND (
-                     -- stream_url stale atau tidak pernah ada
-                     stream_url_ts IS NULL
-                     OR stream_url_ts < ?
-                 )""",
+        await self._conn.execute(
+            "DELETE FROM tracks WHERE last_played < ? AND play_count = 0 AND local_path IS NULL AND (is_favorite = 0 OR is_favorite IS NULL)",
             (thirty_days_ago,)
         )
         await self._conn.commit()
-        deleted = cursor.rowcount
-        if deleted:
-            logger.info(f"Eviction: {deleted} track stale dihapus dari cache DB")
-        return deleted
+        logger.info(f"Database initialized at {self.db_path}")
 
     async def close(self):
         """Close the persistent connection gracefully."""

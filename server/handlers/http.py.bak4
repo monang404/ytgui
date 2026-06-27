@@ -65,25 +65,7 @@ async def serve_stream(request):
 
     http_session = request.app.get("http_session")
     if not http_session:
-        # Tidak ada proxy session — redirect langsung ke YouTube stream URL.
-        # Harus fetch dulu jika belum ada di cache agar tidak redirect ke "".
-        if not stream_url:
-            try:
-                stream_url = await ytdlp.get_stream_url(video_id)
-                await db.update_stream_url_only(video_id, stream_url)
-            except Exception as e:
-                logger.error(f"Gagal fetch stream URL untuk redirect: {e}")
-                return web.HTTPServiceUnavailable(text="Stream tidak tersedia saat ini")
-        # Validasi domain sebelum redirect (cegah open-redirect / SSRF)
-        from urllib.parse import urlparse as _urlparse
-        _p = _urlparse(stream_url)
-        _domain = _p.netloc.lower()
-        if _p.scheme != "https" or not (
-            _domain.endswith(".googlevideo.com") or _domain.endswith(".youtube.com")
-        ):
-            logger.error(f"URL stream tidak valid untuk redirect: {stream_url}")
-            return web.HTTPForbidden(text="URL stream tidak valid")
-        return web.HTTPFound(stream_url)
+        return web.HTTPFound(stream_url or "")
 
     for attempt in range(2):
         if not stream_url:

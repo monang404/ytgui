@@ -4,28 +4,7 @@ import secrets
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
 from core.security import verify_password
 
-def _prune_stale_ips(manager, now: float) -> None:
-    """Hapus entry IP yang sudah melewati window dari kedua dict rate-limit.
-    Dipanggil tiap handle_auth agar dict tidak tumbuh tanpa batas (memory leak).
-    """
-    WINDOW_AUTH = 300   # 5 menit — sama dengan window login_attempts
-    WINDOW_CMD  = 60    # 1 menit — sama dengan window command_history
-
-    stale_auth = [ip for ip, ts_list in manager.login_attempts.items()
-                  if not any(now - t < WINDOW_AUTH for t in ts_list)]
-    for ip in stale_auth:
-        del manager.login_attempts[ip]
-
-    stale_cmd = [ip for ip, ts_list in manager.command_history.items()
-                 if not any(now - t < WINDOW_CMD for t in ts_list)]
-    for ip in stale_cmd:
-        del manager.command_history[ip]
-
-
 async def handle_auth(ws, data, manager, client_ip, db, now):
-    # Prune dict rate-limit agar tidak tumbuh selamanya
-    _prune_stale_ips(manager, now)
-
     token = data.get("token")
     if token and db:
         if await db.verify_session(token):
