@@ -59,21 +59,6 @@ def _normalize_title(title: str) -> str:
     return " ".join(words).strip()
 
 
-def _track_task(task_set: set, coro, name: str):
-    """Buat task, daftarkan discard callback SEBELUM masuk ke set,
-    lalu cek apakah task sudah done (edge case loop sangat cepat).
-    Mengembalikan task agar caller bisa cancel jika perlu.
-    """
-    task = safe_create_task(coro, name=name)
-    # Callback didaftarkan sebelum add() — dijamin terpanggil
-    task.add_done_callback(task_set.discard)
-    task_set.add(task)
-    # Jika task sudah selesai saat baris ini dieksekusi, discard manual
-    if task.done():
-        task_set.discard(task)
-    return task
-
-
 class RadioMode:
     """
     Purpose: Mengelola pemutaran lagu secara otomatis dan berkelanjutan (Radio Mode).
@@ -129,7 +114,9 @@ class RadioMode:
         await self._ensure_artists_loaded()
         self.state.radio_queue.clear()
         seed_artist = random.choice(self._seed_artists)
-        _track_task(self._bg_tasks, self._fetch_and_play_initial(controller, seed_artist), name="radio_initial")
+        task = safe_create_task(self._fetch_and_play_initial(controller, seed_artist), name="radio_initial")
+        self._bg_tasks.add(task)
+        task.add_done_callback(self._bg_tasks.discard)
 
     async def on_deactivated(self) -> None:
         """Dipanggil saat user mematikan Radio Mode. Bersihkan sisa state
@@ -145,7 +132,9 @@ class RadioMode:
         if self.state.radio_queue:
             track = self.state.radio_queue.popleft()
             if len(self.state.radio_queue) <= 5:
-                _track_task(self._bg_tasks, self._prefetch_next(controller), name="radio_prefetch")
+                task = safe_create_task(self._prefetch_next(controller), name="radio_prefetch")
+                self._bg_tasks.add(task)
+                task.add_done_callback(self._bg_tasks.discard)
             await controller.play_track(track)
         else:
             await self._ensure_artists_loaded()

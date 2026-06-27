@@ -36,38 +36,13 @@ class EventBus:
             ref = handler # Fallback strong reference untuk fungsi biasa/lambda
         self._subscribers[event_type].append(ref)
 
-    def _resolve(self, ref):
-        """Resolve ref ke handler asli. Return None jika dead weakref."""
-        if isinstance(ref, weakref.ref):
-            return ref()
-        return ref
-
-    def purge_dead_refs(self):
-        """Hapus semua dead weakref dari seluruh subscriber list.
-        Dipanggil otomatis dari unsubscribe(). Bisa juga dipanggil
-        manual saat room dihancurkan untuk pembersihan menyeluruh.
-        """
-        for event_type in list(self._subscribers):
-            self._subscribers[event_type] = [
-                r for r in self._subscribers[event_type]
-                if self._resolve(r) is not None
-            ]
-            # Hapus key jika list sudah kosong agar dict tidak tumbuh
-            if not self._subscribers[event_type]:
-                del self._subscribers[event_type]
-
     def unsubscribe(self, event_type: Type[E], handler: Callable[[E], Any]):
-        """Remove a handler from an event, sekaligus bersihkan dead refs."""
+        """Remove a handler from an event."""
         if event_type in self._subscribers:
             self._subscribers[event_type] = [
                 r for r in self._subscribers[event_type]
-                # Buang: (1) dead weakref, (2) ref yang menunjuk ke handler target
-                if self._resolve(r) is not None and self._resolve(r) != handler
+                if (r() if isinstance(r, weakref.ref) else r) != handler
             ]
-            if not self._subscribers[event_type]:
-                del self._subscribers[event_type]
-        # Bersihkan dead ref di semua event_type lain sekalian
-        self.purge_dead_refs()
 
     async def publish(self, event: DomainEvent):
         """Publish event to all subscribers. Exceptions in one handler
