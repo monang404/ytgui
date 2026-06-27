@@ -52,15 +52,13 @@ if (window.visualViewport) {
 }
 
 // ── Service Worker Registration — Phase 6 ──
-// DISABLED selama development — biar nggak ke-cache stale.
-// Aktifkan lagi kalau sudah siap "production" (uncomment di bawah).
-// if ('serviceWorker' in navigator) {
-//     window.addEventListener('load', () => {
-//         navigator.serviceWorker.register('/static/sw.js')
-//             .then(reg => console.log('SW registered:', reg.scope))
-//             .catch(err => console.warn('SW registration failed:', err));
-//     });
-// }
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.warn('SW registration failed:', err));
+    });
+}
     
 // Mobile Swipe for Next/Prev
 let touchStartX = 0;

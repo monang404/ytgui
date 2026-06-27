@@ -1,7 +1,7 @@
 // ── Service Worker — bagas.fm Phase 6 ──
 // Strategy: Cache-first untuk static assets, network-first untuk API/WS
 
-const CACHE_VERSION = 'bagas-fm-20260627_1117-dev';
+const CACHE_VERSION = 'bagas-fm-20260626_1144';  // B-10: auto-updated 20260626_1144
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 // Assets yang di-cache saat install
