@@ -164,12 +164,6 @@ function initEvents() {
     dom.radioToggleBtn.addEventListener("click", () => {
         if (store.userRole !== "admin") return;
         const newMode = store.playback_mode === "RADIO" ? "QUEUE" : "RADIO";
-        // FIX BUG-3: optimistic update — jangan tunggu server reply.
-        // Sebelumnya UI baru berubah setelah WS state message datang dari server,
-        // sehingga tombol terasa tidak bereaksi (lag atau blank di mobile).
-        store.playback_mode = newMode;
-        if (typeof renderRadio === "function") renderRadio();
-        if (typeof renderQueue === "function") renderQueue();
         wsSend("set_mode", { mode: newMode });
     });
 

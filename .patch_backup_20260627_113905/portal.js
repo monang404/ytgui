@@ -26,16 +26,6 @@ function applyRoleUI() {
         document.body.classList.remove("client-mode");
         dom.logoutBtn.style.display = "flex";
         switchTab("home");
-        // FIX BUG-1: setelah #app visible, paksa recalculate tinggi viewport.
-        // Android Chrome tidak auto-fire visualViewport resize saat element
-        // berubah dari display:none ke display:flex, sehingga nav-bar bisa
-        // terpotong sampai user scroll atau resize manual.
-        if (window.visualViewport) {
-            const _app = document.getElementById("app");
-            if (_app) {
-                _app.style.height = window.visualViewport.height + "px";
-            }
-        }
     }
     renderHeader();
 }

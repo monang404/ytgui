@@ -2,12 +2,6 @@
     "use strict";
 
     function init() {
-        // FIX BUG-1: set data-active-tab SEBELUM DOM diinit supaya CSS selector
-        // body:not([data-active-tab="home"]) tidak aktif saat #app pertama muncul.
-        // Tanpa ini, player-bar jadi position:absolute dan menutupi navbar.
-        document.body.dataset.activeTab = (typeof store !== "undefined" && store.active_tab)
-            ? store.active_tab
-            : "home";
         initDOM();
         initPortal();
         initAudio();
@@ -74,12 +68,6 @@ document.addEventListener('touchstart', e => {
     if (e.touches.length === 1) touchStartX = e.touches[0].screenX;
 });
 document.addEventListener('touchend', e => {
-    // FIX BUG-2: jangan intercept tap pada elemen yang punya handler sendiri.
-    // Tanpa guard ini, tap singkat di radio-toggle-btn atau button lain bisa
-    // terbaca sebagai swipe (delta X < 80 tapi handler tetap konsumsi event).
-    if (e.target.closest(
-        "#radio-toggle-btn, button, a, input, select, textarea, [role=\"button\"]"
-    )) return;
     if (e.changedTouches.length === 1) {
         const touchEndX = e.changedTouches[0].screenX;
         if (Math.abs(touchEndX - touchStartX) > 80) {
