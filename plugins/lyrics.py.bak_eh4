@@ -22,7 +22,6 @@ class LyricsFetcher:
         self.state = state
         self.lyrics_data: list[tuple[float, str]] = []
         self._session = session
-        self._owns_session = False  # True jika kita yang buat, kita yang harus tutup
         self._current_generation = 0
         # TASK-3.4: Injected per-room bus (fallback ke global jika belum direfactor)
         if event_bus is None:
@@ -31,27 +30,8 @@ class LyricsFetcher:
         self._bus = event_bus
         self._bus.subscribe(TrackProgressEvent, self._on_progress)
 
-    def _get_session(self) -> aiohttp.ClientSession:
-        """Kembalikan session yang ada, atau buat satu fallback session yang persisten."""
-        if self._session is None:
-            self._session = aiohttp.ClientSession()
-            self._owns_session = True
-        return self._session
-
     def cleanup(self):
         self._bus.unsubscribe(TrackProgressEvent, self._on_progress)
-        if self._owns_session and self._session and not self._session.closed:
-            import asyncio as _asyncio
-            try:
-                loop = _asyncio.get_event_loop()
-                if loop.is_running():
-                    loop.create_task(self._session.close())
-                else:
-                    loop.run_until_complete(self._session.close())
-            except Exception:
-                pass
-            self._session = None
-            self._owns_session = False
 
     async def fetch(self, track: TrackInfo):
         """Fetches synchronized lyrics from lrclib.net and parses them."""
@@ -69,9 +49,16 @@ class LyricsFetcher:
         
         await self._bus.publish(LyricsUpdatedEvent())
 
+        @asynccontextmanager
+        async def get_session():
+            if self._session:
+                yield self._session
+            else:
+                async with aiohttp.ClientSession() as s:
+                    yield s
+        
         try:
-            session = self._get_session()
-            if True:  # dummy block untuk menjaga indentasi try/except di bawah
+            async with get_session() as session:
                 # 1. Coba pencarian spesifik (exact match) dengan durasi
                 url_get = f"{LYRICS_API_BASE}/get"
                 params_get = {"track_name": title, "artist_name": artist, "duration": duration}

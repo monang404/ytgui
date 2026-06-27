@@ -137,12 +137,6 @@ class PlaybackController:
             self.state.status = PlayerStatus.ERROR
             await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran"))
             await asyncio.sleep(2)
-            # Batalkan autoplay jika user sudah stop atau ganti lagu selama sleep
-            if self.state.status == PlayerStatus.IDLE:
-                return
-            current_vid = getattr(self.state.current_track, "video_id", None)
-            if next_data.get("video_id") and current_vid != next_data["video_id"]:
-                return
             await self._on_next(next_data)
 
     async def _on_track_progress(self, event: TrackProgressEvent):

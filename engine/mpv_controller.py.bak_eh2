@@ -197,44 +197,15 @@ class MpvController:
                     fut.cancel()
             self._pending.clear()
             logger.warning("mpv observer loop ended — connection lost.")
-
+            # A-03: notify PlaybackController supaya tidak silent-dead
             if not getattr(self, "_shutting_down", False):
-                # Coba reconnect ke mpv yang mungkin masih hidup (misal socket terputus sesaat)
-                reconnected = False
-                for attempt in range(3):
-                    backoff = 2 ** attempt  # 1s, 2s, 4s
-                    logger.info(f"Mencoba reconnect ke mpv (attempt {attempt + 1}/3) dalam {backoff}s...")
-                    await asyncio.sleep(backoff)
-                    if getattr(self, "_shutting_down", False):
-                        break
-                    try:
-                        if os.name == "nt":
-                            self._reader, self._writer = await asyncio.open_connection(
-                                "127.0.0.1", int(self.tcp_port)
-                            )
-                        else:
-                            self._reader, self._writer = await asyncio.open_unix_connection(
-                                self.socket_path
-                            )
-                        self.is_connected = True
-                        self._observer_task = safe_create_task(
-                            self._observe_events(), name="mpv_observer"
-                        )
-                        logger.info(f"Reconnect ke mpv berhasil (attempt {attempt + 1})")
-                        reconnected = True
-                        break
-                    except (ConnectionError, OSError, FileNotFoundError) as e:
-                        logger.warning(f"Reconnect attempt {attempt + 1} gagal: {e}")
-
-                if not reconnected:
-                    logger.error("Semua percobaan reconnect ke mpv gagal.")
-                    from core.events import TrackEndedEvent
-                    import asyncio as _aio
-                    try:
-                        loop = _aio.get_running_loop()
-                        loop.create_task(self._bus.publish(TrackEndedEvent(reason="error")))
-                    except RuntimeError:
-                        pass
+                from core.events import TrackEndedEvent
+                import asyncio as _aio
+                try:
+                    loop = _aio.get_running_loop()
+                    loop.create_task(self._bus.publish(TrackEndedEvent(reason="error")))
+                except RuntimeError:
+                    pass  # loop sudah stop, tidak perlu publish
 
     async def _handle_event(self, msg: dict):
         if "request_id" in msg:
