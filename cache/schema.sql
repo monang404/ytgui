@@ -27,28 +27,34 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 -- Artists untuk Radio Mode seed
--- Diisi via: python data/import_artists.py --db data/ytgui.db --json data/artists.json
 CREATE TABLE IF NOT EXISTS artists (
-    id           INTEGER PRIMARY KEY,
-    nama         TEXT    NOT NULL,
-    kategori     TEXT    CHECK(kategori IN ('individu','band')),
-    tahun_aktif  TEXT,
-    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+    id INTEGER PRIMARY KEY,
+    nama TEXT NOT NULL,
+    kategori TEXT,
+    tahun_aktif TEXT
+);
+
+CREATE TABLE IF NOT EXISTS genres (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nama_genre TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS artist_genres (
-    artist_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-    genre      TEXT    NOT NULL,
-    PRIMARY KEY (artist_id, genre)
+    artist_id INTEGER,
+    genre_id INTEGER,
+    PRIMARY KEY (artist_id, genre_id),
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS artist_seeds (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    artist_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-    judul      TEXT    NOT NULL,
-    urutan     INTEGER NOT NULL
+CREATE TABLE IF NOT EXISTS songs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_id INTEGER,
+    judul TEXT NOT NULL,
+    youtube_id TEXT UNIQUE NOT NULL,
+    duration INTEGER DEFAULT 0,
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_artists_kategori ON artists(kategori);
-CREATE INDEX IF NOT EXISTS idx_genres_genre     ON artist_genres(genre);
-CREATE INDEX IF NOT EXISTS idx_seeds_artist     ON artist_seeds(artist_id);
+CREATE INDEX IF NOT EXISTS idx_songs_youtube_id ON songs(youtube_id);

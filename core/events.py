@@ -21,6 +21,10 @@ class TrackProgressEvent(DomainEvent):
     position: float = 0.0
 
 @dataclass
+class TrackDurationEvent(DomainEvent):
+    duration: float = 0.0
+
+@dataclass
 class QueueUpdatedEvent(DomainEvent):
     pass
 

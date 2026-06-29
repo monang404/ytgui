@@ -1,0 +1,2386 @@
+{
+  "total": 99,
+  "artists": [
+    {
+      "id": 1,
+      "nama": "Nadin Amizah",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2017",
+      "lagu_populer": [
+        {
+          "judul": "Bertaut",
+          "youtube_id": "Xh93FL06JwQ",
+          "duration": 0
+        },
+        {
+          "judul": "Di Akhir Perang",
+          "youtube_id": "9bZaxxlrzbI",
+          "duration": 0
+        },
+        {
+          "judul": "Rayuan Perempuan Gila",
+          "youtube_id": "2A9Atl2hUkg",
+          "duration": 0
+        },
+        {
+          "judul": "Semua Aku Dirayakan",
+          "youtube_id": "CCw8K2Sskkk",
+          "duration": 0
+        },
+        {
+          "judul": "Sorai",
+          "youtube_id": "9QtRcfQ0kyY",
+          "duration": 0
+        },
+        {
+          "judul": "Taruh",
+          "youtube_id": "xQlS1a99vwk",
+          "duration": 250
+        },
+        {
+          "judul": "Berpayung Tuhan",
+          "youtube_id": "4j1BTrPzAXs",
+          "duration": 298
+        },
+        {
+          "judul": "Kekal",
+          "youtube_id": "Jv6ra1YVL3A",
+          "duration": 281
+        },
+        {
+          "judul": "Tapi Diterima",
+          "youtube_id": "Ru4Bjs8KlD8",
+          "duration": 332
+        },
+        {
+          "judul": "Beranjak Dewasa",
+          "youtube_id": "3hDlXFVp7sE",
+          "duration": 298
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "nama": "Peterpan",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        {
+          "judul": "Separuh Aku",
+          "youtube_id": "tstwxIh6xJw",
+          "duration": 0
+        },
+        {
+          "judul": "Yang Terdalam",
+          "youtube_id": "pyeCtmTKUPc",
+          "duration": 0
+        },
+        {
+          "judul": "Bintang di Surga",
+          "youtube_id": "tBnbDO1yFJo",
+          "duration": 0
+        },
+        {
+          "judul": "Walau Habis Terang",
+          "youtube_id": "eDeuUtKb3Lk",
+          "duration": 0
+        },
+        {
+          "judul": "Tak Lagi Sama",
+          "youtube_id": "hGDOkc1bTWA",
+          "duration": 0
+        },
+        {
+          "judul": "Ku Katakan Dengan Indah",
+          "youtube_id": "bqu7e1zrLwg",
+          "duration": 335
+        },
+        {
+          "judul": "Mungkin Nanti",
+          "youtube_id": "zPImzktSfVA",
+          "duration": 269
+        },
+        {
+          "judul": "Ada Apa Denganmu",
+          "youtube_id": "b3oOzsWjdvU",
+          "duration": 281
+        },
+        {
+          "judul": "Jauh Mimpiku",
+          "youtube_id": "0uVVuq6l9xw",
+          "duration": 194
+        },
+        {
+          "judul": "Langit Tak Mendengar",
+          "youtube_id": "nP4CqUjOsuk",
+          "duration": 232
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "nama": "NOAH",
+      "kategori": "band",
+      "genre": [
+        "Country",
+        "Pop"
+      ],
+      "tahun_aktif": "2016",
+      "lagu_populer": [
+        {
+          "judul": "Separuh Aku",
+          "youtube_id": "tstwxIh6xJw",
+          "duration": 0
+        },
+        {
+          "judul": "Yang Terdalam",
+          "youtube_id": "pyeCtmTKUPc",
+          "duration": 0
+        },
+        {
+          "judul": "Bintang di Surga",
+          "youtube_id": "tBnbDO1yFJo",
+          "duration": 0
+        },
+        {
+          "judul": "Walau Habis Terang",
+          "youtube_id": "eDeuUtKb3Lk",
+          "duration": 0
+        },
+        {
+          "judul": "Tak Lagi Sama",
+          "youtube_id": "hGDOkc1bTWA",
+          "duration": 0
+        },
+        {
+          "judul": "Menunggumu",
+          "youtube_id": "4Oqc6G5qmlE",
+          "duration": 225
+        },
+        {
+          "judul": "Hidup Untukmu, Mati Tanpamu",
+          "youtube_id": "HgAbq-fJQqU",
+          "duration": 323
+        },
+        {
+          "judul": "Mimpi Yang Sempurna",
+          "youtube_id": "kzyD5yI4Rqs",
+          "duration": 218
+        },
+        {
+          "judul": "Wanitaku",
+          "youtube_id": "h_dYYQaXKU0",
+          "duration": 259
+        },
+        {
+          "judul": "Ku Katakan Dengan Indah",
+          "youtube_id": "QkngkxUpFd0",
+          "duration": 372
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "nama": "Dewa 19",
+      "kategori": "band",
+      "genre": [
+        "Pop",
+        "Pop/Rock",
+        "Rock"
+      ],
+      "tahun_aktif": "1986",
+      "lagu_populer": [
+        {
+          "judul": "Kangen",
+          "youtube_id": "YKK5_OQiEa4",
+          "duration": 0
+        },
+        {
+          "judul": "Aku Milikmu",
+          "youtube_id": "5a0EkeqWNBs",
+          "duration": 0
+        },
+        {
+          "judul": "Separuh Nafas",
+          "youtube_id": "kitkOTxGfjI",
+          "duration": 0
+        },
+        {
+          "judul": "Pupus",
+          "youtube_id": "T79fB4dkLXM",
+          "duration": 0
+        },
+        {
+          "judul": "Mistikus Cinta",
+          "youtube_id": "CP_10JrktfM",
+          "duration": 338
+        },
+        {
+          "judul": "Pangeran Cinta",
+          "youtube_id": "zJT-to7qlZA",
+          "duration": 281
+        },
+        {
+          "judul": "Risalah Hati",
+          "youtube_id": "Vjp424-pA6A",
+          "duration": 293
+        },
+        {
+          "judul": "Sedang Ingin Bercinta",
+          "youtube_id": "atXXr481yrk",
+          "duration": 243
+        },
+        {
+          "judul": "Satu",
+          "youtube_id": "FhLOtF1rEag",
+          "duration": 287
+        },
+        {
+          "judul": "Roman Picisan",
+          "youtube_id": "JBVaZm6Iot8",
+          "duration": 246
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "nama": "Ungu",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        {
+          "judul": "Luka Disini",
+          "youtube_id": "_lKEvxJQWXg",
+          "duration": 0
+        },
+        {
+          "judul": "Cinta Dalam Hati",
+          "youtube_id": "bjM4sLlB548",
+          "duration": 0
+        },
+        {
+          "judul": "Percaya Padaku",
+          "youtube_id": "xMDP5iNPa4M",
+          "duration": 0
+        },
+        {
+          "judul": "Jika Itu Yang Terbaik",
+          "youtube_id": "xzJDRop70aw",
+          "duration": 0
+        },
+        {
+          "judul": "Untukmu Selamanya - Studio Session",
+          "youtube_id": "GMjzTdvGKiU",
+          "duration": 0
+        },
+        {
+          "judul": "Untukmu Selamanya",
+          "youtube_id": "VRCoy2woxs4",
+          "duration": 295
+        },
+        {
+          "judul": "Dengan NafasMU",
+          "youtube_id": "Z7begS5McN4",
+          "duration": 271
+        },
+        {
+          "judul": "Sejauh Mungkin",
+          "youtube_id": "keSZW9NbBrY",
+          "duration": 274
+        },
+        {
+          "judul": "Waktu Yang Dinanti",
+          "youtube_id": "8EaBiizaMz4",
+          "duration": 259
+        },
+        {
+          "judul": "Demi Waktu",
+          "youtube_id": "OfIKPIRzkps",
+          "duration": 308
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "nama": "Nidji",
+      "kategori": "band",
+      "genre": [
+        "Rock"
+      ],
+      "tahun_aktif": "2002",
+      "lagu_populer": [
+        {
+          "judul": "Hapus Aku",
+          "youtube_id": "giOpWz-fhqM",
+          "duration": 0
+        },
+        {
+          "judul": "Rahasia Hati",
+          "youtube_id": "qkC4waEZVt4",
+          "duration": 0
+        },
+        {
+          "judul": "Sumpah Dan Cinta Matiku",
+          "youtube_id": "x9Yn8eXoSVU",
+          "duration": 0
+        },
+        {
+          "judul": "Laskar Pelangi",
+          "youtube_id": "OthSgKuDi8I",
+          "duration": 0
+        },
+        {
+          "judul": "Jangan Lupakan",
+          "youtube_id": "9eMHrPykb7Q",
+          "duration": 0
+        },
+        {
+          "judul": "Biarlah",
+          "youtube_id": "BdO_xg4Bkd0",
+          "duration": 239
+        },
+        {
+          "judul": "Disco Lazy Time",
+          "youtube_id": "-WtdSvbd6Ng",
+          "duration": 256
+        },
+        {
+          "judul": "Bila Aku Jatuh Cinta",
+          "youtube_id": "Re71ZEAeRf8",
+          "duration": 240
+        },
+        {
+          "judul": "Di Atas Awan",
+          "youtube_id": "K9BEJmfBpy8",
+          "duration": 259
+        },
+        {
+          "judul": "Sang Mantan",
+          "youtube_id": "_1uPyS10_1E",
+          "duration": 235
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "nama": "Samsons",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        {
+          "judul": "Kenangan Terindah",
+          "youtube_id": "n8rLISm84_k",
+          "duration": 0
+        },
+        {
+          "judul": "Di Ujung Jalan",
+          "youtube_id": "t1aco3ogmEM",
+          "duration": 0
+        },
+        {
+          "judul": "Bukan Diriku",
+          "youtube_id": "D20wM38XNF0",
+          "duration": 0
+        },
+        {
+          "judul": "Akhir Rasa Ini",
+          "youtube_id": "IYnbhWQfyz8",
+          "duration": 0
+        },
+        {
+          "judul": "Kisah Tak Sempurna",
+          "youtube_id": "FGEGoMuxcxM",
+          "duration": 0
+        },
+        {
+          "judul": "Luluh",
+          "youtube_id": "a-n733VUGVU",
+          "duration": 278
+        },
+        {
+          "judul": "Dengan Nafasmu",
+          "youtube_id": "d_Nvo9pGeLc",
+          "duration": 310
+        },
+        {
+          "judul": "Naluri Lelaki",
+          "youtube_id": "iAH5TRiPYaw",
+          "duration": 224
+        },
+        {
+          "judul": "Kehadiranmu",
+          "youtube_id": "Y0LbnNtY_ZM",
+          "duration": 273
+        },
+        {
+          "judul": "Masih (Mencintainya)",
+          "youtube_id": "eEVqLoUX-vI",
+          "duration": 243
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "nama": "ST12",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2004",
+      "lagu_populer": [
+        {
+          "judul": "Jangan Pernah Berubah",
+          "youtube_id": "qJo3e0kslwE",
+          "duration": 0
+        },
+        {
+          "judul": "Putri Iklan",
+          "youtube_id": "WdjGp5vATgI",
+          "duration": 0
+        },
+        {
+          "judul": "Cari Pacar Lagi",
+          "youtube_id": "P3S50Wu0DnI",
+          "duration": 0
+        },
+        {
+          "judul": "P.U.S.P.A.",
+          "youtube_id": "8cTPmpT5Eew",
+          "duration": 0
+        },
+        {
+          "judul": "Cinta Tak Harus Memiliki",
+          "youtube_id": "oNxud1xMDcs",
+          "duration": 0
+        },
+        {
+          "judul": "Aku Terjatuh",
+          "youtube_id": "IAW_lfkXuyo",
+          "duration": 259
+        },
+        {
+          "judul": "Rasa Yang Tertinggal",
+          "youtube_id": "N0LyTq0oHPM",
+          "duration": 247
+        },
+        {
+          "judul": "Aku Masih Sayang",
+          "youtube_id": "3GkXv71l6zk",
+          "duration": 220
+        },
+        {
+          "judul": "Terlalu",
+          "youtube_id": "eZ-XY5-Mr1M",
+          "duration": 254
+        },
+        {
+          "judul": "Asmara",
+          "youtube_id": "Yw1YTK7wYbM",
+          "duration": 264
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "nama": "Setia Band",
+      "kategori": "band",
+      "genre": [
+        "Malaysian Popular Music"
+      ],
+      "tahun_aktif": "2012",
+      "lagu_populer": [
+        {
+          "judul": "Istana Bintang",
+          "youtube_id": "eN5ham51o8E",
+          "duration": 0
+        },
+        {
+          "judul": "Asmara",
+          "youtube_id": "Yw1YTK7wYbM",
+          "duration": 0
+        },
+        {
+          "judul": "Bukan Ku Tak Sudi",
+          "youtube_id": "5zkMXrhJVi8",
+          "duration": 0
+        },
+        {
+          "judul": "Pengorbanan",
+          "youtube_id": "UvLwyH_YqnQ",
+          "duration": 0
+        },
+        {
+          "judul": "Stasiun Cinta",
+          "youtube_id": "F1C3FKzHGnI",
+          "duration": 0
+        },
+        {
+          "judul": "Putri Iklan",
+          "youtube_id": "WdjGp5vATgI",
+          "duration": 241
+        },
+        {
+          "judul": "Hilang Ingatan",
+          "youtube_id": "LfgebA6eg5Y",
+          "duration": 233
+        },
+        {
+          "judul": "Terlalu",
+          "youtube_id": "eZ-XY5-Mr1M",
+          "duration": 254
+        },
+        {
+          "judul": "Jangan Pernah Berubah",
+          "youtube_id": "qJo3e0kslwE",
+          "duration": 244
+        },
+        {
+          "judul": "Kehilangan",
+          "youtube_id": "Av7VD0FlXvw",
+          "duration": 262
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "nama": "Wali",
+      "kategori": "band",
+      "genre": [
+        "Dance",
+        "Pop"
+      ],
+      "tahun_aktif": "2009",
+      "lagu_populer": [
+        {
+          "judul": "Nenekku Pahlawanku",
+          "youtube_id": "rWfDhNmIiTw",
+          "duration": 0
+        },
+        {
+          "judul": "Yank",
+          "youtube_id": "ldUvW-rtlSc",
+          "duration": 0
+        },
+        {
+          "judul": "Baik Baik Sayang",
+          "youtube_id": "btrUjpbMN_s",
+          "duration": 0
+        },
+        {
+          "judul": "Harga Diriku",
+          "youtube_id": "2rvObtXp2sk",
+          "duration": 0
+        },
+        {
+          "judul": "Abatasa",
+          "youtube_id": "LOCodOKiEe8",
+          "duration": 0
+        },
+        {
+          "judul": "Cari Jodoh",
+          "youtube_id": "82fGq1us-r4",
+          "duration": 251
+        },
+        {
+          "judul": "Doaku Untukmu Sayang",
+          "youtube_id": "vWswWHoMmVk",
+          "duration": 227
+        },
+        {
+          "judul": "Aku Bukan Bang Toyib",
+          "youtube_id": "izVsChanlrs",
+          "duration": 207
+        },
+        {
+          "judul": "Cari Berkah (CABE)",
+          "youtube_id": "slzl3C12p8E",
+          "duration": 266
+        },
+        {
+          "judul": "Yang Penting Halal",
+          "youtube_id": "GSdzSugd6X0",
+          "duration": 224
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "nama": "The Changcuters",
+      "kategori": "band",
+      "genre": [
+        "Rock And Roll"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        {
+          "judul": "I Love U Bibeh",
+          "youtube_id": "9gemZtE14DM",
+          "duration": 0
+        },
+        {
+          "judul": "Hijrah Ke London",
+          "youtube_id": "KbhiJdRKShc",
+          "duration": 0
+        },
+        {
+          "judul": "Racun Dunia",
+          "youtube_id": "dLioOFsIL94",
+          "duration": 0
+        },
+        {
+          "judul": "Main Serong",
+          "youtube_id": "S31tkSNDwGM",
+          "duration": 0
+        },
+        {
+          "judul": "Gila - Gilaan",
+          "youtube_id": "ayhtGEFsHJA",
+          "duration": 0
+        },
+        {
+          "judul": "Parampampam",
+          "youtube_id": "xMZd72agrEo",
+          "duration": 221
+        },
+        {
+          "judul": "Pria Idaman Wanita",
+          "youtube_id": "7USOZioNM1c",
+          "duration": 220
+        },
+        {
+          "judul": "Senandung Pertemanan",
+          "youtube_id": "ZRN-WfmAIao",
+          "duration": 288
+        },
+        {
+          "judul": "Bintang Jalanan",
+          "youtube_id": "bzDsjZtRqAk",
+          "duration": 209
+        },
+        {
+          "judul": "Suka Suka",
+          "youtube_id": "iYOvesVlty8",
+          "duration": 198
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "nama": "Kotak",
+      "kategori": "band",
+      "genre": [
+        "Baile Funk",
+        "Rock"
+      ],
+      "tahun_aktif": "2008",
+      "lagu_populer": [
+        {
+          "judul": "Masih Cinta",
+          "youtube_id": "9ZO4wOYbAlI",
+          "duration": 0
+        },
+        {
+          "judul": "Sendiri",
+          "youtube_id": "jxgFGq91P2I",
+          "duration": 0
+        },
+        {
+          "judul": "Jagalah Bumi (Theme from BoBoiBoy)",
+          "youtube_id": "Afkc7x8bmM8",
+          "duration": 0
+        },
+        {
+          "judul": "Beraksi",
+          "youtube_id": "EP8mrzNnC8U",
+          "duration": 0
+        },
+        {
+          "judul": "Selalu CInta",
+          "youtube_id": "6W3h0cIf2Ko",
+          "duration": 0
+        },
+        {
+          "judul": "Pelan Pelan Saja",
+          "youtube_id": "TEywNqKZDY4",
+          "duration": 240
+        },
+        {
+          "judul": "Terbang",
+          "youtube_id": "50P7CZghhX0",
+          "duration": 205
+        },
+        {
+          "judul": "Kecuali Kamu",
+          "youtube_id": "TLMVXBXiFlY",
+          "duration": 262
+        },
+        {
+          "judul": "Haters",
+          "youtube_id": "l4rOg7HR55o",
+          "duration": 212
+        },
+        {
+          "judul": "TInggalkan Saja",
+          "youtube_id": "V3ROFpdxSzA",
+          "duration": 235
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "nama": "Geisha",
+      "kategori": "band",
+      "genre": [
+        "Alternative",
+        "Pop"
+      ],
+      "tahun_aktif": "2013",
+      "lagu_populer": [
+        {
+          "judul": "Jika Cinta Dia",
+          "youtube_id": "KlifYu8tGA8",
+          "duration": 0
+        },
+        {
+          "judul": "Lumpuhkan Ingatanku",
+          "youtube_id": "THIP7erPzKM",
+          "duration": 0
+        },
+        {
+          "judul": "Pergi Saja",
+          "youtube_id": "c37HENYKWpM",
+          "duration": 0
+        },
+        {
+          "judul": "Karena Kamu",
+          "youtube_id": "7HQPpcMxyN4",
+          "duration": 0
+        },
+        {
+          "judul": "Cinta Dan Benci",
+          "youtube_id": "FhmGpSb82bA",
+          "duration": 0
+        },
+        {
+          "judul": "Tak Kan Pernah Ada",
+          "youtube_id": "JGzMgwT6zf4",
+          "duration": 215
+        },
+        {
+          "judul": "Selalu Salah",
+          "youtube_id": "BnntVu60eX8",
+          "duration": 245
+        },
+        {
+          "judul": "Kamu Yang Pertama",
+          "youtube_id": "0fiHGb4qNXk",
+          "duration": 184
+        },
+        {
+          "judul": "Sementara Sendiri",
+          "youtube_id": "5poKTbO-LQw",
+          "duration": 218
+        },
+        {
+          "judul": "Adil Bagimu Tak Adil Bagiku",
+          "youtube_id": "WM6CKtAoD44",
+          "duration": 255
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "nama": "Drive",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2007",
+      "lagu_populer": [
+        {
+          "judul": "Melepasmu",
+          "youtube_id": "a7UPB2wXivc",
+          "duration": 0
+        },
+        {
+          "judul": "Bersama Bintang",
+          "youtube_id": "QB1eT6BbGW0",
+          "duration": 0
+        },
+        {
+          "judul": "Akulah Dia",
+          "youtube_id": "xbYJJDDA2aU",
+          "duration": 0
+        },
+        {
+          "judul": "Katakanlah",
+          "youtube_id": "ZbVQsgnE8MY",
+          "duration": 0
+        },
+        {
+          "judul": "Drive By",
+          "youtube_id": "ct1SIHfjzvM",
+          "duration": 196
+        },
+        {
+          "judul": "Be Quiet and Drive (Far Away)",
+          "youtube_id": "_t1vqLwqbyA",
+          "duration": 300
+        },
+        {
+          "judul": "Makhna",
+          "youtube_id": "U13aOFC9Oic",
+          "duration": 183
+        },
+        {
+          "judul": "Tak terbalas",
+          "youtube_id": "DbQDrbDZwuE",
+          "duration": 219
+        },
+        {
+          "judul": "Wanita Terindah",
+          "youtube_id": "frCkYjNghAc",
+          "duration": 226
+        },
+        {
+          "judul": "Mimpi Selamanya",
+          "youtube_id": "gmAEXrW7OY8",
+          "duration": 262
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "nama": "d'Masiv",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        {
+          "judul": "Cinta Ini Membunuhku",
+          "youtube_id": "5Tufr2svt0U",
+          "duration": 0
+        },
+        {
+          "judul": "Diantara Kalian",
+          "youtube_id": "q_tAZdSpzeo",
+          "duration": 0
+        },
+        {
+          "judul": "Diam Tanpa Kata",
+          "youtube_id": "IhFsEEAD0ng",
+          "duration": 0
+        },
+        {
+          "judul": "Cinta Sampai Disini",
+          "youtube_id": "L1Fj_-90-0Q",
+          "duration": 0
+        },
+        {
+          "judul": "Sudahi Perih Ini",
+          "youtube_id": "40rXWkhLLks",
+          "duration": 0
+        },
+        {
+          "judul": "Merindukanmu",
+          "youtube_id": "rtAGHa5Xprc",
+          "duration": 266
+        },
+        {
+          "judul": "On Our Own",
+          "youtube_id": "FbFk0LJ07jQ",
+          "duration": 224
+        },
+        {
+          "judul": "Natural",
+          "youtube_id": "DdgQsj3-ac0",
+          "duration": 235
+        },
+        {
+          "judul": "Semakin",
+          "youtube_id": "peiRirmHaYU",
+          "duration": 203
+        },
+        {
+          "judul": "Aku Takluk",
+          "youtube_id": "PYxDGiWWuoU",
+          "duration": 243
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "nama": "The Rain",
+      "kategori": "band",
+      "genre": [
+        "Alternative",
+        "Dance",
+        "Electronic",
+        "Hip-Hop/Rap",
+        "Instrumental",
+        "Jazz",
+        "Pop",
+        "R&B/Soul",
+        "Rock",
+        "Rok Alternatif",
+        "South America"
+      ],
+      "tahun_aktif": "2001",
+      "lagu_populer": [
+        "The Rain",
+        "Sacrifice (Lonely in the Rain Remix)",
+        "Poignancy in the Rain",
+        "Dancing in the Rain",
+        "Samba After the Rain"
+      ]
+    },
+    {
+      "id": 17,
+      "nama": "Letto",
+      "kategori": "band",
+      "genre": [
+        "Children's Music",
+        "Dance",
+        "Electronic",
+        "Meditation",
+        "Nature",
+        "New Age",
+        "Pop",
+        "Rock",
+        "Soundtrack"
+      ],
+      "tahun_aktif": "2004",
+      "lagu_populer": [
+        "Starfall (Sleep)",
+        "pouring all night",
+        "Shine",
+        "Rain Sound : Sleep Aid",
+        "Between"
+      ]
+    },
+    {
+      "id": 18,
+      "nama": "Kerispatih",
+      "kategori": "band",
+      "genre": [
+        "Rok Alternatif"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        "Tapi Bukan Aku",
+        "Demi Cinta",
+        "Bila Rasaku Ini Rasamu",
+        "Aku Harus Jujur",
+        "Mengenangmu"
+      ]
+    },
+    {
+      "id": 19,
+      "nama": "Vierra",
+      "kategori": "band",
+      "genre": [
+        "Power Pop"
+      ],
+      "tahun_aktif": "2008",
+      "lagu_populer": [
+        "Cinta Butuh Waktu",
+        "ESA X PERIH",
+        "Perih",
+        "Yang Ku Mau",
+        "Jadi Yang Kuinginkan"
+      ]
+    },
+    {
+      "id": 20,
+      "nama": "Vierratale",
+      "kategori": "band",
+      "genre": [
+        "Power Pop"
+      ],
+      "tahun_aktif": "2008",
+      "lagu_populer": [
+        "Cinta Butuh Waktu",
+        "ESA X PERIH",
+        "Perih",
+        "Yang Ku Mau",
+        "Jadi Yang Kuinginkan"
+      ]
+    },
+    {
+      "id": 21,
+      "nama": "Govinda",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "Hal Hebat",
+        "Hal Hebat (Live Studio Session)"
+      ]
+    },
+    {
+      "id": 22,
+      "nama": "Ada Band",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "1996",
+      "lagu_populer": [
+        "Setengah Hati",
+        "Haruskah Ku Mati",
+        "Manusia Bodoh",
+        "Yang Terbaik Bagimu (Jangan Lupakan Ayah) [feat. Gita Gutawa]",
+        "Pemain Cinta"
+      ]
+    },
+    {
+      "id": 23,
+      "nama": "Radja",
+      "kategori": "band",
+      "genre": [
+        "Rock"
+      ],
+      "tahun_aktif": "2001",
+      "lagu_populer": [
+        "Jujur",
+        "Aku Ada Karena Kau Ada",
+        "Tulus",
+        "Cinderella",
+        "BBC (Benci Bilang Cinta)"
+      ]
+    },
+    {
+      "id": 24,
+      "nama": "Kangen Band",
+      "kategori": "band",
+      "genre": [
+        "Pop",
+        "Pop Melayu"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        "Cinta Sampai Mati",
+        "Tentang Aku",
+        "Kau Dan Dia",
+        "Pujaan Hati",
+        "Kembali Pulang",
+        "Terbang Bersamaku"
+      ]
+    },
+    {
+      "id": 25,
+      "nama": "J-Rocks",
+      "kategori": "band",
+      "genre": [
+        "Pop Rock",
+        "Rok Alternatif"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        "Lepaskan Diriku",
+        "Ceria",
+        "Cobalah Kau Mengerti",
+        "Kau Curi Lagi",
+        "Fallin' In Love (Indonesian Version)"
+      ]
+    },
+    {
+      "id": 26,
+      "nama": "Andra and The Backbone",
+      "kategori": "band",
+      "genre": [
+        "Rock"
+      ],
+      "tahun_aktif": "2007",
+      "lagu_populer": [
+        "Sempurna",
+        "Hitamku",
+        "Main Hati",
+        "Lagi...Dan Lagi...",
+        "Tak Ada Yang Bisa"
+      ]
+    },
+    {
+      "id": 27,
+      "nama": "Padi Reborn",
+      "kategori": "band",
+      "genre": [
+        "Pop",
+        "Soundtrack"
+      ],
+      "tahun_aktif": "2001",
+      "lagu_populer": [
+        "Kasih Tak Sampai"
+      ]
+    },
+    {
+      "id": 28,
+      "nama": "Armada",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2017",
+      "lagu_populer": [
+        "Asal Kau Bahagia",
+        "Asal Kau Bahagia (Piano Version)",
+        "Asal Kau Bahagia (Minus One)",
+        "Asal Kau Bahagia (Acoustic Version)",
+        "Asal Kau Bahagia (Accoustic Version)"
+      ]
+    },
+    {
+      "id": 29,
+      "nama": "Cokelat",
+      "kategori": "band",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2000",
+      "lagu_populer": [
+        "Karma",
+        "Luka Lama",
+        "Jauh",
+        "Segitiga",
+        "Bendera"
+      ]
+    },
+    {
+      "id": 30,
+      "nama": "Gigi",
+      "kategori": "band",
+      "genre": [
+        "Indo Pop"
+      ],
+      "tahun_aktif": "2007",
+      "lagu_populer": [
+        "11 Januari"
+      ]
+    },
+    {
+      "id": 31,
+      "nama": "Slank",
+      "kategori": "band",
+      "genre": [
+        "Alternative",
+        "Electronic",
+        "Hard Rock",
+        "Jazz",
+        "Pop",
+        "R&B/Soul",
+        "Rock"
+      ],
+      "tahun_aktif": "1983",
+      "lagu_populer": [
+        "Terlalu Manis (Suka Suka Version)",
+        "Kamu Harus Pulang",
+        "I Miss U But I Hate U",
+        "Mawar Merah",
+        "Ku Tak Bisa"
+      ]
+    },
+    {
+      "id": 32,
+      "nama": "Sheila On 7",
+      "kategori": "band",
+      "genre": [
+        "Rock",
+        "Rok Alternatif"
+      ],
+      "tahun_aktif": "1996",
+      "lagu_populer": [
+        "Seberapa Pantas",
+        "Dan...",
+        "Anugerah Terindah Yang Pernah Kumiliki",
+        "Yang Terlewatkan",
+        "Bila Kau Tak Disampingku"
+      ]
+    },
+    {
+      "id": 33,
+      "nama": "Maliq & D'Essentials",
+      "kategori": "band",
+      "genre": [
+        "Jazz"
+      ],
+      "tahun_aktif": "2002",
+      "lagu_populer": [
+        "Senja Teduh Pelita",
+        "Semesta",
+        "Musim Bunga",
+        "Taman",
+        "Menghilang"
+      ]
+    },
+    {
+      "id": 34,
+      "nama": "The Groove",
+      "kategori": "band",
+      "genre": [
+        "Indo Pop",
+        "Pop",
+        "R&B/Soul",
+        "Rock"
+      ],
+      "tahun_aktif": "1999",
+      "lagu_populer": [
+        "Dahulu",
+        "Let's Go! (Reunian)",
+        "Lebih Indah"
+      ]
+    },
+    {
+      "id": 35,
+      "nama": "Kahitna",
+      "kategori": "band",
+      "genre": [
+        "Jazz",
+        "Pop"
+      ],
+      "tahun_aktif": "1986",
+      "lagu_populer": [
+        "Titik Nadir",
+        "Tak Kan Terganti",
+        "Soulmate",
+        "Mantan Terindah",
+        "Cerita Cinta"
+      ]
+    },
+    {
+      "id": 36,
+      "nama": "Juicy Luicy",
+      "kategori": "band",
+      "genre": [
+        "Pop",
+        "Soul"
+      ],
+      "tahun_aktif": "2016",
+      "lagu_populer": [
+        "Lantas",
+        "Lampu Kuning",
+        "Sialan",
+        "Mawar Jingga",
+        "Terlalu Tinggi"
+      ]
+    },
+    {
+      "id": 37,
+      "nama": "Hindia",
+      "kategori": "individu",
+      "genre": [
+        "Indie Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "2012-sekarang",
+      "lagu_populer": [
+        "everything u are",
+        "Evaluasi",
+        "Rumah Ke Rumah",
+        "Kita Ke Sana",
+        "Cincin"
+      ]
+    },
+    {
+      "id": 38,
+      "nama": "Lomba Sihir",
+      "kategori": "band",
+      "genre": [
+        "Indie Rock"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "Semua Orang Pernah Sakit Hati",
+        "Ribuan Memori",
+        "Hati Dan Paru-Paru",
+        "Sofa",
+        "Polusi Cahaya"
+      ]
+    },
+    {
+      "id": 39,
+      "nama": "Reality Club",
+      "kategori": "band",
+      "genre": [
+        "Indie Pop"
+      ],
+      "tahun_aktif": "2016",
+      "lagu_populer": [
+        "Alexandra",
+        "Am I Bothering You?",
+        "Anything You Want",
+        "Is It The Answer",
+        "A Sorrowful Reunion"
+      ]
+    },
+    {
+      "id": 40,
+      "nama": "Fourtwnty",
+      "kategori": "band",
+      "genre": [
+        "Folk Pop",
+        "Musik Tradisional"
+      ],
+      "tahun_aktif": "2010",
+      "lagu_populer": [
+        "Fana Merah Jambu",
+        "Mangu (feat. Charita Utami)",
+        "Zona Nyaman (From \"Filosofi Kopi 2: Ben & Jody\")",
+        "Aku Tenang",
+        "Hitam Putih"
+      ]
+    },
+    {
+      "id": 41,
+      "nama": "Ariel NOAH",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        "Menghapus Jejakmu",
+        "Nada-Nada Cinta",
+        "Andaikan Kau Datang",
+        "Moshimo Mata Itsuka",
+        "Kutunggu Kau Putus"
+      ]
+    },
+    {
+      "id": 42,
+      "nama": "Afgan",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop",
+        "R&B/Soul"
+      ],
+      "tahun_aktif": "2008",
+      "lagu_populer": [
+        "Jodoh Pasti Bertemu",
+        "Bukan Cinta Biasa",
+        "M.I.A (feat. Jackson Wang)",
+        "Kamu Yang Kutunggu",
+        "Heaven"
+      ]
+    },
+    {
+      "id": 43,
+      "nama": "Judika",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop",
+        "Pop Rock"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        "Aku Yang Tersakiti",
+        "Bukan Dia Tapi Aku",
+        "Jikalau Kau Cinta",
+        "Cinta Karena Cinta",
+        "Bagaimana Kalau Aku Tidak Baik Baik Saja"
+      ]
+    },
+    {
+      "id": 44,
+      "nama": "Glenn Fredly",
+      "kategori": "individu",
+      "genre": [
+        "R&B"
+      ],
+      "tahun_aktif": "1995",
+      "lagu_populer": [
+        "Kasih Putih",
+        "Terserah",
+        "Akhir Cerita Cinta (Ost. Cinta Silver - Re-arrange Version)",
+        "You Are My Everything (feat. Red)",
+        "Adu Rayu"
+      ]
+    },
+    {
+      "id": 45,
+      "nama": "Tompi",
+      "kategori": "individu",
+      "genre": [
+        "Jazz",
+        "Pop"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        "Menghujam Jantungku",
+        "Sedari Dulu",
+        "Tak Pernah Setengah Hati",
+        "Salahkah",
+        "Aku Jatuh Cinta"
+      ]
+    },
+    {
+      "id": 46,
+      "nama": "Marcell Siahaan",
+      "kategori": "individu",
+      "genre": [
+        "Adult Alternative",
+        "Metal",
+        "Pop"
+      ],
+      "tahun_aktif": "2003",
+      "lagu_populer": [
+        "Sempurnalah Cinta",
+        "Takkan Terganti",
+        "Adventure Of A Lifetime",
+        "Peri Cintaku",
+        "Demi Waktu"
+      ]
+    },
+    {
+      "id": 47,
+      "nama": "Ello",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2006",
+      "lagu_populer": [
+        "Pergi Untuk Kembali",
+        "Masih Ada",
+        "Anchor",
+        "Buka Semangat Baru"
+      ]
+    },
+    {
+      "id": 48,
+      "nama": "Virgoun",
+      "kategori": "individu",
+      "genre": [
+        "Rock"
+      ],
+      "tahun_aktif": "2016",
+      "lagu_populer": [
+        "Surat Cinta Untuk Starla",
+        "Bukti",
+        "Saat Kau Telah Mengerti",
+        "Surat Cinta Untuk Starla (New Version)",
+        "Orang Yang Sama"
+      ]
+    },
+    {
+      "id": 49,
+      "nama": "Rizky Febian",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2013",
+      "lagu_populer": [
+        "Alamak",
+        "Kesempurnaan Cinta",
+        "Hingga Tua Bersama",
+        "Mantra Cinta",
+        "Seperti Kisah"
+      ]
+    },
+    {
+      "id": 50,
+      "nama": "Ardhito Pramono",
+      "kategori": "individu",
+      "genre": [
+        "Indie Pop",
+        "Indo Pop",
+        "Jazz",
+        "Pop"
+      ],
+      "tahun_aktif": "2017",
+      "lagu_populer": [
+        "Waking Up Together With You",
+        "Bitterlove",
+        "fine today (Nanti Kita Cerita Tentang Hari Ini - Original Motion Picture Soundtrack)",
+        "Here We Go Again / Fanboi",
+        "Fake Optics"
+      ]
+    },
+    {
+      "id": 51,
+      "nama": "Tulus",
+      "kategori": "individu",
+      "genre": [
+        "Jazz",
+        "Pop"
+      ],
+      "tahun_aktif": "2011",
+      "lagu_populer": [
+        "Hati-Hati di Jalan",
+        "Teman Hidup",
+        "Monokrom",
+        "Adu Rayu",
+        "Sewindu"
+      ]
+    },
+    {
+      "id": 52,
+      "nama": "Pamungkas",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2013",
+      "lagu_populer": [
+        "To the Bone",
+        "Berapa Kali Kita Akan Saling Memaafkan",
+        "Closure",
+        "Monolog",
+        "Sorry"
+      ]
+    },
+    {
+      "id": 53,
+      "nama": "Budi Doremi",
+      "kategori": "individu",
+      "genre": [
+        "Reggae"
+      ],
+      "tahun_aktif": "2011",
+      "lagu_populer": [
+        "123456",
+        "Doremi",
+        "Asmara Nusantara",
+        "Melukis Senja",
+        "Tolong"
+      ]
+    },
+    {
+      "id": 54,
+      "nama": "Mahalini",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "2023",
+      "lagu_populer": [
+        "Sial"
+      ]
+    },
+    {
+      "id": 55,
+      "nama": "Tiara Andini",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2017",
+      "lagu_populer": [
+        "Janji Setia",
+        "Merasa Indah",
+        "Usai",
+        "Cintanya Aku",
+        "Kupu - Kupu"
+      ]
+    },
+    {
+      "id": 56,
+      "nama": "Lyodra",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2014",
+      "lagu_populer": [
+        "Pesan Terakhir",
+        "Mengapa Kita #terlanjurmencinta",
+        "Tak Dianggap",
+        "Tak Selalu Memiliki (Ipar Adalah Maut Original Soundtrack)",
+        "Ego"
+      ]
+    },
+    {
+      "id": 57,
+      "nama": "Ziva Magnolya",
+      "kategori": "individu",
+      "genre": [
+        "Jazz",
+        "Pop",
+        "R&B",
+        "Soul"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "Cukup",
+        "Peri Cintaku",
+        "Pilihan Yang Terbaik",
+        "Terlukis Indah",
+        "Tak Sanggup Melupa #terlanjurmencinta"
+      ]
+    },
+    {
+      "id": 58,
+      "nama": "Sal Priadi",
+      "kategori": "individu",
+      "genre": [
+        "Folk Rock",
+        "Indo Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "Gala bunga matahari",
+        "Ada titik-titik di ujung doa",
+        "Kita usahakan rumah itu",
+        "Mesra-mesraannya kecil-kecilan dulu",
+        "Besok kita pergi makan"
+      ]
+    },
+    {
+      "id": 59,
+      "nama": "Fiersa Besari",
+      "kategori": "individu",
+      "genre": [
+        "Pop",
+        "Rock",
+        "Traditional Folk"
+      ],
+      "tahun_aktif": "2012",
+      "lagu_populer": [
+        "Runtuh",
+        "Celengan Rindu",
+        "Pelukku Untuk Pelikmu (From \"Imperfect: Karier",
+        "Cinta",
+        "& Timbangan\")",
+        "April",
+        "Garis Terdepan"
+      ]
+    },
+    {
+      "id": 60,
+      "nama": "Raim Laode",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2014",
+      "lagu_populer": [
+        "Iqro'",
+        "Komang",
+        "Cemburu",
+        "Lesung Pipi (Sped Up)",
+        "Suasana Rumah"
+      ]
+    },
+    {
+      "id": 61,
+      "nama": "Bernadya",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2022",
+      "lagu_populer": [
+        "Untungnya",
+        "Hidup Harus Tetap Berjalan",
+        "Satu Bulan",
+        "Kata Mereka Ini Berlebihan",
+        "Rabun Jauh",
+        "Kini Mereka Tahu"
+      ]
+    },
+    {
+      "id": 62,
+      "nama": "Ari Lasso",
+      "kategori": "individu",
+      "genre": [
+        "Glam Metal"
+      ],
+      "tahun_aktif": "1991",
+      "lagu_populer": [
+        "Cinta Terakhir",
+        "Aku Dan Dirimu",
+        "Rahasia Perempuan",
+        "Hampa",
+        "Penjaga Hati"
+      ]
+    },
+    {
+      "id": 63,
+      "nama": "Once Mekel",
+      "kategori": "individu",
+      "genre": [
+        "Dance",
+        "Indo Pop",
+        "Jazz",
+        "Pop",
+        "Rock"
+      ],
+      "tahun_aktif": "1984",
+      "lagu_populer": [
+        "Dealova",
+        "Kucinta Kau Apa Adanya",
+        "Symphoni Yang Indah",
+        "Pasti Untukmu",
+        "Karena Kucinta Kau"
+      ]
+    },
+    {
+      "id": 64,
+      "nama": "Anji",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2016",
+      "lagu_populer": [
+        "Dia",
+        "Kamulah Orangnya"
+      ]
+    },
+    {
+      "id": 65,
+      "nama": "Yovie Widianto",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "1986",
+      "lagu_populer": [
+        "Terlalu Cinta",
+        "Tanpa Cinta",
+        "Semenjak Ada Dirimu",
+        "Menanti",
+        "Tak Kan Terganti"
+      ]
+    },
+    {
+      "id": 66,
+      "nama": "Rossa",
+      "kategori": "individu",
+      "genre": [
+        "Alternative",
+        "Classical",
+        "Classical Crossover",
+        "Dance",
+        "Edm",
+        "Electronic",
+        "Hip-Hop/Rap",
+        "Jazz",
+        "Old School Rap",
+        "Pop",
+        "R&B",
+        "Rock",
+        "Soul",
+        "Soundtrack",
+        "Vocal"
+      ],
+      "tahun_aktif": "1986",
+      "lagu_populer": [
+        "Terlalu Cinta",
+        "Aku Bukan Untukmu",
+        "Kini",
+        "Kamu Yang Kutunggu",
+        "Lacrima Rossa"
+      ]
+    },
+    {
+      "id": 67,
+      "nama": "Krisdayanti",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop",
+        "Soundtrack"
+      ],
+      "tahun_aktif": "1987",
+      "lagu_populer": [
+        "Mencintaimu",
+        "Cinta",
+        "Kamu Dihatiku Selamanya",
+        "Menghitung Hari",
+        "Cobalah Untuk Setia"
+      ]
+    },
+    {
+      "id": 68,
+      "nama": "Ruth Sahanaya",
+      "kategori": "individu",
+      "genre": [
+        "Big Band",
+        "Christmas: Jazz",
+        "Indo Pop",
+        "Jazz",
+        "Pop",
+        "Praise & Worship",
+        "R&B"
+      ],
+      "tahun_aktif": "1987",
+      "lagu_populer": [
+        "Ingin Kumiliki",
+        "Keliru",
+        "Andaikan Kau Datang",
+        "Kaulah Segalanya",
+        "Mengertilah Kasih"
+      ]
+    },
+    {
+      "id": 69,
+      "nama": "Bunga Citra Lestari",
+      "kategori": "individu",
+      "genre": [
+        "Pop",
+        "Soul"
+      ],
+      "tahun_aktif": "1997",
+      "lagu_populer": [
+        "Aku Dan Dirimu",
+        "Saat Kau Pergi",
+        "Karena Kucinta Kau",
+        "Menghapus Jejakmu",
+        "Cinta Sejati"
+      ]
+    },
+    {
+      "id": 70,
+      "nama": "Yura Yunita",
+      "kategori": "individu",
+      "genre": [
+        "Folk Rock",
+        "Indo Pop",
+        "Pop",
+        "Singer/Songwriter"
+      ],
+      "tahun_aktif": "2014",
+      "lagu_populer": [
+        "Tanda",
+        "Dunia Tipu-Tipu",
+        "Tutur Batin",
+        "Tenang",
+        "Jalan Pulang"
+      ]
+    },
+    {
+      "id": 71,
+      "nama": "Isyana Sarasvati",
+      "kategori": "individu",
+      "genre": [
+        "Jazz",
+        "Pop"
+      ],
+      "tahun_aktif": "2014",
+      "lagu_populer": [
+        "Tetap Dalam Jiwa",
+        "Kau Adalah (feat. Rayi Putra)",
+        "Heaven",
+        "Winter Song",
+        "Keep Being You"
+      ]
+    },
+    {
+      "id": 72,
+      "nama": "Raisa",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2008",
+      "lagu_populer": [
+        "Kali Kedua (Live At Stadion Utama Gelora Bung Karno)",
+        "Kali Kedua",
+        "Love You Longer",
+        "Usai Di Sini",
+        "Jatuh Hati"
+      ]
+    },
+    {
+      "id": 73,
+      "nama": "Citra Scholastika",
+      "kategori": "individu",
+      "genre": [
+        "Christian",
+        "Electronic",
+        "Gospel",
+        "Indo Pop",
+        "Indonesian Religious",
+        "Pop",
+        "Praise & Worship"
+      ],
+      "tahun_aktif": "2012",
+      "lagu_populer": [
+        "PertolonganMu",
+        "Kekuatan Hidupku",
+        "Hanya Kau",
+        "Everybody Knew",
+        "Sbab Kau Besar"
+      ]
+    },
+    {
+      "id": 74,
+      "nama": "Ghea Indrawari",
+      "kategori": "individu",
+      "genre": [
+        "Bossa Nova"
+      ],
+      "tahun_aktif": "2017",
+      "lagu_populer": [
+        "Jiwa Yang Bersedih",
+        "1000X",
+        "Setengah Mati (From \"Bila Esok Ibu Tiada\")",
+        "Terima Kasih Sudah Bertahan",
+        "Teramini"
+      ]
+    },
+    {
+      "id": 75,
+      "nama": "Marion Jola",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2014",
+      "lagu_populer": [
+        "Rayu",
+        "Tak Ingin Pisah Lagi",
+        "Aduh",
+        "Jangan (feat. Rayi Putra)",
+        "Bukan Manusia"
+      ]
+    },
+    {
+      "id": 76,
+      "nama": "Brisia Jodie",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2013",
+      "lagu_populer": [
+        "Ternyata Hanya Kamu",
+        "Dengan Caraku",
+        "Soulmate",
+        "Kisahku",
+        "Rekah"
+      ]
+    },
+    {
+      "id": 77,
+      "nama": "Rinni Wulandari",
+      "kategori": "individu",
+      "genre": [
+        "Pop",
+        "R&B"
+      ],
+      "tahun_aktif": "2007",
+      "lagu_populer": [
+        "Aku Bukan Boneka",
+        "Aku Tetap Milikmu",
+        "Cinta T'lah Memilih",
+        "Dunia Belum Berakhir",
+        "Jera"
+      ]
+    },
+    {
+      "id": 78,
+      "nama": "Melly Goeslaw",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop",
+        "Soundtrack"
+      ],
+      "tahun_aktif": "1988",
+      "lagu_populer": [
+        "Jika",
+        "Kembalikan Senyumku",
+        "Cinta",
+        "Ada Apa Dengan Cinta",
+        "Gantung"
+      ]
+    },
+    {
+      "id": 79,
+      "nama": "Dewi Sandra",
+      "kategori": "individu",
+      "genre": [
+        "Children's Music",
+        "Electronic",
+        "Hip-Hop/Rap",
+        "Pop",
+        "R&B/Soul",
+        "Soundtrack"
+      ],
+      "tahun_aktif": "1997",
+      "lagu_populer": [
+        "Tanpa Kata",
+        "Air Mata Surga (Theme from \"Air Mata Surga\")",
+        "Gila",
+        "Air Mata Surga",
+        "Kamu"
+      ]
+    },
+    {
+      "id": 80,
+      "nama": "Beby Romeo",
+      "kategori": "individu",
+      "genre": [
+        "Pop",
+        "Singer/Songwriter"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        "Bunga Terakhir"
+      ]
+    },
+    {
+      "id": 81,
+      "nama": "Maudy Ayunda",
+      "kategori": "individu",
+      "genre": [
+        "Musicals",
+        "Pop"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        "Aku Sedang Mencintaimu",
+        "Sekali Lagi",
+        "By My Side",
+        "Untuk Apa",
+        "Goodbye"
+      ]
+    },
+    {
+      "id": 82,
+      "nama": "Putri Ariani",
+      "kategori": "individu",
+      "genre": [
+        "Classical",
+        "Dance",
+        "Electronic",
+        "Indie Pop",
+        "Indo Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "2018",
+      "lagu_populer": [
+        "Loneliness",
+        "Perfect Liar",
+        "Stay With Me",
+        "Who I Am (Putri's Version)",
+        "Loneliness (Live Version)"
+      ]
+    },
+    {
+      "id": 83,
+      "nama": "Keisya Levronka",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "Tak Ingin Usai",
+        "Better On My Own",
+        "Darkest Hour",
+        "Tersemogakan",
+        "Tak Ingin Usai (Duet Version)"
+      ]
+    },
+    {
+      "id": 84,
+      "nama": "Titi DJ",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "1983",
+      "lagu_populer": [
+        "Separuh Hidupku",
+        "Tak Kan Ada Cinta Yang Lain",
+        "Jangan Berhenti Mencintaiku",
+        "Bahasa Kalbu",
+        "Galau"
+      ]
+    },
+    {
+      "id": 85,
+      "nama": "Fabio Asher",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2021",
+      "lagu_populer": [
+        "Rumah Singgah",
+        "Bertahan Terluka",
+        "Mahir Memberi Luka",
+        "Hati Lain Di Hatimu",
+        "Berharap Kau Kembali"
+      ]
+    },
+    {
+      "id": 86,
+      "nama": "Yotari",
+      "kategori": "individu",
+      "genre": [
+        "Christian",
+        "Indo Pop",
+        "Música Mexicana",
+        "Música tropical",
+        "Pop",
+        "R&B/Soul",
+        "Soundtrack"
+      ],
+      "tahun_aktif": "1997",
+      "lagu_populer": [
+        "Cara Bahagia",
+        "Bila Kemarin",
+        "Cara Bahagia (Alternate Version)",
+        "Galeri Hati",
+        "Hatiku Menanti"
+      ]
+    },
+    {
+      "id": 87,
+      "nama": "Prince Husein",
+      "kategori": "individu",
+      "genre": [
+        "Pop"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "Queen",
+        "Sweetest Scar",
+        "Walau Berantakan (Special Live Session)",
+        "Skinnier",
+        "Skywalker"
+      ]
+    },
+    {
+      "id": 88,
+      "nama": "Awdella",
+      "kategori": "individu",
+      "genre": [
+        "Indo Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "2016",
+      "lagu_populer": [
+        "Tertawan Hati",
+        "Tak Bisa Bilang",
+        "Bagaimana Kabarmu?",
+        "Amin Kita Beda",
+        "Setengah Mati"
+      ]
+    },
+    {
+      "id": 89,
+      "nama": "Batas Senja",
+      "kategori": "band",
+      "genre": [
+        "Dangdut",
+        "Folk",
+        "Pop",
+        "Rock"
+      ],
+      "tahun_aktif": "2014",
+      "lagu_populer": [
+        "Kita Usahakan Lagi",
+        "Nanti Kita Seperti Ini",
+        "Menceritakanmu",
+        "Kemana Kita Hari Ini",
+        "Sudikah Ta'aruf"
+      ]
+    },
+    {
+      "id": 90,
+      "nama": "For Revenge",
+      "kategori": "band",
+      "genre": [
+        "Emo",
+        "Rok Alternatif"
+      ],
+      "tahun_aktif": "2006",
+      "lagu_populer": [
+        "Serana",
+        "Sadrah",
+        "Jakarta Hari Ini (feat. Stereo Wall)",
+        "Penyangkalan",
+        "Pulang"
+      ]
+    },
+    {
+      "id": 91,
+      "nama": "Last Child",
+      "kategori": "band",
+      "genre": [
+        "Funk Rock"
+      ],
+      "tahun_aktif": "2006",
+      "lagu_populer": [
+        "Seluruh Nafas Ini (feat. Gisel)",
+        "Sekuat Hatimu",
+        "Duka (Studio Session)",
+        "Bernafas Tanpamu",
+        "Tak Pernah Ternilai"
+      ]
+    },
+    {
+      "id": 92,
+      "nama": "Stand Here Alone",
+      "kategori": "band",
+      "genre": [
+        "Alternative",
+        "Dance",
+        "Hip-Hop/Rap",
+        "Pop",
+        "Pop/Rock",
+        "Punk",
+        "R&B/Soul",
+        "Rock",
+        "Singer/Songwriter"
+      ],
+      "tahun_aktif": "2000",
+      "lagu_populer": [
+        "Hilang Harapan",
+        "Wanita Masih Banyak",
+        "Mantan",
+        "Indah Tak Sempurna",
+        "Kita Lawan Mereka"
+      ]
+    },
+    {
+      "id": 93,
+      "nama": "The Panturas",
+      "kategori": "band",
+      "genre": [
+        "Pop Rock",
+        "Surf Rock"
+      ],
+      "tahun_aktif": "2015",
+      "lagu_populer": [
+        "Sunshine",
+        "Tafsir Mistik",
+        "Queen of The South",
+        "Arabian Playboy (feat. Oscar Lolang)",
+        "Gurita Kota"
+      ]
+    },
+    {
+      "id": 94,
+      "nama": "Feel Koplo",
+      "kategori": "band",
+      "genre": [
+        "Dangdut Koplo",
+        "Electronic"
+      ],
+      "tahun_aktif": "2018",
+      "lagu_populer": [
+        "Who I Am (Feel Koplo Dangdut Version)",
+        "Lupa Lupa Tapi Ingat (Feel Koplo Remix)",
+        "Hura-Haru",
+        "Eastern Man - Remix (feat. Oscar Lolang)",
+        "Hari Untukmu - Feel Koplo Remix"
+      ]
+    },
+    {
+      "id": 95,
+      "nama": "Stereowall",
+      "kategori": "band",
+      "genre": [
+        "Alternative",
+        "Indie Pop",
+        "Pop",
+        "Rock"
+      ],
+      "tahun_aktif": "2005",
+      "lagu_populer": [
+        "Alive",
+        "Jakarta Hari Ini",
+        "Forever",
+        "Tentang kita",
+        "Blood And Light"
+      ]
+    },
+    {
+      "id": 96,
+      "nama": "Perunggu",
+      "kategori": "band",
+      "genre": [
+        "Indie Rock",
+        "Rock"
+      ],
+      "tahun_aktif": "2019",
+      "lagu_populer": [
+        "33x",
+        "Gemilang",
+        "Kalibata",
+        "2012",
+        "Tapi",
+        "Pastikan Riuh Akhiri Malammu"
+      ]
+    },
+    {
+      "id": 97,
+      "nama": "The Lantis",
+      "kategori": "band",
+      "genre": [
+        "Indie Pop",
+        "Pop"
+      ],
+      "tahun_aktif": "2020",
+      "lagu_populer": [
+        "Bunga Maaf",
+        "Goodnight",
+        "Why Do You Love Me",
+        "Lampu Merah",
+        "Once Upon A Time"
+      ]
+    },
+    {
+      "id": 98,
+      "nama": "Coldiac",
+      "kategori": "band",
+      "genre": [
+        "Indie Pop",
+        "Rok Alternatif",
+        "Sophisti-Pop",
+        "Urban Contemporary"
+      ],
+      "tahun_aktif": "2015",
+      "lagu_populer": [
+        "Beautiful Day",
+        "Vow (Alternate Version)",
+        "Wreck This Journal",
+        "Heartbreaker",
+        "Vow"
+      ]
+    },
+    {
+      "id": 99,
+      "nama": "Denny Caknan",
+      "kategori": "individu",
+      "genre": [
+        "Pop Jawa"
+      ],
+      "tahun_aktif": "2017",
+      "lagu_populer": [
+        "Kartonyono Medot Janji",
+        "Negoro Angin",
+        "Wirang",
+        "Cundamani",
+        "Satru (feat. Happy Asmara)"
+      ]
+    }
+  ]
+}

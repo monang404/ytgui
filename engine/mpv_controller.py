@@ -182,6 +182,7 @@ class MpvController:
         try:
             await self._command(["observe_property", 1, "time-pos"])
             await self._command(["observe_property", 2, "pause"])
+            await self._command(["observe_property", 3, "duration"])
 
             while self.is_connected:
                 try:
@@ -255,6 +256,9 @@ class MpvController:
                 await self._bus.publish(TrackProgressEvent(position=float(data), room_id=self._room_id))
             elif name == "pause":
                 await self._bus.publish(TrackPauseChangedEvent(is_paused=bool(data), room_id=self._room_id))
+            elif name == "duration" and isinstance(data, (int, float)):
+                from core.events import TrackDurationEvent
+                await self._bus.publish(TrackDurationEvent(duration=float(data), room_id=self._room_id))
         elif event == "end-file":
             reason = msg.get("reason", "")
             if reason in ("eof", "stop", "error"):

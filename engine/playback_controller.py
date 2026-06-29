@@ -9,7 +9,8 @@ import structlog
 from core.event_bus import EventBus
 from core.events import (
     TrackEndedEvent, TrackProgressEvent, TrackStartedEvent, 
-    LogMessageEvent, QueueUpdatedEvent, TrackPauseChangedEvent
+    LogMessageEvent, QueueUpdatedEvent, TrackPauseChangedEvent,
+    TrackDurationEvent
 )
 from core.state import AppState, PlayerStatus, PlaybackMode, AudioOutput, TrackInfo
 from core.ports import AudioPlayerPort, LyricsProvider, SponsorBlockProvider
@@ -53,6 +54,16 @@ class PlaybackController:
         self.bus.subscribe(TrackProgressEvent, self._on_track_progress)
 
         self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
+        self.bus.subscribe(TrackDurationEvent, self._on_track_duration)
+
+    async def _on_track_duration(self, event: TrackDurationEvent):
+        if event.duration and self.state.duration == 0:
+            self.state.duration = event.duration
+            if self.state.current_track:
+                self.state.current_track.duration = int(event.duration)
+                # Simpan metadata durasi ke database agar cache berikutnya sudah tahu durasinya
+                safe_create_task(self.resolver.db.upsert_track(self.state.current_track), name="upsert_track_duration")
+            await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
 
     async def play_track(self, track: TrackInfo):
         async with self._play_lock:  # A-05: cegah concurrent play_track race
@@ -90,6 +101,10 @@ class PlaybackController:
                 self._retry_count = 0  # Reset retry count on success
                 await self.bus.publish(TrackStartedEvent(track=track, room_id=self.room_id))
 
+                # Fetch duration actively if not available
+                if self.state.duration == 0:
+                    safe_create_task(self._poll_duration(track), name="poll_duration")
+
                 # C-02: Increment play count for favorites
                 await self.resolver.db.increment_play_count(track.video_id)
 
@@ -113,6 +128,28 @@ class PlaybackController:
                     # Ensure we don't call _on_next if we are no longer trying to play this track
                     if self.state.current_track == track:
                         await self._advance_to_next()
+
+    async def _poll_duration(self, track: TrackInfo):
+        # Tunggu stream loading
+        await asyncio.sleep(2)
+        if self.state.current_track != track:
+            return
+        dur = await self.mpv.get_duration()
+        if dur > 0:
+            self.state.duration = dur
+            track.duration = int(dur)
+            safe_create_task(self.resolver.db.upsert_track(track), name="upsert_track_duration_poll")
+            await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+        else:
+            # Coba sekali lagi setelah 5 detik
+            await asyncio.sleep(5)
+            if self.state.current_track == track:
+                dur = await self.mpv.get_duration()
+                if dur > 0:
+                    self.state.duration = dur
+                    track.duration = int(dur)
+                    safe_create_task(self.resolver.db.upsert_track(track), name="upsert_track_duration_poll")
+                    await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:

@@ -302,109 +302,18 @@ class RadioMode:
     async def _gather_batch(
         self, prioritized_artist: Optional[str] = None, max_artists: int = ARTISTS_PER_BATCH
     ) -> list:
-        chosen: list[str] = []
-        if prioritized_artist and prioritized_artist in self._seed_artists:
-            chosen.append(prioritized_artist)
-        slots_left = max_artists - len(chosen)
-        if slots_left > 0:
-            chosen.extend(self._next_artists_from_rotation(slots_left, exclude=set(chosen)))
-
-        results_per_artist = await asyncio.gather(
-            *[self._search_artist(artist) for artist in chosen],
-            return_exceptions=True,
-        )
-        per_artist_tracks: list[list] = [
-            r if not isinstance(r, Exception) else []
-            for r in results_per_artist
-        ]
-        return self._interleave(per_artist_tracks)
-
-    def _next_artists_from_rotation(self, count: int, exclude: set[str]) -> list[str]:
-        picked: list[str] = []
-        while len(picked) < count:
-            if not self._artist_rotation:
-                self._artist_rotation = list(self._seed_artists)
-                random.shuffle(self._artist_rotation)
-            artist = self._artist_rotation.pop(0)
-            if artist in exclude or artist in picked:
-                continue
-            picked.append(artist)
-        return picked
-
-    async def _search_artist(self, artist: str) -> list:
-        """Cari track untuk satu artis.
-        Prioritas: judul populer dari DB, query format "{artist} {judul} audio"
-        agar lebih toleran di YouTube daripada "{judul} {artist}" yang terlalu spesifik.
-        Fallback: query generik "{artist} music".
-        """
-        seed_titles: list[str] = []
+        limit = max_artists * TRACKS_PER_ARTIST_TARGET
+        existing = self._build_exclusion_set()
+        
         if self.db and self.db.conn:
             try:
-                seed_titles = await self.db.get_artist_seeds(artist, limit=SEED_LIMIT)
+                tracks = await self.db.get_random_songs(limit=limit, exclude_ids=existing)
+                # If prioritized_artist was requested, ideally we'd insert some of their songs here.
+                # Since we shifted to pure random DB, we just return random songs for now.
+                return tracks
             except Exception as e:
-                _log.debug(f"Gagal ambil seeds untuk {artist}: {e}")
-
-        existing = self._build_exclusion_set()
-        seen_titles: set[str] = set()
-        unique_tracks: list = []
-
-        if seed_titles:
-            # Bug #4 fix: ubah urutan query → "{artist} {judul} audio"
-            # lebih toleran di YouTube, mengurangi false-negative
-            async def _search_one(judul: str):
-                async with _RADIO_SEARCH_SEM:
-                    return await self.ytdlp.search(f"{artist} {judul} audio", max_results=5)
-
-            results_nested = await asyncio.gather(
-                *[_search_one(j) for j in seed_titles],
-                return_exceptions=True,
-            )
-            candidate_lists = [r for r in results_nested if not isinstance(r, Exception)]
-            for i in range(max((len(l) for l in candidate_lists), default=0)):
-                for lst in candidate_lists:
-                    if i < len(lst):
-                        t = lst[i]
-                        if t.video_id in existing:
-                            continue
-                        if not (0 < t.duration < MAX_TRACK_DURATION):
-                            continue
-                        norm = _normalize_title(t.title)
-                        if norm and norm in seen_titles:
-                            continue
-                        seen_titles.add(norm)
-                        unique_tracks.append(t)
-                        if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
-                            break
-                if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
-                    break
-
-        if len(unique_tracks) < TRACKS_PER_ARTIST_TARGET:
-            async with _RADIO_SEARCH_SEM:
-                fallback = await self.ytdlp.search(f"{artist} music", max_results=15)
-            for t in fallback:
-                if t.video_id in existing:
-                    continue
-                if not (0 < t.duration < MAX_TRACK_DURATION):
-                    continue
-                norm = _normalize_title(t.title)
-                if norm and norm in seen_titles:
-                    continue
-                seen_titles.add(norm)
-                unique_tracks.append(t)
-                if len(unique_tracks) >= TRACKS_PER_ARTIST_TARGET:
-                    break
-
-        return unique_tracks[:TRACKS_PER_ARTIST_TARGET]
-
-    @staticmethod
-    def _interleave(per_artist_tracks: list[list]) -> list:
-        result = []
-        max_len = max((len(lst) for lst in per_artist_tracks), default=0)
-        for i in range(max_len):
-            for lst in per_artist_tracks:
-                if i < len(lst):
-                    result.append(lst[i])
-        return result
+                _log.warning(f"Gagal mengambil lagu acak dari DB: {e}")
+        return []
 
     def _build_exclusion_set(self) -> set[str]:
         ids = {t.video_id for t in self.state.radio_queue}

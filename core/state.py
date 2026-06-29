@@ -47,7 +47,7 @@ class AppState:
     # Playback
     status:          PlayerStatus  = PlayerStatus.IDLE
     playback_mode:   PlaybackMode  = PlaybackMode.QUEUE
-    audio_output:    AudioOutput   = AudioOutput.DEVICE
+    audio_output:    AudioOutput   = AudioOutput.BROWSER
     current_track:   Optional[TrackInfo] = None
     position:        float = 0.0
     duration:        float = 0.0

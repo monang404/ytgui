@@ -196,22 +196,39 @@ class Database:
 
         return [row["nama"] for row in rows]
 
-    async def get_artist_seeds(self, artist_name: str, limit: int = 3) -> list[str]:
-        """Ambil judul lagu populer untuk satu artis (hint query yt-dlp).
-
-        Returns:
-            List judul lagu urut dari yang paling populer.
+    async def get_random_songs(self, limit: int = 12, exclude_ids: set[str] = None) -> list[TrackInfo]:
+        """Ambil lagu acak langsung dari database untuk Radio Mode."""
+        if exclude_ids is None:
+            exclude_ids = set()
+            
+        placeholders = ','.join('?' for _ in exclude_ids)
+        query = """
+            SELECT s.youtube_id, s.judul, s.duration, a.nama 
+            FROM songs s
+            JOIN artists a ON s.artist_id = a.id
+            WHERE 1=1
         """
-        async with self._conn.execute("""
-            SELECT s.judul FROM artist_seeds s
-            JOIN artists a ON a.id = s.artist_id
-            WHERE a.nama = ?
-            ORDER BY s.urutan
-            LIMIT ?
-        """, (artist_name, limit)) as cursor:
+        params = []
+        if exclude_ids:
+            query += f" AND s.youtube_id NOT IN ({placeholders})"
+            params.extend(exclude_ids)
+            
+        query += " ORDER BY RANDOM() LIMIT ?"
+        params.append(limit)
+
+        async with self._conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        return [row["judul"] for row in rows]
+        tracks = []
+        for row in rows:
+            tracks.append(TrackInfo(
+                video_id=row["youtube_id"],
+                title=row["judul"],
+                artist=row["nama"],
+                duration=row["duration"],
+                thumbnail=f"https://i.ytimg.com/vi/{row['youtube_id']}/mqdefault.jpg"
+            ))
+        return tracks
 
 
     async def toggle_favorite(self, video_id: str) -> int:
