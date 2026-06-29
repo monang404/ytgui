@@ -357,6 +357,9 @@ html, body {
   color: var(--text-2); letter-spacing: 0.6px;
 }
 .section-label-row .label-link {
+  font-size: var(--t-xs); color: var(--accent);
+  font-weight: var(--w-medium); cursor: pointer;
+  text-decoration: none;
 }
 
 .pb-ctrl .pb-sec {
