@@ -3,6 +3,12 @@ import sqlite3
 import os
 
 def create_tables(cursor):
+    # Hapus tabel lama jika ada agar schema baru bisa diterapkan
+    cursor.execute('DROP TABLE IF EXISTS songs')
+    cursor.execute('DROP TABLE IF EXISTS artist_genres')
+    cursor.execute('DROP TABLE IF EXISTS genres')
+    cursor.execute('DROP TABLE IF EXISTS artists')
+
     # Tabel Artists
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS artists (
@@ -102,7 +108,7 @@ def main():
         for lagu in artist.get('lagu_populer', []):
             youtube_id = lagu.get('youtube_id')
             if youtube_id:  # Hanya masukkan yang punya ID YouTube valid
-                duration = lagu.get('duration', 0)
+                duration = lagu.get('durasi_detik', 0)
                 # Insert lagu (IGNORE jika youtube_id sudah ada, karena kolom tersebut UNIQUE)
                 cursor.execute('''
                 INSERT OR IGNORE INTO songs (artist_id, judul, youtube_id, duration)

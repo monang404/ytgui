@@ -221,10 +221,10 @@
   .home-art-section { align-items: center; justify-content: center; padding: 0; }
   .home-art-frame { width: 100%; max-width: 380px; margin: 0; }
   
-  #tab-home .home-track-row { grid-area: track; justify-content: space-between; text-align: left; padding: 24px 0 0 0; gap: 20px; width: 100%; max-width: 380px; }
-  #tab-home .home-track-info { text-align: left; flex: 1; }
-  #tab-home .mti-title, #tab-home .mti-artist { text-align: left; }
-  #tab-home .home-fav-btn { position: static; right: auto; margin-left: 0; }
+  #tab-home .home-track-row { grid-area: track; justify-content: center; text-align: center; padding: 24px 0 0 0; gap: 20px; width: 100%; max-width: 380px; position: relative; }
+  #tab-home .home-track-info { text-align: center; flex: 1; }
+  #tab-home .mti-title, #tab-home .mti-artist { text-align: center; }
+  #tab-home .home-fav-btn { position: absolute; right: 0; margin-left: 0; }
   
   .lyrics-wrap { grid-area: lyrics; text-align: left; padding: 24px 0; width: 100%; max-width: 380px; }
   
@@ -304,10 +304,10 @@
   .home-art-section { align-items: center; justify-content: center; padding: 0; }
   .home-art-frame { width: 100%; max-width: 320px; margin: 0; }
   
-  #tab-home .home-track-row { grid-area: track; justify-content: space-between; text-align: left; padding: 24px 0 0 0; gap: 20px; width: 100%; max-width: 320px; }
-  #tab-home .home-track-info { text-align: left; flex: 1; }
-  #tab-home .mti-title, #tab-home .mti-artist { text-align: left; }
-  #tab-home .home-fav-btn { position: static; right: auto; margin-left: 0; }
+  #tab-home .home-track-row { grid-area: track; justify-content: center; text-align: center; padding: 24px 0 0 0; gap: 20px; width: 100%; max-width: 320px; position: relative; }
+  #tab-home .home-track-info { text-align: center; flex: 1; }
+  #tab-home .mti-title, #tab-home .mti-artist { text-align: center; }
+  #tab-home .home-fav-btn { position: absolute; right: 0; margin-left: 0; }
   
   .lyrics-wrap { grid-area: lyrics; text-align: left; padding: 24px 0; width: 100%; max-width: 320px; }
   
