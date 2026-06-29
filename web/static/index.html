@@ -91,31 +91,47 @@
                     </div>
                 </header>
 
-                <!-- ══ Album Art Hero ══ -->
-                <div class="home-art-section" id="vinyl-wrap">
-                    <div class="home-art-frame" id="vinyl-record">
-                        <img id="vinyl-cover" src="" crossorigin="anonymous" alt="Album Art"
-                            style="display:none; width:100%; height:100%; object-fit:cover; border-radius:inherit;">
-                        <i id="vinyl-icon" class="ti ti-music-note home-art-placeholder"></i>
+                <div class="home-left-col">
+                    <!-- ══ Album Art Hero ══ -->
+                    <div class="home-art-section" id="vinyl-wrap">
+                        <div class="home-art-frame" id="vinyl-record">
+                            <img id="vinyl-cover" src="" crossorigin="anonymous" alt="Album Art"
+                                style="display:none; width:100%; height:100%; object-fit:cover; border-radius:inherit;">
+                            <i id="vinyl-icon" class="ti ti-music-note home-art-placeholder"></i>
+                        </div>
                     </div>
-                </div>
 
-                <!-- ══ Track Info + Favorite ══ -->
-                <div class="home-track-row">
-                    <div class="home-track-info main-track-info">
-                        <div class="mti-title" id="np-title">Belum ada lagu</div>
-                        <div class="mti-artist" id="np-artist">Putar lagu untuk memulai</div>
+                    <!-- ══ Track Info + Favorite ══ -->
+                    <div class="home-track-row">
+                        <div class="home-track-info main-track-info">
+                            <div class="mti-title" id="np-title">Belum ada lagu</div>
+                            <div class="mti-artist" id="np-artist">Putar lagu untuk memulai</div>
+                        </div>
+                        <button class="home-fav-btn" id="btn-favorite" aria-label="Favorite">
+                            <i class="ti ti-heart"></i>
+                        </button>
                     </div>
-                    <button class="home-fav-btn" id="btn-favorite" aria-label="Favorite">
-                        <i class="ti ti-heart"></i>
-                    </button>
-                </div>
 
-                <!-- ══ Lyrics inline (tersembunyi, dipakai JS sync) ══ -->
-                <div class="lyrics-wrap" id="lyrics-wrap" style="display:none;">
-                    <div class="lyrics-line prev" id="lyrics-prev"></div>
-                    <div class="lyrics-line current" id="lyrics-current"></div>
-                    <div class="lyrics-line next" id="lyrics-next"></div>
+                    <!-- ══ Lyrics inline / Equalizer ══ -->
+                    <div class="lyrics-wrap" id="lyrics-wrap">
+                        <div id="lyrics-text-container">
+                            <div class="lyrics-line prev" id="lyrics-prev"></div>
+                            <div class="lyrics-line current" id="lyrics-current"></div>
+                            <div class="lyrics-line next" id="lyrics-next"></div>
+                        </div>
+                        <div class="home-equalizer" id="home-equalizer" style="display:none;">
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ═══ Player Bar ═══ -->
@@ -181,22 +197,24 @@
                 </div>
 
 
-                <!-- ══ Terakhir Diputar ══ -->
-                <div class="home-recent-section">
-                    <div class="section-label-row">
-                        <span class="label-text">Terakhir Diputar</span>
-                        <span class="label-link">See all</span>
+                <div class="home-right-col">
+                    <!-- ══ Terakhir Diputar ══ -->
+                    <div class="home-recent-section">
+                        <div class="section-label-row">
+                            <span class="label-text">Terakhir Diputar</span>
+                            <span class="label-link">See all</span>
+                        </div>
+                        <div id="home-recent-list" class="home-recent-list"></div>
                     </div>
-                    <div id="home-recent-list" class="home-recent-list"></div>
-                </div>
 
-                <!-- ══ Antrean Putar ══ -->
-                <div class="home-queue-section" id="home-queue-section" style="padding: var(--s4) var(--s5) var(--s12);">
-                    <div class="section-label-row">
-                        <span class="label-text">Antrean Putar</span>
-                        <div id="queue-footer" style="font-size: var(--t-xs); color: var(--text-3); font-weight: var(--w-medium);">Mode: QUEUE</div>
+                    <!-- ══ Antrean Putar ══ -->
+                    <div class="home-queue-section" id="home-queue-section" style="padding: var(--s4) var(--s5) var(--s12);">
+                        <div class="section-label-row">
+                            <span class="label-text">Antrean Putar</span>
+                            <div id="queue-footer" style="font-size: var(--t-xs); color: var(--text-3); font-weight: var(--w-medium);">Mode: QUEUE</div>
+                        </div>
+                        <div id="queue-list" style="display:flex; flex-direction:column;"></div>
                     </div>
-                    <div id="queue-list" style="display:flex; flex-direction:column;"></div>
                 </div>
 
             </section>

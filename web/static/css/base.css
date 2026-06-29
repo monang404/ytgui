@@ -415,3 +415,22 @@ body[data-active-tab="home"] .pb-track .pb-thumb {
   transform: translate(-50%, -50%) scale(1.15) !important;
 }
 
+.home-left-col, .home-right-col {
+  display: contents;
+}
+
+/* Home Tab Lyrics & Equalizer Animations */
+.lyrics-wrap {
+  display: none; /* Hidden on mobile by default */
+}
+
+@keyframes lyric-pop {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes eq-bounce {
+  0%, 100% { height: 4px; }
+  50% { height: 24px; }
+}

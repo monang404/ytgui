@@ -32,6 +32,8 @@ function initDOM() {
         ambientBg1: $("ambient-bg-1"),
         ambientBg2: $("ambient-bg-2"),
         lyricsWrap: $("lyrics-wrap"),
+        lyricsTextContainer: $("lyrics-text-container"),
+        homeEqualizer: $("home-equalizer"),
         lyricsPrev: $("lyrics-prev"),
         lyricsCurrent: $("lyrics-current"),
         lyricsNext: $("lyrics-next"),

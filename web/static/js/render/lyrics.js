@@ -40,28 +40,29 @@ function renderHomeLyrics() {
     if (!dom.lyricsCurrent || !dom.lyricsPrev || !dom.lyricsNext) return;
 
     if (!store.lyrics_lines || store.lyrics_lines.length === 0) {
-        if (store.lyrics_loading) {
-            dom.lyricsPrev.textContent = "";
-            dom.lyricsCurrent.textContent = "Mencari lirik...";
-            dom.lyricsCurrent.className = "lyrics-line current lyrics-empty";
-            dom.lyricsNext.textContent = "";
-        } else {
-            dom.lyricsPrev.textContent = "";
-            dom.lyricsCurrent.textContent = "Lirik tidak tersedia";
-            dom.lyricsCurrent.className = "lyrics-line current lyrics-empty";
-            dom.lyricsNext.textContent = "";
-        }
+        if (dom.lyricsTextContainer) dom.lyricsTextContainer.style.display = "none";
+        if (dom.homeEqualizer) dom.homeEqualizer.style.display = "flex";
         return;
     }
 
-    dom.lyricsCurrent.className = "lyrics-line current";
+    if (dom.lyricsTextContainer) dom.lyricsTextContainer.style.display = "flex";
+    if (dom.homeEqualizer) dom.homeEqualizer.style.display = "none";
+
+    dom.lyricsCurrent.className = "lyrics-line current lyric-pop";
+    
+    // Remove class after animation finishes to allow re-trigger
+    setTimeout(() => {
+        if (dom.lyricsCurrent) {
+            dom.lyricsCurrent.className = "lyrics-line current";
+        }
+    }, 300);
 
     const idx = store.lyrics_index || 0;
     const lines = store.lyrics_lines;
 
-    dom.lyricsPrev.textContent = idx > 0 ? lines[idx - 1] : "";
-    dom.lyricsCurrent.textContent = lines[idx] || "";
-    dom.lyricsNext.textContent = idx < lines.length - 1 ? lines[idx + 1] : "";
+    dom.lyricsPrev.innerHTML = idx > 0 ? lines[idx - 1] : "&nbsp;";
+    dom.lyricsCurrent.innerHTML = lines[idx] || "&nbsp;";
+    dom.lyricsNext.innerHTML = idx < lines.length - 1 ? lines[idx + 1] : "&nbsp;";
 }
 
 function updateOffsetDisplay() {

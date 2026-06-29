@@ -68,17 +68,9 @@
   color: var(--accent);
 }
 
-/* Active dot */
+/* Active dot (removed) */
 .nav-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: var(--accent);
-  border-radius: 50%;
+  display: none;
 }@media (max-width: 480px) {
     .discover-section, .fav-card, .sr-item { flex: 1 1 100%; min-width: 0; }
 }
