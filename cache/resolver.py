@@ -31,8 +31,6 @@ class CacheResolver:
                 track.local_path = path
                 return path
 
-        import time
-        from config import STREAM_URL_TTL_SEC
         # Rule 2: Gunakan stream_url dari cache jika belum kadaluwarsa
         if row and row.stream_url and row.stream_url_ts:
             ts = row.stream_url_ts

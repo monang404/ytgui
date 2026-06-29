@@ -75,7 +75,12 @@ class PlaybackController:
                 await self.mpv.play(uri)
 
                 if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
-                    await self.bus.publish(LogMessageEvent(message="Audio output is browser, skipping mpv local playback.", room_id=self.room_id))
+                    # BACKEND-FIX-01: Pastikan mpv silent di browser mode.
+                    # Bug sebelumnya: volume TIDAK di-set 0 di sini — hanya di _on_set_output.
+                    # Akibat: jika radio start fresh (server restart atau room baru),
+                    # _on_set_output belum pernah dipanggil → mpv bunyi dari speaker Termux/HP.
+                    await self.mpv.set_volume(0)
+                    await self.bus.publish(LogMessageEvent(message="Audio output is browser, mpv silent (volume=0).", room_id=self.room_id))
                 else:
                     await self.mpv.set_volume(self.state.volume)
 
@@ -194,24 +199,32 @@ class PlaybackController:
             self.state.position = position
 
     async def _on_set_mode(self, mode: PlaybackMode):
+        # Bug #6 fix: state mutation di dalam lock (cepat),
+        # on_activated() di luar lock agar ytdlp/DB tidak memblok command lain.
+        should_activate_radio = False
         async with self._lock:
             if self.state.playback_mode != mode:
                 previous_mode = self.state.playback_mode
                 self.state.playback_mode = mode
-                
+
                 if previous_mode == PlaybackMode.RADIO:
                     await self.radio_mode.on_deactivated()
                     await self.mpv.pause()
                     self.state.current_track = None
                     self.state.status = PlayerStatus.IDLE
                     # B-02: tidak auto-advance saat keluar RADIO — biarkan user mulai manual
-                    
+
                 if mode == PlaybackMode.RADIO:
-                    self.state.status = PlayerStatus.LOADING  # B-FIX: signal ke frontend bahwa radio sedang fetch
-                    await self.radio_mode.on_activated(self)
-                    
+                    self.state.status = PlayerStatus.LOADING  # signal ke frontend bahwa radio sedang fetch
+                    should_activate_radio = True
+
                 await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}", room_id=self.room_id))
                 await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+
+        # on_activated di luar lock: fetch DB + ytdlp bisa lama,
+        # command pause/stop/skip tetap bisa masuk selama proses ini.
+        if should_activate_radio:
+            await self.radio_mode.on_activated(self)
 
     async def _on_queue_select(self, index: int):
         async with self._lock:

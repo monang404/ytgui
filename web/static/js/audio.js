@@ -1,5 +1,6 @@
 let localAudio = null;
 let audioUnlocked = false;
+let _unlocking = false; // guard agar tidak double-call saat masih proses
 let _lastLoadedVideoId = null;
 
 function getOrInitAudio() {
@@ -9,15 +10,11 @@ function getOrInitAudio() {
         localAudio.onerror = (e) => {
             const err = localAudio.error;
             if (!err) return;
-            if (err.code === 1) return; // MEDIA_ERR_ABORTED (e.g. changing src quickly)
-            if (err.code === 4 && localAudio.src.includes("data:audio")) return; // Ignore dummy audio error
-
+            if (err.code === 1) return;
+            if (err.code === 4 && localAudio.src.includes("data:audio")) return;
             const errMsg = err.message || ("code " + err.code);
-            if (errMsg.includes("Empty src") || !localAudio.getAttribute("src")) {
-                return;
-            }
+            if (errMsg.includes("Empty src") || !localAudio.getAttribute("src")) return;
             console.warn("Browser audio error:", err.code, errMsg);
-            // Hanya tampilkan toast jika bukan dummy
             showLogToast("⚠️ Audio stream info: " + errMsg);
         };
         localAudio.addEventListener("timeupdate", () => {
@@ -25,12 +22,8 @@ function getOrInitAudio() {
                 if (!window.isDraggingPb) {
                     store.position = localAudio.currentTime;
                     renderProgress();
-                    // renderPlayerBar() dihapus dari timeupdate (PERF-02)
-                    // dipanggil hanya dari WS event saat state berubah
                 }
-                if (typeof syncLocalLyrics === "function") {
-                    syncLocalLyrics();
-                }
+                if (typeof syncLocalLyrics === "function") syncLocalLyrics();
             }
         });
     }
@@ -41,39 +34,18 @@ let audioCtx = null;
 let analyser = null;
 let dataArray = null;
 
-// BUG-01 fix: hindari createMediaElementSource di Android/iOS
 function initVisualizer() {
-    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (isMobile) {
-        startFakeBeatLoop();
-        return;
-    }
-
-    if (audioCtx || !localAudio) return;
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext({ latencyHint: 'playback' });
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-
-        const source = audioCtx.createMediaElementSource(localAudio);
-        source.connect(analyser);
-        analyser.connect(audioCtx.destination);
-
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        startVisualizerLoop();
-    } catch (e) {
-        console.warn("Visualizer init failed:", e);
-    }
+    // Semua platform pakai fake beat.
+    // createMediaElementSource di-skip karena /api/stream/ tidak ada CORS header
+    // -> browser silence audio jika di-connect ke AudioContext (CORS zeroes bug).
+    startFakeBeatLoop();
 }
 
-// Fake beat loop untuk mobile (BUG-01 fix): animasi tetap ada, audio tidak diganggu
 let _fakeBeatRaf = null;
 function startFakeBeatLoop() {
     if (_fakeBeatRaf) return;
     const BASE_INTERVAL = 500;
     let lastBeat = 0;
-
     function tick(ts) {
         _fakeBeatRaf = requestAnimationFrame(tick);
         if (store.status !== 'PLAYING') {
@@ -101,12 +73,9 @@ function startFakeBeatLoop() {
     _fakeBeatRaf = requestAnimationFrame(tick);
 }
 
-// PERF-01 fix: RAF berhenti saat tidak PLAYING
 let _vizRafId = null;
-
 function startVisualizerLoop() {
     if (!analyser || !dom.vinylRecord) return;
-
     const isBrowser = store.userRole === "client" || store.audio_output === "browser";
     if (!isBrowser || store.status !== "PLAYING") {
         if (dom.tabHome) {
@@ -117,60 +86,110 @@ function startVisualizerLoop() {
         _vizRafId = null;
         return;
     }
-
     analyser.getByteFrequencyData(dataArray);
-
     let bassSum = 0;
-    for (let i = 0; i < 10; i++) {
-        bassSum += dataArray[i];
-    }
-    const bassAvg = bassSum / 10;
-    const ratio = bassAvg / 255;
-
-    const glowOpacity = 0.4 + (ratio * 0.2);
-    const bgBrightness = 0.2 + (ratio * 0.1);
-    const transitionTime = ratio > 0.4 ? '0.2s' : '0.4s';
-
+    for (let i = 0; i < 10; i++) bassSum += dataArray[i];
+    const ratio = (bassSum / 10) / 255;
     if (dom.tabHome) {
-        dom.tabHome.style.setProperty('--beat-glow-opacity', glowOpacity.toFixed(3));
-        dom.tabHome.style.setProperty('--beat-bg-brightness', bgBrightness.toFixed(3));
-        dom.tabHome.style.setProperty('--beat-glow-transition', transitionTime);
+        dom.tabHome.style.setProperty('--beat-glow-opacity', (0.4 + ratio * 0.2).toFixed(3));
+        dom.tabHome.style.setProperty('--beat-bg-brightness', (0.2 + ratio * 0.1).toFixed(3));
+        dom.tabHome.style.setProperty('--beat-glow-transition', ratio > 0.4 ? '0.2s' : '0.4s');
     }
-
     _vizRafId = requestAnimationFrame(startVisualizerLoop);
 }
 
-// Panggil saat status berubah ke PLAYING agar RAF aktif kembali
 function resumeVisualizerLoop() {
     if (!_vizRafId && analyser) startVisualizerLoop();
 }
 
-function unlockBrowserAudio() {
-    if (audioUnlocked) return;
-    const audio = getOrInitAudio();
-    
-    if (!audio.src || audio.src === window.location.href || audio.src === window.location.origin + "/") {
-        audio.src = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU5LjI3LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+AAAAAExhdmM1OS4zNy4xMDBHAAAAAAAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAATEFN//MUZAMAAAGkAAAAAAAAA0gAAAAARTmZ//MUZAYAAAGkAAAAAAAAA0gAAAAARTmZ//MUZAwAAAGkAAAAAAAAA0gAAAAARTmZ";
+async function _resumeAndPlay(audio) {
+    if (audioCtx && audioCtx.state === 'suspended') {
+        try { await audioCtx.resume(); } catch (e) { console.warn("[audio] ctx resume failed:", e); }
     }
-    
-    audio.volume = 0;
-    const p = audio.play();
-    if (p !== undefined) {
-        p.then(() => {
+    try {
+        await audio.play();
+        console.log("[audio] play() OK");
+    } catch (e) {
+        console.warn("[audio] play() blocked:", e.name, e.message);
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        const isBrowser = store && (store.userRole === "client" || store.audio_output === "browser");
+        if (isBrowser && store.status === "PLAYING") {
+            const audio = getOrInitAudio();
+            if (audio.paused && audio.src && !audio.src.startsWith("data:")) {
+                _resumeAndPlay(audio);
+            }
+        }
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UNLOCK STRATEGY
+//
+// Masalah dummy audio base64: beberapa browser/OS tidak support format itu,
+// throw NotSupportedError → unlock gagal selamanya.
+//
+// Solusi: pakai AudioContext (Web Audio API) sebagai unlock mechanism,
+// bukan Audio element. AudioContext.resume() dalam gesture context cukup
+// untuk memberi "autoplay allowance" ke Audio element di halaman yang sama.
+//
+// Setelah AudioContext di-resume dalam gesture → audioUnlocked=true →
+// syncBrowserAudio() load src nyata → oncanplay → audio.play() diizinkan.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function unlockBrowserAudio() {
+    if (audioUnlocked || _unlocking) return;
+    _unlocking = true;
+    console.log("[audio] unlocking via AudioContext...");
+
+    // Buat AudioContext sementara khusus untuk unlock jika belum ada
+    // (initVisualizer belum dipanggil karena belum ada interaksi sebelumnya)
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) {
+        // Browser tidak support AudioContext — mark unlocked dan coba play langsung
+        audioUnlocked = true;
+        _unlocking = false;
+        _lastLoadedVideoId = null;
+        syncBrowserAudio();
+        return;
+    }
+
+    // Kalau audioCtx sudah ada (dari initVisualizer), pakai itu
+    // Kalau belum, buat baru khusus untuk unlock
+    const ctx = audioCtx || new AC();
+
+    const doUnlock = () => {
+        audioUnlocked = true;
+        _unlocking = false;
+        console.log("[audio] unlocked, syncing...");
+        // Simpan ctx sebagai audioCtx global jika belum ada
+        if (!audioCtx) {
+            audioCtx = ctx;
+        }
+        // Inisialisasi visualizer lewat initVisualizer() — dia yang tahu
+        // cara handle CORS dan perbedaan mobile/desktop
+        initVisualizer();
+        // Reset agar syncBrowserAudio load src nyata dengan oncanplay
+        _lastLoadedVideoId = null;
+        syncBrowserAudio();
+    };
+
+    if (ctx.state === 'suspended') {
+        ctx.resume().then(doUnlock).catch((e) => {
+            console.warn("[audio] AudioContext resume failed:", e);
+            // Tetap mark unlocked — coba saja play, mungkin berhasil
+            _unlocking = false;
             audioUnlocked = true;
-            audio.pause();
-            audio.volume = 1;
-            initVisualizer();
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            _lastLoadedVideoId = null;
             syncBrowserAudio();
-        }).catch((err) => {
-            console.warn("Unlock play failed, will retry on next interaction:", err);
         });
     } else {
-        audioUnlocked = true;
-        initVisualizer();
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        syncBrowserAudio();
+        // ctx sudah running (bisa terjadi di desktop)
+        doUnlock();
     }
 }
 
@@ -199,38 +218,47 @@ function syncBrowserAudio() {
     if (_lastLoadedVideoId !== track.video_id) {
         _lastLoadedVideoId = track.video_id;
         audio.src = expectedSrc;
-        
-        audio.oncanplay = () => {
-            // BUG-04 fix: threshold 5s, hindari flush buffer di awal playback
-            if (store.position > 5 && Math.abs(audio.currentTime - store.position) > 5) {
-                audio.currentTime = store.position;
-            }
-            audio.oncanplay = null;
-        };
-        
+        audio.volume = Math.max(0, Math.min(1, (store.volume || 80) / 100));
+
         audio.onended = () => {
-            console.log("Browser audio ended, requesting next track");
+            console.log("[radio] track ended, requesting next...");
             if (store.audio_output === "browser") {
                 wsSend("next", { video_id: track.video_id });
             }
         };
-        
+
+        if (!audioUnlocked) {
+            // Belum unlock: buffer saja, jangan play
+            // unlockBrowserAudio() akan reset dan sync ulang setelah user klik
+            audio.oncanplay = null;
+            audio.load();
+            console.log("[audio] buffering, waiting for user gesture:", track.video_id);
+            return;
+        }
+
+        // Sudah unlock: load → oncanplay → play
+        audio.oncanplay = () => {
+            audio.oncanplay = null;
+            if (store.position > 5 && Math.abs(audio.currentTime - store.position) > 5) {
+                audio.currentTime = store.position;
+            }
+            if (store.status === "PLAYING") {
+                console.log("[audio] canplay → play:", track.video_id);
+                _resumeAndPlay(audio);
+            }
+        };
         audio.load();
+        return;
     }
 
+    // Track sama
     audio.volume = Math.max(0, Math.min(1, (store.volume || 80) / 100));
-
     if (store.status === "PLAYING") {
-        if (audio.paused && audio.src) {
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(err => console.warn("Autoplay prevented:", err));
-            }
+        if (audio.paused && audio.src && !audio.src.startsWith("data:") && audioUnlocked) {
+            _resumeAndPlay(audio);
         }
     } else {
-        if (!audio.paused) {
-            audio.pause();
-        }
+        if (!audio.paused) audio.pause();
     }
 }
 

@@ -11,11 +11,13 @@ Publishes: QUEUE_UPDATED, LOG_MESSAGE
 import asyncio
 import random
 import re
+import logging
 from typing import TYPE_CHECKING, Optional
 
 from core.events import QueueUpdatedEvent, LogMessageEvent
 
-_RADIO_SEARCH_SEM = asyncio.Semaphore(2)
+# Bug #5 fix: naikkan semaphore dari 2 → 4 agar search lebih paralel
+_RADIO_SEARCH_SEM = asyncio.Semaphore(4)
 
 if TYPE_CHECKING:
     from engine.playback_controller import PlaybackController
@@ -23,6 +25,7 @@ from core.state import AppState, PlaybackMode, PlayerStatus
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
+_log = logging.getLogger(__name__)
 
 MAX_TRACK_DURATION = 600        # 10 menit — hindari kompilasi / livestream
 TRACKS_PER_ARTIST_TARGET = 3   # target track unik per artis dalam satu batch
@@ -90,21 +93,26 @@ class RadioMode:
             if self.db and self.db.conn:
                 self._seed_artists = await self.db.get_all_artists()
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"Gagal load artis dari DB: {e}")
+            _log.warning(f"Gagal load artis dari DB: {e}")
 
         if not self._seed_artists:
-            # Tidak ada fallback hardcode — DB harus diisi dulu
-            # Error ini akan ditangkap oleh _start dan dikirim ke frontend
+            # Bug #3 fix: pesan error sebut path DB yang benar
             raise RuntimeError(
                 "Tabel artists kosong. Jalankan: python data/import_artists.py "
-                "--db cache/library.db --json data/artists.json"
+                "--db data/ytgui.db --json data/artists.json"
             )
 
     # ── lifecycle ─────────────────────────────────────────────
 
     async def on_activated(self, controller: "PlaybackController") -> None:
-        await self._ensure_artists_loaded()
+        # Bug #2 fix: tangkap RuntimeError agar error tampil di frontend
+        try:
+            await self._ensure_artists_loaded()
+        except RuntimeError as e:
+            await controller.bus.publish(LogMessageEvent(
+                message=f"Radio: {e}", room_id=controller.room_id
+            ))
+            return
         self.state.radio_queue.clear()
         self._artist_rotation = []
         _track_task(self._bg_tasks, self._start(controller), name="radio_start")
@@ -201,8 +209,8 @@ class RadioMode:
                     while len(self.state.radio_queue) > 30:
                         self.state.radio_queue.pop()
                     await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
-            except Exception:
-                pass
+            except Exception as e:
+                _log.warning(f"Radio backfill gagal: {e}")
 
         # Setelah backfill selesai, langsung siapkan standby berikutnya
         _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
@@ -225,8 +233,8 @@ class RadioMode:
                 if tracks:
                     async with self._standby_lock:
                         self._standby = tracks
-            except Exception:
-                pass
+            except Exception as e:
+                _log.warning(f"Radio build_standby gagal: {e}")
 
     async def _ensure_standby(self, controller: "PlaybackController") -> None:
         """Pastikan standby sedang disiapkan kalau belum ada."""
@@ -240,12 +248,54 @@ class RadioMode:
     async def _fetch_and_play_initial(
         self, controller: "PlaybackController", seed_artist: Optional[str] = None
     ) -> None:
-        """Entry point untuk tombol Acak — sama dengan _start tapi
-        reset rotasi dulu agar artis benar-benar fresh."""
+        """Entry point untuk tombol Acak.
+        Fetch FULL batch 4 artis sekaligus (bukan quick 2 dulu),
+        agar dari awal langsung dapat 4 artis berbeda × 3 lagu = 12 lagu.
+        _start() tetap pakai quick batch untuk auto-refill saat queue habis.
+        """
         self._artist_rotation = []
         async with self._standby_lock:
             self._standby = []  # buang standby lama, minta yang fresh
-        await self._start(controller)
+
+        await controller.bus.publish(LogMessageEvent(
+            message="Mengacak playlist radio...", room_id=controller.room_id
+        ))
+
+        try:
+            tracks = await asyncio.wait_for(
+                self._gather_batch(
+                    prioritized_artist=seed_artist,
+                    max_artists=ARTISTS_PER_BATCH
+                ),
+                timeout=40.0
+            )
+        except RuntimeError as e:
+            await controller.bus.publish(LogMessageEvent(
+                message=f"Radio: {e}", room_id=controller.room_id
+            ))
+            return
+        except asyncio.TimeoutError:
+            await controller.bus.publish(LogMessageEvent(
+                message="Radio: Timeout saat mengambil lagu. Coba lagi.", room_id=controller.room_id
+            ))
+            return
+        except Exception as e:
+            _log.warning(f"Radio randomize gagal: {e}")
+            return
+
+        if not tracks:
+            await controller.bus.publish(LogMessageEvent(
+                message="Radio: Tidak ada hasil ditemukan.", room_id=controller.room_id
+            ))
+            return
+
+        self.state.radio_queue.clear()
+        self.state.radio_queue.extend(tracks[1:])
+        await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+        await controller.play_track(tracks[0])
+
+        # Siapkan standby berikutnya di background untuk auto-refill
+        _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
 
     # ── batch & search ────────────────────────────────────────
 
@@ -283,24 +333,27 @@ class RadioMode:
 
     async def _search_artist(self, artist: str) -> list:
         """Cari track untuk satu artis.
-        Prioritas: judul populer dari DB (max SEED_LIMIT query paralel).
+        Prioritas: judul populer dari DB, query format "{artist} {judul} audio"
+        agar lebih toleran di YouTube daripada "{judul} {artist}" yang terlalu spesifik.
         Fallback: query generik "{artist} music".
         """
         seed_titles: list[str] = []
         if self.db and self.db.conn:
             try:
                 seed_titles = await self.db.get_artist_seeds(artist, limit=SEED_LIMIT)
-            except Exception:
-                pass
+            except Exception as e:
+                _log.debug(f"Gagal ambil seeds untuk {artist}: {e}")
 
         existing = self._build_exclusion_set()
         seen_titles: set[str] = set()
         unique_tracks: list = []
 
         if seed_titles:
+            # Bug #4 fix: ubah urutan query → "{artist} {judul} audio"
+            # lebih toleran di YouTube, mengurangi false-negative
             async def _search_one(judul: str):
                 async with _RADIO_SEARCH_SEM:
-                    return await self.ytdlp.search(f"{judul} {artist}", max_results=5)
+                    return await self.ytdlp.search(f"{artist} {judul} audio", max_results=5)
 
             results_nested = await asyncio.gather(
                 *[_search_one(j) for j in seed_titles],

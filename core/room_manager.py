@@ -34,7 +34,8 @@ class Room:
         self.mpv = MpvController(
             socket_path=f"/tmp/mpv-socket-{room_id}",
             tcp_port=_win_port,
-            event_bus=self.event_bus  # TASK-3.3: inject per-room bus
+            event_bus=self.event_bus,  # TASK-3.3: inject per-room bus
+            room_id=room_id,           # BACKEND-FIX-02: agar events punya room_id benar
         )
         
         self.resolver = CacheResolver(db, ytdlp)

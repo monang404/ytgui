@@ -22,7 +22,10 @@ class MpvController:
     MED-11: Basic reconnection support via is_connected flag.
     """
 
-    def __init__(self, socket_path: str = None, tcp_port: str = None, event_bus: EventBus = None):
+    def __init__(self, socket_path: str = None, tcp_port: str = None, event_bus: EventBus = None, room_id: str = "default"):
+        # BACKEND-FIX-02: simpan room_id agar events yang di-publish ke bus
+        # punya room_id yang benar, bukan selalu "default".
+        self._room_id = room_id
         self._reader = None
         self._writer = None
         self._request_id = 0
@@ -233,7 +236,7 @@ class MpvController:
                     import asyncio as _aio
                     try:
                         loop = _aio.get_running_loop()
-                        loop.create_task(self._bus.publish(TrackEndedEvent(reason="error")))
+                        loop.create_task(self._bus.publish(TrackEndedEvent(reason="error", room_id=self._room_id)))
                     except RuntimeError:
                         pass
 
@@ -249,13 +252,13 @@ class MpvController:
             name = msg.get("name")
             data = msg.get("data")
             if name == "time-pos" and isinstance(data, (int, float)):
-                await self._bus.publish(TrackProgressEvent(position=float(data)))
+                await self._bus.publish(TrackProgressEvent(position=float(data), room_id=self._room_id))
             elif name == "pause":
-                await self._bus.publish(TrackPauseChangedEvent(is_paused=bool(data)))
+                await self._bus.publish(TrackPauseChangedEvent(is_paused=bool(data), room_id=self._room_id))
         elif event == "end-file":
             reason = msg.get("reason", "")
             if reason in ("eof", "stop", "error"):
-                await self._bus.publish(TrackEndedEvent(reason=reason))
+                await self._bus.publish(TrackEndedEvent(reason=reason, room_id=self._room_id))
 
     async def _command(self, cmd: list) -> int:
         if not self.is_connected or not self._writer:

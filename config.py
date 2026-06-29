@@ -6,7 +6,7 @@ from pathlib import Path
 BASE_DIR = Path(os.environ.get("YT_PLAYER_BASE", Path(__file__).parent))
 
 CACHE_DIR = BASE_DIR / "cache" / "mp3"
-DB_PATH = BASE_DIR / "cache" / "library.db"
+DB_PATH = BASE_DIR / "data" / "ytgui.db"
 
 # Handle Windows compatibility for Unix Sockets
 if os.name == 'nt':

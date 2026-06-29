@@ -6,9 +6,20 @@ function renderPlayerBar() {
         dom.pbTrackInfo.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:5px; vertical-align:-2px;"></span> Memuat... ' + escapeHtml(t ? t.title : "");
     } else if (t) {
         const title = typeof cleanTrackTitle === "function" ? cleanTrackTitle(t.title) : t.title;
-        dom.pbTrackInfo.textContent = title + " — " + t.artist;
+        const thumbUrl = t.thumbnail || '';
+        const fallbackIcon = `<i class="ti ti-music" style="color:var(--text-3); font-size:20px;"></i>`;
+        const thumbHtml = thumbUrl ? `<img src="${escapeHtml(thumbUrl)}" style="width:44px; height:44px; border-radius:6px; object-fit:cover; flex-shrink:0;">` : `<div style="width:44px; height:44px; border-radius:6px; background:rgba(255,255,255,0.1); flex-shrink:0; display:flex; align-items:center; justify-content:center;">${fallbackIcon}</div>`;
+        dom.pbTrackInfo.innerHTML = `
+            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                ${thumbHtml}
+                <div style="display:flex; flex-direction:column; justify-content:center; line-height:1.3; overflow:hidden; min-width:0;">
+                    <span style="font-weight:600; font-size:14px; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(title)}</span>
+                    <span style="font-size:12px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(t.artist)}</span>
+                </div>
+            </div>
+        `;
     } else {
-        dom.pbTrackInfo.textContent = "";
+        dom.pbTrackInfo.innerHTML = "";
     }
 
     renderPlayBtn();

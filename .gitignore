@@ -20,6 +20,13 @@ cache/*.db
 cache/*.db-shm
 cache/*.db-wal
 cache/admin_password.txt
+
+# Database utama (berisi session tokens — jangan commit)
+# Data artis di-seed ulang via: python data/import_artists.py
+data/ytgui.db
+data/*.db-shm
+data/*.db-wal
+
 *.log
 *.mp3
 *.webm

@@ -130,16 +130,25 @@ function handleServerMessage(msg) {
 
             if (store.audio_output === "browser" && store.status === "PLAYING") {
                 const audio = getOrInitAudio();
-                if (!audio.paused && audio.src) {
+                if (!audio.paused && audio.src && !audio.src.startsWith("data:")) {
+                    // Sync posisi
                     const diff = Math.abs(audio.currentTime - store.position);
                     if (diff > 0.5 && store.position > 2) {
                         audio.currentTime = store.position;
+                    }
+                } else if (audio.paused && audio.src && !audio.src.startsWith("data:") && audio.readyState >= 2) {
+                    // FIX-RADIO-08: Audio stuck paused padahal status PLAYING.
+                    // Terjadi saat AudioContext suspended (radio auto-switch tanpa user interaction).
+                    // Coba resume AudioContext + play ulang tanpa menunggu user klik.
+                    // audio.readyState >= 2 = HAVE_CURRENT_DATA — audio sudah ter-load, aman di-play.
+                    if (typeof _resumeAndPlay === "function") {
+                        _resumeAndPlay(audio);
                     }
                 }
             }
 
             renderProgress();
-            forceUpdateProgress();
+
             renderPlayBtn();
             if (statusChanged) {
                 if (typeof renderNowPlaying === "function") renderNowPlaying();
@@ -207,8 +216,8 @@ function renderFullState() {
     renderHeader();
     renderNowPlaying();
     renderProgress();
-            forceUpdateProgress();
-        _renderProgressCore();
+
+
     renderPlayerBar();
     renderRadio();
     renderQueue();

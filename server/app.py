@@ -3,7 +3,6 @@ import time
 import structlog
 from pathlib import Path
 from aiohttp import web
-import aiohttp
 
 from core.events import (
     TrackStartedEvent, TrackProgressEvent, QueueUpdatedEvent, LyricsUpdatedEvent,
@@ -28,11 +27,8 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
     app["ytdlp"] = ytdlp
     app["db"] = db
     app["manager"] = manager
-    app["http_session"] = aiohttp.ClientSession()
-
-    async def on_cleanup(app):
-        await app["http_session"].close()
-    app.on_cleanup.append(on_cleanup)
+    # Bug #9 fix: ClientSession sudah dibuat di main.py dan di-pass ke plugins.
+    # Tidak perlu buat session baru di sini agar tidak ada resource leak.
 
     last_progress_per_room: dict[str, float] = {}
 

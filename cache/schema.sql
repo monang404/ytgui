@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 -- Artists untuk Radio Mode seed
--- Diisi via: python data/import_artists.py --db cache/library.db --json data/artists.json
+-- Diisi via: python data/import_artists.py --db data/ytgui.db --json data/artists.json
 CREATE TABLE IF NOT EXISTS artists (
     id           INTEGER PRIMARY KEY,
     nama         TEXT    NOT NULL,
