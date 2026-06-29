@@ -251,6 +251,7 @@ function renderRadio() {
 }
 
 function renderQueue() {
+    document.body.dataset.queueEmpty = (store.queue.length === 0) ? "true" : "false";
     const isRadio = store.playback_mode === "RADIO";
     
     // Render the manual queue in Queue Tab

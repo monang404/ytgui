@@ -40,11 +40,13 @@ function renderHomeLyrics() {
     if (!dom.lyricsCurrent || !dom.lyricsPrev || !dom.lyricsNext) return;
 
     if (!store.lyrics_lines || store.lyrics_lines.length === 0) {
+        document.body.setAttribute("data-has-lyrics", "false");
         if (dom.lyricsTextContainer) dom.lyricsTextContainer.style.display = "none";
         if (dom.homeEqualizer) dom.homeEqualizer.style.display = "flex";
         return;
     }
 
+    document.body.setAttribute("data-has-lyrics", "true");
     if (dom.lyricsTextContainer) dom.lyricsTextContainer.style.display = "flex";
     if (dom.homeEqualizer) dom.homeEqualizer.style.display = "none";
 
@@ -66,8 +68,9 @@ function renderHomeLyrics() {
 }
 
 function updateOffsetDisplay() {
-    if (!dom.lyricOffsetDisplay) return;
+    const el = document.getElementById("sync-val");
+    if (!el) return;
     const val = store.lyrics_offset || 0;
     const sign = val >= 0 ? '+' : '';
-    dom.lyricOffsetDisplay.textContent = sign + val.toFixed(1) + 's';
+    el.textContent = sign + val.toFixed(1) + 's';
 }

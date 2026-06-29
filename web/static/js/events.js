@@ -653,6 +653,48 @@ function _cleanupDrag() {
     _dragEl = null;
 }
 
+// ── Lyric Sync Controls ──
+const btnSyncMinus = document.getElementById("btn-sync-minus");
+const btnSyncPlus = document.getElementById("btn-sync-plus");
+const lyricsWrap = document.getElementById("lyrics-wrap");
+const lyricSyncCtrls = document.getElementById("lyric-sync-ctrls");
+let lyricSyncHideTimeout = null;
+
+if (lyricsWrap && lyricSyncCtrls) {
+    function showLyricSync() {
+        lyricSyncCtrls.classList.add("active");
+        if (lyricSyncHideTimeout) clearTimeout(lyricSyncHideTimeout);
+        lyricSyncHideTimeout = setTimeout(() => {
+            lyricSyncCtrls.classList.remove("active");
+        }, 3000);
+    }
+    
+    lyricsWrap.addEventListener("mousemove", showLyricSync);
+    lyricsWrap.addEventListener("touchstart", showLyricSync);
+    lyricsWrap.addEventListener("click", showLyricSync);
+    
+    if (btnSyncMinus) {
+        btnSyncMinus.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (store.userRole !== "admin") return;
+            store.lyrics_offset = (store.lyrics_offset || 0) - 0.5;
+            if (typeof updateOffsetDisplay === "function") updateOffsetDisplay();
+            if (typeof syncLocalLyrics === "function") syncLocalLyrics();
+            showLyricSync();
+        });
+    }
+    if (btnSyncPlus) {
+        btnSyncPlus.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (store.userRole !== "admin") return;
+            store.lyrics_offset = (store.lyrics_offset || 0) + 0.5;
+            if (typeof updateOffsetDisplay === "function") updateOffsetDisplay();
+            if (typeof syncLocalLyrics === "function") syncLocalLyrics();
+            showLyricSync();
+        });
+    }
+}
+
 // ── Keyboard Shortcuts — Phase 5 (Desktop) ──
 // Hanya aktif di desktop (pointer: fine = mouse)
 if (window.matchMedia('(pointer: fine)').matches) {

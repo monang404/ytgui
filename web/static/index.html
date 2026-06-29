@@ -92,6 +92,15 @@
                 </header>
 
                 <div class="home-left-col">
+                    <!-- ══ Idle View (Shows only when no music) ══ -->
+                    <div class="home-idle-view" id="home-idle-view">
+                        <div class="idle-text-slider">
+                            <span class="idle-text-slide">Belum ada lagu, silakan aktifkan Radio...</span>
+                            <span class="idle-text-slide">Atau temukan musik baru di tab Discover...</span>
+                            <span class="idle-text-slide">Atau cari lagu favoritmu lewat tab Search...</span>
+                        </div>
+                    </div>
+
                     <!-- ══ Album Art Hero ══ -->
                     <div class="home-art-section" id="vinyl-wrap">
                         <div class="home-art-frame" id="vinyl-record">
@@ -114,6 +123,11 @@
 
                     <!-- ══ Lyrics inline / Equalizer ══ -->
                     <div class="lyrics-wrap" id="lyrics-wrap">
+                        <div class="lyric-sync-ctrls" id="lyric-sync-ctrls">
+                            <button id="btn-sync-minus" class="lyric-sync-btn" title="Mundurkan Lirik (0.5s)"><i class="ti ti-minus"></i></button>
+                            <span id="sync-val">0.0s</span>
+                            <button id="btn-sync-plus" class="lyric-sync-btn" title="Majukan Lirik (0.5s)"><i class="ti ti-plus"></i></button>
+                        </div>
                         <div id="lyrics-text-container">
                             <div class="lyrics-line prev" id="lyrics-prev"></div>
                             <div class="lyrics-line current" id="lyrics-current"></div>
@@ -198,14 +212,7 @@
 
 
                 <div class="home-right-col">
-                    <!-- ══ Terakhir Diputar ══ -->
-                    <div class="home-recent-section">
-                        <div class="section-label-row">
-                            <span class="label-text">Terakhir Diputar</span>
-                            <span class="label-link">See all</span>
-                        </div>
-                        <div id="home-recent-list" class="home-recent-list"></div>
-                    </div>
+
 
                     <!-- ══ Antrean Putar ══ -->
                     <div class="home-queue-section" id="home-queue-section" style="padding: var(--s4) var(--s5) var(--s12);">
@@ -297,6 +304,15 @@
                 <div class="discover-header">
                     <h1 class="discover-title">Discover</h1>
                     <p class="discover-sub">Find your next favorite song</p>
+                </div>
+
+                <!-- ══ Terakhir Diputar (Dipindah dari Home) ══ -->
+                <div class="home-recent-section">
+                    <div class="section-label-row">
+                        <span class="label-text">Terakhir Diputar</span>
+                        <span class="label-link">See all</span>
+                    </div>
+                    <div id="home-recent-list" class="home-recent-list"></div>
                 </div>
 
                 <!-- Browse By Mood -->
