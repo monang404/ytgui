@@ -92,3 +92,19 @@ class DiscoverService:
         except Exception:
             pass
         return tracks
+
+    async def get_featured_artists(self, n: int) -> list[dict]:
+        """Mengambil n artis acak dari tabel artists beserta click_count."""
+        if not getattr(self.db, '_conn', None):
+            return []
+            
+        artists = []
+        try:
+            async with self.db._conn.execute(
+                "SELECT id, nama, kategori, tahun_aktif, COALESCE(click_count, 0) as click_count FROM artists ORDER BY RANDOM() LIMIT ?", (n,)
+            ) as cursor:
+                async for row in cursor:
+                    artists.append(dict(row))
+        except Exception:
+            pass
+        return artists

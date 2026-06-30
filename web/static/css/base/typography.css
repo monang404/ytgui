@@ -1,0 +1,7 @@
+/* ══ BAGAS.FM typography.css ══ */
+
+html, body {
+  font-family: var(--font);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+}

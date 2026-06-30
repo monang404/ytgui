@@ -6,7 +6,7 @@ Verifikasi bahwa _on_queue_remove menggunakan self._lock.
 import pytest
 import inspect
 
-from engine.playback_controller import PlaybackController
+from engine.playback import PlaybackController
 
 
 class TestQueueRemoveLock:

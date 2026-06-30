@@ -14,12 +14,8 @@ class TestProgressServerTimestamp:
 
     def test_progress_broadcast_contains_server_ts(self):
         """_on_track_progress di server.py harus mengirim server_ts."""
-        import server.app as server
-        import server.handlers.http as server_http
-        import server.handlers.websocket as server_ws
-        import server.handlers.auth as server_auth
-        import server.middleware as server_middleware
-        source = inspect.getsource(server)
+        import server.services.broadcast_service as server_broadcast
+        source = inspect.getsource(server_broadcast)
         
         # Cari di bagian progress broadcast
         assert "server_ts" in source, (
@@ -28,12 +24,8 @@ class TestProgressServerTimestamp:
 
     def test_progress_broadcast_uses_time(self):
         """server_ts harus menggunakan time.time() atau time.monotonic()."""
-        import server.app as server
-        import server.handlers.http as server_http
-        import server.handlers.websocket as server_ws
-        import server.handlers.auth as server_auth
-        import server.middleware as server_middleware
-        source = inspect.getsource(server)
+        import server.services.broadcast_service as server_broadcast
+        source = inspect.getsource(server_broadcast)
         
         # Harus import time dan menggunakannya
         has_time_call = (
@@ -46,12 +38,8 @@ class TestProgressServerTimestamp:
 
     def test_progress_data_structure(self):
         """Payload progress harus punya position, status, dan server_ts."""
-        import server.app as server
-        import server.handlers.http as server_http
-        import server.handlers.websocket as server_ws
-        import server.handlers.auth as server_auth
-        import server.middleware as server_middleware
-        source = inspect.getsource(server)
+        import server.services.broadcast_service as server_broadcast
+        source = inspect.getsource(server_broadcast)
         
         # Cari pattern progress data yang lengkap
         assert "\"position\"" in source or "'position'" in source

@@ -9,7 +9,7 @@ from engine.mpv_controller import MpvController
 from engine.queue_manager import QueueMode
 from engine.radio_engine import RadioMode
 from engine.volume_service import VolumeService
-from engine.playback_controller import PlaybackController
+from engine.playback import PlaybackController
 from cache.resolver import CacheResolver
 
 logger = structlog.get_logger(__name__)

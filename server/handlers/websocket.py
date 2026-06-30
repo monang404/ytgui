@@ -144,12 +144,14 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
             recent = await ds.get_recent(15)
             favorites = await ds.get_favorites(15)
             cached = await ds.get_cached(15)
+            featured_artists = await ds.get_featured_artists(100)
             await ws.send_str(json.dumps({
                 "type": "discover_data",
                 "data": {
                     "recent": [track_to_dict(t) for t in recent],
                     "favorites": [track_to_dict(t) for t in favorites],
-                    "cached_tracks": [track_to_dict(t) for t in cached]
+                    "cached_tracks": [track_to_dict(t) for t in cached],
+                    "featured_artists": featured_artists
                 }
             }, ensure_ascii=False))
 
@@ -178,12 +180,14 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
                 recent = await ds.get_recent(15)
                 favorites = await ds.get_favorites(15)
                 cached = await ds.get_cached(15)
+                featured_artists = await ds.get_featured_artists(100)
                 await manager.broadcast({
                     "type": "discover_data",
                     "data": {
                         "recent": [track_to_dict(t) for t in recent],
                         "favorites": [track_to_dict(t) for t in favorites],
-                        "cached_tracks": [track_to_dict(t) for t in cached]
+                        "cached_tracks": [track_to_dict(t) for t in cached],
+                        "featured_artists": featured_artists
                     }
                 })
 
@@ -243,6 +247,21 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
             from_idx = int(data.get("from_index", 0))
             to_idx = int(data.get("to_index", 0))
             await command_bus.execute(CMD_QUEUE_REORDER, room_id, {"from_index": from_idx, "to_index": to_idx})
+
+        elif action == "enqueue_artist_songs":
+            artist_name = data.get("artist")
+            if artist_name:
+                songs = await db.get_artist_songs_strict(artist=artist_name, limit=10)
+                if songs:
+                    await db.increment_artist_click(artist_name)
+                    
+                    await command_bus.execute(CMD_SET_MODE, room_id, PlaybackMode.QUEUE)
+                    state.queue.clear()
+                    
+                    for track in songs:
+                        await command_bus.execute(CMD_QUEUE_ADD, room_id, track)
+                        
+                    await command_bus.execute(CMD_QUEUE_SELECT, room_id, 0)
 
         elif action == "radio_randomize":
             seed_artist = data.get("seed_artist")

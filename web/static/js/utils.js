@@ -5,6 +5,18 @@ function formatTime(secs) {
     return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
 
+window.safeStorage = {
+    get: function(key) {
+        try { return localStorage.getItem(key); } catch(e) { return null; }
+    },
+    set: function(key, value) {
+        try { localStorage.setItem(key, value); } catch(e) {}
+    },
+    remove: function(key) {
+        try { localStorage.removeItem(key); } catch(e) {}
+    }
+};
+
 function escapeHtml(str) {
     if (!str) return "";
     const div = document.createElement("div");
@@ -45,14 +57,32 @@ window.getCoverArt = async function(track) {
     if (!track.video_id) return track.thumbnail || "";
     
     const cacheKey = "cover_" + track.video_id;
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) return cached;
+    const cachedStr = window.safeStorage.get(cacheKey);
+    if (cachedStr) {
+        try {
+            if (cachedStr.startsWith("{")) {
+                const cached = JSON.parse(cachedStr);
+                // 7 days TTL
+                if (Date.now() - cached.ts < 7 * 24 * 60 * 60 * 1000) {
+                    return cached.url;
+                }
+            } else {
+                // legacy format without TTL
+                return cachedStr;
+            }
+        } catch(e) {}
+    }
     
     const ytFallback = `https://i.ytimg.com/vi/${track.video_id}/hqdefault.jpg`;
     
     if (!track.title || !track.artist) {
         return track.thumbnail || ytFallback;
     }
+    
+    const saveCache = (url) => {
+        window.safeStorage.set(cacheKey, JSON.stringify({url: url, ts: Date.now()}));
+        return url;
+    };
     
     try {
         const cleanTitle = window.cleanTrackTitle(track.title);
@@ -65,16 +95,14 @@ window.getCoverArt = async function(track) {
             let artworkUrl = data.results[0].artworkUrl100;
             if (artworkUrl) {
                 artworkUrl = artworkUrl.replace("100x100bb", "600x600bb");
-                localStorage.setItem(cacheKey, artworkUrl);
-                return artworkUrl;
+                return saveCache(artworkUrl);
             }
         }
     } catch (e) {
         console.warn("Cover fetch error for", track.title, e);
     }
     
-    localStorage.setItem(cacheKey, ytFallback);
-    return ytFallback;
+    return saveCache(ytFallback);
 };
 
 window.loadLazyCovers = function() {
@@ -104,27 +132,48 @@ window.extractDominantColor = function(imgEl, callback) {
     
     try {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         canvas.width = 50;
         canvas.height = 50;
         ctx.drawImage(imgEl, 0, 0, 50, 50);
         
         const data = ctx.getImageData(0, 0, 50, 50).data;
-        let r = 0, g = 0, b = 0, count = 0;
+        let bestR = 0, bestG = 0, bestB = 0;
+        let maxScore = -1;
         
         for (let i = 0; i < data.length; i += 16) {
-            r += data[i];
-            g += data[i+1];
-            b += data[i+2];
-            count++;
+            let r = data[i], g = data[i+1], b = data[i+2];
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let l = (max + min) / 2;
+            
+            // Skip colors that are too dark or too bright
+            if (l < 20 || l > 240) continue;
+            
+            let s = 0;
+            if (max !== min) {
+                s = l > 127 ? (max - min) / (510 - max - min) : (max - min) / (max + min);
+            }
+            
+            let score = s * 100;
+            if (score > maxScore) {
+                maxScore = score;
+                bestR = r; bestG = g; bestB = b;
+            }
         }
         
-        r = Math.floor(r / count);
-        g = Math.floor(g / count);
-        b = Math.floor(b / count);
+        // Fallback to average if no saturated pixel found (e.g. grayscale or pure black/white image)
+        if (maxScore === -1) {
+            let r = 0, g = 0, b = 0, count = 0;
+            for (let i = 0; i < data.length; i += 16) {
+                r += data[i]; g += data[i+1]; b += data[i+2]; count++;
+            }
+            bestR = Math.floor(r / count);
+            bestG = Math.floor(g / count);
+            bestB = Math.floor(b / count);
+        }
         
-        console.log("Cover Color Extracted:", r, g, b);
-        if (callback) callback({r, g, b});
+        console.log("Cover Color Extracted:", bestR, bestG, bestB);
+        if (callback) callback({r: bestR, g: bestG, b: bestB});
     } catch (e) {
         console.warn("Color extraction failed:", e);
         if (callback) callback("var(--bg-elevated)");

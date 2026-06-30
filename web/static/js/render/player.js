@@ -93,4 +93,8 @@ function _renderProgressCore() {
 
     dom.pbTimePos.textContent = formatTime(pos);
     dom.pbTimeDur.textContent = formatTime(dur);
+
+    // S8-08 Mini Player Progress
+    const playerBar = document.getElementById("player-bar");
+    if(playerBar) playerBar.style.setProperty("--mini-progress", pct + "%");
 }

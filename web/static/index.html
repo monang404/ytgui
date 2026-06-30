@@ -12,9 +12,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="YTGUI — YouTube music player for Termux with search, radio, queue, and lyrics">
     <meta name="theme-color" content="#090A0D">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,12 +19,28 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="/static/css/tokens.css">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <link rel="stylesheet" href="/static/css/layout.css">
-    <link rel="stylesheet" href="/static/css/player.css">
-    <link rel="stylesheet" href="/static/css/tabs.css">
-    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/base/reset.css">
+    <link rel="stylesheet" href="/static/css/base/typography.css">
+    <link rel="stylesheet" href="/static/css/base/animations.css">
+    <link rel="stylesheet" href="/static/css/layout/app-shell.css">
+    <link rel="stylesheet" href="/static/css/layout/nav.css">
+    <link rel="stylesheet" href="/static/css/layout/grid.css">
+    <link rel="stylesheet" href="/static/css/components/player-bar.css">
+    <link rel="stylesheet" href="/static/css/components/player-controls.css">
+    <link rel="stylesheet" href="/static/css/components/queue.css">
+    <link rel="stylesheet" href="/static/css/components/search.css">
+    <link rel="stylesheet" href="/static/css/components/settings-sheet.css">
+    <link rel="stylesheet" href="/static/css/components/lyrics.css">
+    <link rel="stylesheet" href="/static/css/components/cards.css">
+    <link rel="stylesheet" href="/static/css/components/toasts.css">
     <link rel="stylesheet" href="/static/css/portal.css">
+
+    <!-- Platform Overrides -->
+    <link rel="stylesheet" href="/static/css/platform/mobile.css">
+    <link rel="stylesheet" href="/static/css/platform/tablet.css">
+    <link rel="stylesheet" href="/static/css/platform/desktop.css">
+    <link rel="stylesheet" href="/static/css/platform/landscape.css">
+    <link rel="stylesheet" href="/static/css/platform/safe-area.css">
 </head>
 
 <body>
@@ -286,7 +299,7 @@
                 <!-- Section Label Row with Action Button -->
                 <div class="section-label-row" style="padding-top: var(--s4);">
                     <span class="label-text">All Stations</span>
-                    <button id="radio-randomize-btn" class="label-link" style="background:none; border:none; display:flex; align-items:center; gap:6px; font-family:inherit;">
+                    <button id="radio-randomize-btn" class="label-link" style="background:none; border:none; display:flex; align-items:center; gap:6px; font-family:inherit; min-height: 44px; min-width: 44px; padding: 10px; margin: -10px;">
                         <i class="ti ti-dice" style="font-size:14px;"></i> Acak Artis
                     </button>
                 </div>
@@ -306,52 +319,30 @@
                     <p class="discover-sub">Find your next favorite song</p>
                 </div>
 
-                <!-- ══ Terakhir Diputar (Dipindah dari Home) ══ -->
-                <div class="home-recent-section">
-                    <div class="section-label-row">
-                        <span class="label-text">Terakhir Diputar</span>
-                        <span class="label-link">See all</span>
-                    </div>
-                    <div id="home-recent-list" class="home-recent-list"></div>
+
+                <!-- Artis Indonesia (Featured Artists) -->
+                <div class="section-label-row">
+                    <span class="label-text">Jelajahi Artis</span>
+                </div>
+                <div id="discover-artists" class="hashtag-cloud-container">
+                    <div class="hashtag-pill skeleton-box" style="width:60px; height:24px; border-radius:12px;"></div>
+                    <div class="hashtag-pill skeleton-box" style="width:100px; height:24px; border-radius:12px;"></div>
+                    <div class="hashtag-pill skeleton-box" style="width:80px; height:24px; border-radius:12px;"></div>
                 </div>
 
-                <!-- Browse By Mood -->
-                <div class="section-label-row">
-                    <span class="label-text">Browse By Mood</span>
-                    <span class="label-link">See all</span>
-                </div>
-                <div class="mood-row">
-                    <div class="mood-card" data-mood="chill">
-                        <i class="ti ti-coffee mood-icon"></i>
-                        <span>Chill</span>
-                    </div>
-                    <div class="mood-card mood-romantic" data-mood="romantic">
-                        <i class="ti ti-heart mood-icon"></i>
-                        <span>Romantic</span>
-                    </div>
-                    <div class="mood-card mood-energetic" data-mood="energetic">
-                        <i class="ti ti-bolt mood-icon"></i>
-                        <span>Energetic</span>
-                    </div>
-                </div>
 
-                <!-- New Release (dari discover_cached / recent) -->
-                <div class="section-label-row">
-                    <span class="label-text">New Release</span>
-                    <span class="label-link">See all</span>
-                </div>
-                <div id="discover-recent" style="display:flex; flex-direction:column;"></div>
-
-                <!-- Top Artists / Most Played -->
-                <div class="section-label-row">
-                    <span class="label-text">Paling Sering Diputar</span>
-                    <span class="label-link">See all</span>
-                </div>
-                <div class="disc-row2" id="discover-favorites"></div>
 
                 <!-- Cache -->
                 <div class="section-label">Tersimpan Lokal</div>
-                <div id="discover-cached" style="display:flex; flex-direction:column; padding-bottom:80px;"></div>
+                <div id="discover-cached" style="display:flex; flex-direction:column; padding-bottom:80px;">
+                    <div class="sr-item">
+                        <div class="sr-thumb skeleton-box" style="border-radius:6px;"></div>
+                        <div class="sr-info">
+                            <div class="sr-title skeleton-box" style="width:60%; height:14px; margin-bottom:6px;"></div>
+                            <div class="sr-meta skeleton-box" style="width:40%; height:12px;"></div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
 
@@ -616,14 +607,25 @@
     <script src="/static/js/store.js" defer></script>
     <script src="/static/js/dom.js" defer></script>
     <script src="/static/js/utils.js" defer></script>
+    <script src="/static/js/services/auth.js" defer></script>
     <script src="/static/js/render/player.js" defer></script>
-    <script src="/static/js/render/tabs.js" defer></script>
+    <script src="/static/js/render/now-playing.js" defer></script>
+    <script src="/static/js/render/queue.js?v=3" defer></script>
+    <script src="/static/js/render/discover.js?v=5" defer></script>
+    <script src="/static/js/render/favorites.js" defer></script>
     <script src="/static/js/render/lyrics.js" defer></script>
     <script src="/static/js/render/search.js" defer></script>
-    <script src="/static/js/audio.js" defer></script>
+    <script src="/static/js/events/player-events.js" defer></script>
+    <script src="/static/js/events/queue-events.js?v=3" defer></script>
+    <script src="/static/js/events/lyrics-events.js" defer></script>
+    <script src="/static/js/events/settings-events.js" defer></script>
+    <script src="/static/js/events/index.js" defer></script>
     <script src="/static/js/portal.js" defer></script>
+    <script src="/static/js/platform/viewport.js" defer></script>
+    <script src="/static/js/platform/touch.js" defer></script>
+    <script src="/static/js/platform/keyboard.js" defer></script>
+    <script src="/static/js/audio.js" defer></script>
     <script src="/static/js/ws.js" defer></script>
-    <script src="/static/js/events.js" defer></script>
     <script src="/static/js/main.js" defer></script>
 <!-- AUTO-UNREGISTER-SW: matikan SW lama + bersihkan cache. Hapus blok ini setelah selesai development. -->
 <script>

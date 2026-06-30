@@ -1,13 +1,13 @@
-/* ══════════════════════════════════════
-   RESPONSIVE BREAKPOINTS — Mobile First
+﻿/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+   RESPONSIVE BREAKPOINTS ΓÇö Mobile First
    bagas.fm Spotify-Class Transformation Phase 1
    ADR-002: 601px tablet, 1024px desktop
-   ══════════════════════════════════════ */
+   ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 
-/* ─── Base: Mobile (≤ 600px) ─── */
+/* ΓöÇΓöÇΓöÇ Base: Mobile (Γëñ 600px) ΓöÇΓöÇΓöÇ */
 /* Default styles sudah mobile-first */
 
-/* ─── Tablet (601px – 1023px) ─── */
+/* ΓöÇΓöÇΓöÇ Tablet (601px ΓÇô 1023px) ΓöÇΓöÇΓöÇ */
 @media (min-width: 601px) {
   #app {
     /* C-02: gunakan lebih banyak ruang di tablet, bukan cuma 600px kolom sempit */
@@ -21,16 +21,16 @@
   }
 }
 
-/* ══════════════════════════════════════
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
    GLOBAL OVERRIDES & UTILITIES
-   ══════════════════════════════════════ */
+   ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 #btn-shuffle, #btn-repeat { display: none !important; }
 
-/* ══════════════════════════════════════
-   DESKTOP LAYOUT — Phase 5
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+   DESKTOP LAYOUT ΓÇö Phase 5
    Blueprint: AUDIT_V2 Chapter C.4
    2-column: sidebar kiri + main content
-   ══════════════════════════════════════ */
+   ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 @media (min-width: 1024px) {
   body {
     display: flex;
@@ -51,7 +51,7 @@
       "sidebar main";
   }
 
-  /* Sidebar navigation — kiri */
+  /* Sidebar navigation ΓÇö kiri */
   #nav-bar {
     grid-area: sidebar;
     display: flex;
@@ -233,9 +233,9 @@
 }
 
 
-/* ══════════════════════════════════════
-   TABLET LANDSCAPE — Mini Desktop Layout
-   ══════════════════════════════════════ */
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+   TABLET LANDSCAPE ΓÇö Mini Desktop Layout
+   ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 @media (min-width: 601px) and (max-width: 1023px) and (orientation: landscape) {
   #app {
     display: grid;
@@ -383,14 +383,14 @@
   .search-wrap { max-width: 600px; margin: 0 auto; }
 }
 
-/* ─── Orientation: Landscape di Mobile ─── */
+/* ΓöÇΓöÇΓöÇ Orientation: Landscape di Mobile ΓöÇΓöÇΓöÇ */
 @media (max-height: 500px) and (orientation: landscape) {
   .vinyl-wrap {
     display: none; /* Sembunyikan vinyl di landscape untuk hemat ruang */
   }
 }
 
-/* ─── Safe Area Insets (iPhone notch / Android nav bar) ─── */
+/* ΓöÇΓöÇΓöÇ Safe Area Insets (iPhone notch / Android nav bar) ΓöÇΓöÇΓöÇ */
 @supports (padding: env(safe-area-inset-top)) {
   /* C-04: iPhone notch / Dynamic Island */
   #app-header {
@@ -447,7 +447,7 @@
   .pb-sec button{width:36px;height:36px;font-size:16px}
 }
 
-/* C-05: Settings sheet pada desktop — anchored ke kanan bawah konten, bukan fixed ke viewport */
+/* C-05: Settings sheet pada desktop ΓÇö anchored ke kanan bawah konten, bukan fixed ke viewport */
 @media (min-width: 1024px) {
   .settings-sheet {
     position: absolute;
@@ -504,7 +504,7 @@
   .eq-bar:nth-child(10) { animation-duration: 1.1s; animation-delay: 0.2s; }
 }
 
-/* ══ IDLE STATE VIEW (HOME TAB) ══ */
+/* ΓòÉΓòÉ IDLE STATE VIEW (HOME TAB) ΓòÉΓòÉ */
 @media (min-width: 601px) {
   body[data-player-state="IDLE"] #tab-home,
   body[data-queue-empty="true"] #tab-home {

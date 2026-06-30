@@ -1,0 +1,144 @@
+/* ══ BAGAS.FM base.css v2 ══ */
+/* C-14: Google Fonts dipindah ke <link> di HTML head untuk non-blocking load */
+
+
+
+/* ── App Shell ── */
+#app {
+  width: 100%; height: 100dvh; height: 100vh;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column; overflow: hidden;
+  color: var(--text-1); font-family: var(--font);
+  font-size: var(--t-md); position: relative;
+}
+
+/* ── Header ── */
+#app-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: var(--s4) var(--s5) var(--s2);
+  flex-shrink: 0;
+  background: var(--bg-primary);
+}
+
+.fm-header-left { display: flex; flex-direction: column; gap: 1px; }
+
+.fm-greeting {
+  font-size: var(--t-xs);
+  color: var(--text-2);
+  font-weight: var(--w-regular);
+  letter-spacing: 0.2px;
+}
+
+.fm-title {
+  font-size: var(--t-xl);
+  font-weight: var(--w-bold);
+  color: var(--text-1);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+}
+
+.fm-hright { display: flex; align-items: center; gap: var(--s2); }
+
+.out-btn {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-full);
+  padding: 5px 12px;
+  color: var(--text-2);
+  font-size: var(--t-xs);
+  font-family: var(--font);
+  font-weight: var(--w-medium);
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  display: flex; align-items: center; gap: 4px;
+  transition: color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+}
+.out-btn:hover { color: var(--text-1); border-color: var(--border-3); }
+.out-btn.browser { color: var(--accent); border-color: var(--accent); }
+
+.status-dot {
+  width: 6px; height: 6px;
+  background: var(--green); border-radius: 50%; flex-shrink: 0;
+}
+.status-dot.offline { background: var(--red); }
+
+/* ── Content Area ── */
+#content-area { flex: 1; overflow-y: scroll; overflow-x: hidden; scrollbar-width: none; }
+#content-area::-webkit-scrollbar { display: none; }
+
+/* ── Responsive Helpers ── */
+
+
+
+/* ── Overlay ── */
+#main-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(9,10,13,0.65);
+  z-index: 200; backdrop-filter: blur(2px);
+}
+#main-overlay.open { display: block; }
+
+/* ── Spinner ── */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: fm-spin 0.7s linear infinite;
+}
+
+
+/* ── EQ Animation ── */
+.eq-anim-icon {
+  display: flex; align-items: flex-end;
+  justify-content: center; gap: 3px;
+  height: 16px; width: 24px;
+}
+.eq-anim-icon span {
+  display: block; width: 4px;
+  background: var(--accent); border-radius: 2px;
+  animation: eq-bounce 1s ease-in-out infinite alternate;
+}
+.eq-anim-icon span:nth-child(1) { animation-delay: 0.1s; height: 100%; }
+.eq-anim-icon span:nth-child(2) { animation-delay: 0.3s; height: 60%; }
+.eq-anim-icon span:nth-child(3) { animation-delay: 0.0s; height: 80%; }
+
+
+/* ── Section Label ── */
+.section-label {
+  font-size: var(--t-xs); font-weight: var(--w-semibold);
+  color: var(--text-2); letter-spacing: 0.6px;
+  padding: var(--s5) var(--s5) var(--s2);
+}
+
+.section-label-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: var(--s5) var(--s5) var(--s2);
+}
+.section-label-row .label-text {
+  font-size: var(--t-xs); font-weight: var(--w-semibold);
+  color: var(--text-2); letter-spacing: 0.6px;
+}
+.section-label-row .label-link {
+  font-size: var(--t-xs); color: var(--accent);
+  font-weight: var(--w-medium); cursor: pointer;
+  text-decoration: none;
+}
+
+/* SVG Icon overrides */
+.nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-btn:active svg {
+  transform: scale(0.92);
+}
+
+.btn-prev svg, .btn-next svg {
+  width: 22px;
+  height: 22px;
+}

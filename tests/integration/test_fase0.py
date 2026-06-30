@@ -74,7 +74,7 @@ class TestTask02RetryCountReset:
 
     def _make_controller(self):
         """Buat PlaybackController minimal dengan semua dependency di-mock."""
-        from engine.playback_controller import PlaybackController
+        from engine.playback import PlaybackController
         from core.state import AppState
 
         mock_bus = AsyncMock()
@@ -117,7 +117,7 @@ class TestTask02RetryCountReset:
     async def test_retry_count_reset_before_mpv_pause(self):
         """Reset harus terjadi di awal method (baris pertama)."""
         # Verifikasi struktural: baris pertama on_stop adalah reset
-        from engine.playback_controller import PlaybackController
+        from engine.playback import PlaybackController
         import inspect
         source = inspect.getsource(PlaybackController._on_stop)
         lines = [l.strip() for l in source.splitlines() if l.strip()]

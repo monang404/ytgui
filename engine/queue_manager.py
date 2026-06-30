@@ -10,7 +10,7 @@ from core.state import PlayerStatus
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from engine.playback_controller import PlaybackController
+    from engine.playback import PlaybackController
 
 class QueueMode:
     """

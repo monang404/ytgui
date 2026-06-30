@@ -17,7 +17,7 @@
 
 /* ── Home Header (inside tab) ── */
 .home-header {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   padding: var(--s4) var(--s5) var(--s3);
@@ -143,19 +143,7 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
   background: linear-gradient(to bottom, rgba(13, 15, 20, 0.4) 0%, rgba(13, 15, 20, 0.95) 55%, rgba(13, 15, 20, 1) 100%);
 }
 
-@keyframes ambientDrift {
-  0% {
-    transform: translate(-8px, -4px) scale(1.1);
-  }
 
-  50% {
-    transform: translate(8px, 4px) scale(1.15);
-  }
-
-  100% {
-    transform: translate(-4px, 8px) scale(1.1);
-  }
-}
 
 /* subtle gradient overlay di bawah artwork */
 .home-art-frame::after {
@@ -217,8 +205,8 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
   color: var(--text-3);
   font-size: 22px;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,7 +242,7 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
   padding-bottom: var(--s8);
 }
 
-.home-recent-item {
+.home-recent-item, .radio-queue-item {
   display: flex;
   align-items: center;
   gap: var(--s3);
@@ -263,15 +251,15 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
   transition: background var(--dur-fast) var(--ease);
 }
 
-.home-recent-item:hover {
+.home-recent-item:hover, .radio-queue-item:hover {
   background: var(--fm-color-hover);
 }
 
-.home-recent-item.current {
+.home-recent-item.current, .radio-queue-item.current {
   background: var(--accent-alpha);
 }
 
-.home-recent-thumb {
+.home-recent-thumb, .radio-queue-thumb {
   width: 46px;
   height: 46px;
   border-radius: 10px;
@@ -302,6 +290,7 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
 }
 
 .home-recent-item.current .thumb-eq-overlay,
+.radio-queue-item.current .thumb-eq-overlay,
 .sr-item.current .thumb-eq-overlay {
   opacity: 1;
 }
@@ -319,22 +308,23 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
 }
 
 .home-recent-item.playing .thumb-eq-overlay .eq-anim-icon span,
+.radio-queue-item.playing .thumb-eq-overlay .eq-anim-icon span,
 .sr-item.playing .thumb-eq-overlay .eq-anim-icon span {
   animation-play-state: running;
 }
 
-.home-recent-thumb img {
+.home-recent-thumb img, .radio-queue-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.home-recent-info {
+.home-recent-info, .radio-queue-info {
   flex: 1;
   min-width: 0;
 }
 
-.home-recent-title {
+.home-recent-title, .radio-queue-title {
   font-size: var(--t-md);
   font-weight: var(--w-medium);
   color: var(--text-1);
@@ -343,17 +333,21 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
   text-overflow: ellipsis;
 }
 
-.home-recent-item.current .home-recent-title {
+.home-recent-item.current .home-recent-title,
+.radio-queue-item.current .radio-queue-title {
   color: var(--accent);
 }
 
-.home-recent-artist {
+.home-recent-artist, .radio-queue-artist {
   font-size: var(--t-sm);
   color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin-top: 2px;
 }
 
-.home-recent-more {
+.home-recent-more, .radio-queue-more {
   background: none;
   border: none;
   color: var(--text-3);
@@ -407,6 +401,10 @@ body[data-player-state="PLAYING"] .ambient-bg-layer {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+body[data-has-lyrics="false"] .lyric-sync-ctrls {
+  display: none !important;
 }
 
 .lyric-sync-btn {
@@ -541,16 +539,109 @@ body[data-active-tab="home"] #player-bar {
   color: var(--accent) !important;
 }
 
-/* Radio queue items cursor & hover overrides (non-clickable) */
-#radio-queue-list .home-recent-item {
-  cursor: default;
+/* ── PLAYER BAR ── */
+#player-bar {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-1);
+  padding: var(--s3) var(--s5) var(--s4);
+  flex-shrink: 0;
+  position: relative;
 }
-#radio-queue-list .home-recent-item:hover {
-  background: transparent;
-}
-#radio-queue-list .home-recent-item.current:hover {
-  background: var(--accent-alpha);
-}.pb-progress-track { min-height: 44px; touch-action: none; }
 
-.pb-progress-track { min-height: 44px; touch-action: none; }
+
+
+.pb-row1 {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s2);
+}
+
+.pb-title {
+  font-size: var(--t-sm); font-weight: var(--w-medium);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 200px; color: var(--text-1);
+}
+
+.pb-badge {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: var(--r-full); flex-shrink: 0;
+  font-weight: var(--w-medium);
+  background: var(--accent-dark); color: var(--accent);
+}
+.pb-badge.queue { background: rgba(96,165,250,0.12); color: #60a5fa; }
+
+/* Progress bar */
+.pb-seek {
+  display: flex; align-items: center; gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.pb-time {
+  font-size: var(--t-xs); color: var(--text-3);
+  min-width: 32px; font-weight: var(--w-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.pb-track {
+  flex: 1; height: 3px;
+  background: rgba(255,255,255,0.10);
+  border-radius: var(--r-full); cursor: pointer;
+  position: relative; touch-action: none;
+}
+
+.pb-fill {
+  height: 100%; background: var(--accent);
+  border-radius: var(--r-full);
+}
+
+.pb-thumb {
+  position: absolute; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px; height: 13px;
+  background: var(--accent); border-radius: 50%;
+  cursor: grab; opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.pb-track:hover .pb-thumb { opacity: 1; }
+
+/* Badges SM */
+.pb-badge-sm {
+  font-size: 10px; padding: 2px 6px;
+  border-radius: var(--r-full); font-weight: var(--w-medium);
+}
+.pb-badge-sm.cached { background: rgba(34,197,94,0.12); color: var(--green); }
+.pb-badge-sm.stream { display: none !important; }
+.pb-badge-sm.sb     { display: none !important; }
+.pb-badge-sm.dl     { background: rgba(96,165,250,0.12); color: #60a5fa; }
+
+/* ── Mini player (non-home tabs) ── */
+
+
+/* FIX PROGRESS BAR THUMB - CENTERED */
+.pb-progress-track {
+  min-height: 44px;
+  touch-action: none;
+}
+
+.pb-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(242, 181, 68, 0.6);
+  z-index: 10;
+  transition: left 0.05s linear;
+  pointer-events: none;
+}
+
+.pb-track:hover .pb-thumb,
+body[data-active-tab="home"] .pb-track .pb-thumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
 

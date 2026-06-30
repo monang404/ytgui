@@ -20,7 +20,7 @@ from core.events import QueueUpdatedEvent, LogMessageEvent
 _RADIO_SEARCH_SEM = asyncio.Semaphore(4)
 
 if TYPE_CHECKING:
-    from engine.playback_controller import PlaybackController
+    from engine.playback import PlaybackController
 from core.state import AppState, PlaybackMode, PlayerStatus
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
@@ -83,6 +83,7 @@ class RadioMode:
         # Playlist cadangan — diisi di background, dipakai saat user klik
         self._standby: list = []
         self._standby_lock = asyncio.Lock()
+        self._prefetch_started = False
 
     # ── bootstrap ─────────────────────────────────────────────
 
@@ -305,11 +306,12 @@ class RadioMode:
         limit = max_artists * TRACKS_PER_ARTIST_TARGET
         existing = self._build_exclusion_set()
         
+        if not prioritized_artist and self._seed_artists:
+            prioritized_artist = random.choice(self._seed_artists)
+            
         if self.db and self.db.conn:
             try:
-                tracks = await self.db.get_random_songs(limit=limit, exclude_ids=existing)
-                # If prioritized_artist was requested, ideally we'd insert some of their songs here.
-                # Since we shifted to pure random DB, we just return random songs for now.
+                tracks = await self.db.get_random_songs(limit=limit, exclude_ids=existing, artist=prioritized_artist)
                 return tracks
             except Exception as e:
                 _log.warning(f"Gagal mengambil lagu acak dari DB: {e}")
@@ -322,3 +324,31 @@ class RadioMode:
         for t in list(self.state.history)[-20:]:
             ids.add(t.video_id)
         return ids
+
+    def check_prefetch(self, controller: "PlaybackController", position: float, duration: float) -> None:
+        """Trigger prefetch stream_url untuk lagu berikutnya jika waktu tersisa <= 30 detik."""
+        if duration > 0 and (duration - position) <= 30.0:
+            current_vid = self.state.current_track.video_id if self.state.current_track else None
+            if current_vid and getattr(self, '_last_prefetch_vid', None) != current_vid:
+                self._last_prefetch_vid = current_vid
+                _track_task(self._bg_tasks, self._prefetch_next(controller), name="radio_prefetch")
+
+    async def _prefetch_next(self, controller: "PlaybackController") -> None:
+        """Resolve stream_url untuk lagu pertama di radio_queue secara background."""
+        try:
+            # We want a timeout just in case it hangs
+            await asyncio.wait_for(self._do_prefetch(controller), timeout=25.0)
+        except Exception as e:
+            _log.warning(f"Prefetch next track gagal: {e}")
+
+    async def _do_prefetch(self, controller: "PlaybackController") -> None:
+        if not self.state.radio_queue:
+            return
+        next_track = self.state.radio_queue[0]
+        if next_track.stream_url:
+            return  # Sudah resolve
+        try:
+            await controller.track_loader.resolver.resolve(next_track)
+            _log.info(f"Berhasil prefetch stream_url untuk: {next_track.title}")
+        except Exception as e:
+            _log.warning(f"Error saat resolve stream_url prefetch: {e}")

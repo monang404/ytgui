@@ -1,95 +1,3 @@
-function renderNowPlaying() {
-    const t = store.current_track;
-
-    if (dom.vinylCover) {
-        if (t && t.video_id) {
-            dom.vinylCover.style.display = "none";
-            if (dom.vinylIcon) dom.vinylIcon.style.display = "block";
-            window.getCoverArt(t).then(url => {
-                if (url && store.current_track && store.current_track.video_id === t.video_id) {
-                    dom.vinylCover.src = url;
-                    dom.vinylCover.style.display = "block";
-                    if (dom.vinylIcon) dom.vinylIcon.style.display = "none";
-                    if (typeof window.extractDominantColor === "function" && dom.tabHome) {
-                        window.extractDominantColor(dom.vinylCover, (color) => {
-                            if (color && color.r !== undefined) {
-                                dom.tabHome.style.setProperty("--color-r", color.r);
-                                dom.tabHome.style.setProperty("--color-g", color.g);
-                                dom.tabHome.style.setProperty("--color-b", color.b);
-                            }
-                        });
-                    }
-                    if (dom.ambientBg1 && dom.ambientBg2) {
-                        const activeBg = dom.ambientBg1.classList.contains('active') ? dom.ambientBg1 : dom.ambientBg2;
-                        const inactiveBg = activeBg === dom.ambientBg1 ? dom.ambientBg2 : dom.ambientBg1;
-                        inactiveBg.style.backgroundImage = `url(${url})`;
-                        inactiveBg.classList.add('active');
-                        activeBg.classList.remove('active');
-                    }
-                }
-            });
-        } else {
-            dom.vinylCover.src = "";
-            dom.vinylCover.style.display = "none";
-            if (dom.vinylIcon) dom.vinylIcon.style.display = "block";
-        }
-    }
-
-    if (dom.npThumbIcon && dom.npEqAnim) {
-        if (store.status === "PLAYING") {
-            dom.npThumbIcon.style.display = "none";
-            dom.npEqAnim.style.display = "flex";
-            if (dom.vinylRecord) {
-                const isBrowser = store.userRole === "client" || store.audio_output === "browser";
-                dom.vinylRecord.classList.add(isBrowser ? "visualizer-active" : "playing");
-                dom.vinylRecord.classList.remove(isBrowser ? "playing" : "visualizer-active");
-            }
-        } else {
-            dom.npThumbIcon.style.display = "block";
-            dom.npEqAnim.style.display = "none";
-            if (dom.vinylRecord) {
-                dom.vinylRecord.classList.remove("playing");
-                dom.vinylRecord.classList.remove("visualizer-active");
-            }
-        }
-    }
-
-    if (dom.vinylRecord) {
-        if (store.status === "PLAYING") {
-            dom.vinylRecord.classList.add("playing");
-        } else {
-            dom.vinylRecord.classList.remove("playing");
-        }
-    }
-
-    if (store.status === "LOADING") {
-        dom.npTitle.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:8px; vertical-align:-3px; width:20px; height:20px;"></span> ⏳ Memuat...';
-        dom.npArtist.textContent = t ? t.title : "";
-    } else if (t) {
-        const cleanedTitle = typeof cleanTrackTitle === "function" ? cleanTrackTitle(t.title) : t.title;
-        dom.npTitle.textContent = cleanedTitle.toLowerCase().replace(/(?:^|\s|-)\S/g, function(a) { return a.toUpperCase(); });
-        dom.npArtist.textContent = t.artist;
-    } else {
-        dom.npTitle.textContent = "Belum ada lagu yang diputar";
-        dom.npArtist.textContent = "Cari lagu untuk memulai";
-    }
-
-    if (dom.npDurMeta && t) {
-        dom.npDurMeta.textContent = formatTime(t.duration);
-    } else if (dom.npDurMeta) {
-        dom.npDurMeta.textContent = '';
-    }
-
-    if (dom.btnFavorite) {
-        if (t && t.is_favorite) {
-            dom.btnFavorite.classList.add("active");
-        } else {
-            dom.btnFavorite.classList.remove("active");
-        }
-    }
-}
-
-
 function renderDiscoverTab() {
     if (dom.discFavorites && store.discover_favorites) {
         if (store.discover_favorites.length === 0) {
@@ -150,6 +58,43 @@ function renderDiscoverTab() {
         }
     }
 
+    if (dom.discArtists && store.discover_featured_artists) {
+        if (store.discover_featured_artists.length > 0) {
+            dom.discArtists.innerHTML = store.discover_featured_artists.map((artist, idx) => {
+                const name = typeof cleanTrackTitle === "function" ? escapeHtml(cleanTrackTitle(artist.nama)) : escapeHtml(artist.nama);
+                const hashtag = "#" + name.replace(/\s+/g, '');
+                
+                // Generasi gaya acak untuk Word Cloud
+                const hue = Math.floor(Math.random() * 360);
+                const saturation = 60 + Math.floor(Math.random() * 30);
+                const lightness = 50 + Math.floor(Math.random() * 20);
+                const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                // Algoritma: Ukuran dasar 14px. Membesar +2px tiap kali diklik (maks 28px)
+                const clicks = artist.click_count || 0;
+                const bonusSize = Math.min(clicks * 2, 14); // Max +14px
+                const fontSize = 14 + bonusSize; // 14px - 28px
+                
+                return `<div class="hashtag-pill" data-artist="${escapeHtml(artist.nama)}" style="color: ${color}; --base-size: ${fontSize}px;">${hashtag}</div>`;
+            }).join('');
+            
+            // Event delegation untuk hashtag click
+            dom.discArtists.onclick = (e) => {
+                const pill = e.target.closest('.hashtag-pill');
+                if (pill && pill.dataset.artist) {
+                    if (store.userRole !== 'admin') {
+                        if (typeof showLogToast === 'function') showLogToast("Hanya admin yang bisa memutar musik");
+                        return;
+                    }
+                    if (typeof showLogToast === 'function') showLogToast(`Memutar playlist dari ${pill.dataset.artist}...`);
+                    wsSend('enqueue_artist_songs', { artist: pill.dataset.artist });
+                    if (typeof switchTab === 'function') switchTab('home');
+                }
+            };
+        } else {
+            dom.discArtists.innerHTML = '';
+        }
+    }
+
     if (dom.discCached && store.discover_cached) {
         if (store.discover_cached.length === 0) {
             dom.discCached.innerHTML = '<div class="discover-empty"><i class="ti ti-box-off" style="font-size:32px; opacity:0.6; margin-bottom:12px; display:block;"></i>Tidak ada file tersimpan</div>';
@@ -193,6 +138,7 @@ function renderDiscoverTab() {
     updateDiscoverPlayingState();
 }
 
+
 function updateDiscoverPlayingState() {
     const currentId = store.current_track && store.current_track.video_id;
     const isPlaying = store.status === "PLAYING";
@@ -226,6 +172,7 @@ function updateDiscoverPlayingState() {
     }
 }
 
+
 function renderRadio() {
     const isRadio = store.playback_mode === 'RADIO';
 
@@ -242,161 +189,20 @@ function renderRadio() {
     }
 
     if (dom.rtSub) {
-        dom.rtSub.textContent = isRadio
-            ? 'Menyetel lagu otomatis...'
-            : 'Aktifkan untuk putar otomatis';
-    }
-
-
-}
-
-function renderQueue() {
-    document.body.dataset.queueEmpty = (store.queue.length === 0) ? "true" : "false";
-    const isRadio = store.playback_mode === "RADIO";
-    
-    // Render the manual queue in Queue Tab
-    renderList(dom.queueList, store.queue, false, store.playback_mode === "QUEUE");
-    
-    // Render the radio queue in Radio Tab
-    if (dom.radioQueueList) {
-        renderList(dom.radioQueueList, store.radio_queue, true, isRadio);
-    }
-
-    const modeStr = isRadio
-        ? '<span style="color:var(--fm-green)">RADIO</span>'
-        : '<span style="color:var(--fm-text-5)">QUEUE</span>';
-    if (dom.queueFooter) {
-        dom.queueFooter.innerHTML = "Mode: " + modeStr;
-    }
-}
-
-function renderList(container, items, isRadioList, isCurrentActiveMode) {
-    if (!container) return;
-    
-    const allItems = [];
-    if (isCurrentActiveMode && store.current_track) {
-        allItems.push({ track: store.current_track, index: -1, isCurrent: true });
-    }
-    items.forEach((track, i) => allItems.push({ track, index: i, isCurrent: false }));
-
-    if (allItems.length === 0) {
-        container.innerHTML = '<div class="queue-empty">' + (isRadioList ? "Tekan 'Acak Ulang' untuk memulai radio" : "Cari lagu atau putar dari Discover") + '</div>';
-    } else {
-        const existing = Array.from(container.children);
-        if (existing.length === 1 && existing[0].classList.contains('queue-empty')) {
-            existing[0].remove();
-            existing.shift();
-        }
-
-        allItems.forEach((item, i) => {
-            let el = existing[i];
-            if (!el) {
-                el = createQueueItemTemplate(isRadioList);
-                container.appendChild(el);
-            }
-            updateQueueItem(el, item.track, item.index, item.isCurrent, isRadioList);
-        });
-
-        while (container.children.length > allItems.length) {
-            container.removeChild(container.lastChild);
-        }
-        
-        if (isRadioList && typeof window.loadLazyCovers === "function") {
-            window.loadLazyCovers();
-        }
-    }
-}
-
-function createQueueItemTemplate(isRadio) {
-    const div = document.createElement("div");
-    if (isRadio) {
-        div.className = "home-recent-item";
-        div.innerHTML = `
-            <div class="home-recent-thumb">
-                <img class="lazy-cover" src="" alt="">
-                <div class="thumb-eq-overlay">
-                    <div class="eq-anim-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            </div>
-            <div class="home-recent-info">
-                <div class="home-recent-title"></div>
-                <div class="home-recent-artist"></div>
-            </div>
-        `;
-    } else {
-        div.className = "queue-item";
-        div.innerHTML = `
-            <span class="qi-drag" aria-hidden="true">⠿</span>
-            <span class="qi-index"></span>
-            <div class="qi-info">
-                <div class="qi-title"></div>
-                <div class="qi-dur"></div>
-            </div>
-            <button class="qi-remove">✕</button>
-        `;
-    }
-    return div;
-}
-
-function updateQueueItem(div, track, index, isCurrent, isRadio) {
-    if (isRadio) {
-        div.className = "home-recent-item" + (isCurrent ? " current" : "") + (isCurrent && store.status === "PLAYING" ? " playing" : "");
-        div.dataset.vid = track.video_id || '';
-        
-        const titleEl = div.querySelector(".home-recent-title");
-        const artistEl = div.querySelector(".home-recent-artist");
-        
-        const title = typeof cleanTrackTitle === "function" ? escapeHtml(cleanTrackTitle(track.title)) : escapeHtml(track.title);
-        if (titleEl) titleEl.textContent = title;
-        if (artistEl) artistEl.textContent = (track.artist || '') + " · " + formatTime(track.duration);
-        
-        const img = div.querySelector(".lazy-cover");
-        if (img) {
-            // Only update datasets and reset cover if track changed to avoid disappear/flicker bug
-            if (img.dataset.vid !== (track.video_id || '')) {
-                img.dataset.vid = track.video_id || '';
-                img.dataset.title = track.title || '';
-                img.dataset.artist = track.artist || '';
-                img.dataset.thumb = track.thumbnail || '';
-                img.src = '';
-                img.classList.remove('loaded');
-            }
-        }
-    } else {
-        div.className = "queue-item" + (isCurrent ? " current" : "");
-        if (!isCurrent) {
-            div.dataset.index = index;
-            div.setAttribute('draggable', 'true');
-        } else {
-            div.removeAttribute("data-index");
-            div.removeAttribute('draggable');
-        }
-        
-        if (isCurrent) {
-            if (store.status === "PLAYING") {
-                div.querySelector(".qi-index").innerHTML = `<div class="eq-anim-icon" style="height:12px; width:14px; gap:2px;"><span style="width:3px; background: currentColor;"></span><span style="width:3px; background: currentColor;"></span><span style="width:3px; background: currentColor;"></span></div>`;
+        if (isRadio) {
+            if (store.status === "LOADING") {
+                dom.rtSub.textContent = "Mencari stasiun...";
             } else {
-                div.querySelector(".qi-index").textContent = "▶";
+                dom.rtSub.textContent = "24/7 Nonstop Music";
             }
         } else {
-            div.querySelector(".qi-index").textContent = index + 1;
-        }
-        div.querySelector(".qi-title").textContent = track.title;
-        div.querySelector(".qi-dur").textContent = track.artist + " · " + formatTime(track.duration);
-        
-        const rmBtn = div.querySelector(".qi-remove");
-        if (isCurrent) {
-            rmBtn.style.display = "none";
-        } else {
-            rmBtn.style.display = "block";
-            rmBtn.dataset.index = index;
+            dom.rtSub.textContent = "Aktifkan untuk putar otomatis";
         }
     }
+
+
 }
+
 
 function renderRecentRow() {
     const container = document.getElementById('home-recent-list');

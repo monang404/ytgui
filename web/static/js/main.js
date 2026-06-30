@@ -43,19 +43,6 @@
     document.addEventListener("DOMContentLoaded", init);
 })();
 
-// ── Visual Viewport Handler (Mobile Keyboard) ──
-// Mencegah layout terdorong saat keyboard virtual muncul di iOS/Android
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-        const app = document.getElementById('app');
-        if (app) {
-            app.style.height = window.visualViewport.height + 'px';
-            document.documentElement.style.setProperty("--sat", "env(safe-area-inset-top)");
-            document.documentElement.style.setProperty("--sab", "env(safe-area-inset-bottom)");
-            document.documentElement.style.setProperty("--sab", "env(safe-area-inset-bottom)");
-        }
-    });
-}
 
 // ── Service Worker Registration — Phase 6 ──
 // DISABLED selama development — biar nggak ke-cache stale.
@@ -68,23 +55,3 @@ if (window.visualViewport) {
 //     });
 // }
     
-// Mobile Swipe for Next/Prev
-let touchStartX = 0;
-document.addEventListener('touchstart', e => {
-    if (e.touches.length === 1) touchStartX = e.touches[0].screenX;
-});
-document.addEventListener('touchend', e => {
-    // FIX BUG-2: jangan intercept tap pada elemen yang punya handler sendiri.
-    // Tanpa guard ini, tap singkat di radio-toggle-btn atau button lain bisa
-    // terbaca sebagai swipe (delta X < 80 tapi handler tetap konsumsi event).
-    if (e.target.closest(
-        "#radio-toggle-btn, button, a, input, select, textarea, [role=\"button\"]"
-    )) return;
-    if (e.changedTouches.length === 1) {
-        const touchEndX = e.changedTouches[0].screenX;
-        if (Math.abs(touchEndX - touchStartX) > 80) {
-            if (touchEndX < touchStartX) cmd('next');
-            else cmd('prev');
-        }
-    }
-});

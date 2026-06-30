@@ -18,6 +18,7 @@ from cache.resolver import CacheResolver
 from engine.queue_manager import QueueMode
 from engine.radio_engine import RadioMode
 from core.task_utils import safe_create_task
+from engine.playback.track_loader import TrackLoader
 
 logger = structlog.get_logger(__name__)
 
@@ -39,20 +40,17 @@ class PlaybackController:
         self.state = state
         self.mpv = mpv
         self.resolver = resolver
-        self.sponsorblock = sponsorblock
-        self.lyrics_fetcher = lyrics_fetcher
         self.queue_mode = queue_mode
         self.radio_mode = radio_mode
+        self.track_loader = TrackLoader(resolver, sponsorblock, lyrics_fetcher)
 
         self._lock = asyncio.Lock()
         self._play_lock = asyncio.Lock()  # A-05: proteksi race condition di play_track
         self._retry_count = 0
 
-        # Subscribe
         # Subscribe events
         self.bus.subscribe(TrackEndedEvent, self._on_track_ended)
         self.bus.subscribe(TrackProgressEvent, self._on_track_progress)
-
         self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
         self.bus.subscribe(TrackDurationEvent, self._on_track_duration)
 
@@ -79,17 +77,14 @@ class PlaybackController:
             self.state.lyrics_index = 0
 
             try:
-                # Resolve URI
-                uri = await self.resolver.resolve(track)
+                # Load track (resolve URI, fetch lyrics/sponsorblock, increment play count)
+                uri = await self.track_loader.load_track(track)
 
                 # Play
                 await self.mpv.play(uri)
 
                 if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
                     # BACKEND-FIX-01: Pastikan mpv silent di browser mode.
-                    # Bug sebelumnya: volume TIDAK di-set 0 di sini — hanya di _on_set_output.
-                    # Akibat: jika radio start fresh (server restart atau room baru),
-                    # _on_set_output belum pernah dipanggil → mpv bunyi dari speaker Termux/HP.
                     await self.mpv.set_volume(0)
                     await self.bus.publish(LogMessageEvent(message="Audio output is browser, mpv silent (volume=0).", room_id=self.room_id))
                 else:
@@ -104,13 +99,6 @@ class PlaybackController:
                 # Fetch duration actively if not available
                 if self.state.duration == 0:
                     safe_create_task(self._poll_duration(track), name="poll_duration")
-
-                # C-02: Increment play count for favorites
-                await self.resolver.db.increment_play_count(track.video_id)
-
-                # Fetch sponsorblock and lyrics
-                safe_create_task(self.sponsorblock.fetch_segments(track.video_id), name="fetch_sponsorblock")
-                safe_create_task(self.lyrics_fetcher.fetch(track), name="fetch_lyrics")
 
             except Exception as e:
                 logger.error(f"Failed to play track {track.title}: {e}", exc_info=True)
@@ -189,6 +177,8 @@ class PlaybackController:
 
     async def _on_track_progress(self, event: TrackProgressEvent):
         self.state.position = event.position
+        if self.state.playback_mode == PlaybackMode.RADIO:
+            self.radio_mode.check_prefetch(self, self.state.position, self.state.duration)
 
     async def _on_cmd_toggle_pause(self, _data=None):
         if self.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED):

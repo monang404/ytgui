@@ -1,0 +1,44 @@
+/* ── Lyrics Header + Offset Controls ── */
+.lyric-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 0;
+}
+
+.lyric-offset-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fm-text-5);
+}
+
+.offset-btn {
+  background: var(--bg-elevated);
+  border: none;
+  color: var(--fm-text-4);
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--fm-transition-fast);
+}
+
+.offset-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+#lyric-offset-display {
+  min-width: 38px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--fm-text-4);
+}

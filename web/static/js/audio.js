@@ -47,15 +47,19 @@ function startFakeBeatLoop() {
     const BASE_INTERVAL = 500;
     let lastBeat = 0;
     function tick(ts) {
-        _fakeBeatRaf = requestAnimationFrame(tick);
         if (store.status !== 'PLAYING') {
             if (dom.tabHome) {
                 dom.tabHome.style.removeProperty('--beat-glow-opacity');
                 dom.tabHome.style.removeProperty('--beat-bg-brightness');
                 dom.tabHome.style.removeProperty('--beat-glow-transition');
             }
+            if (_fakeBeatRaf) {
+                cancelAnimationFrame(_fakeBeatRaf);
+                _fakeBeatRaf = null;
+            }
             return;
         }
+        _fakeBeatRaf = requestAnimationFrame(tick);
         const elapsed = ts - lastBeat;
         if (elapsed < BASE_INTERVAL) return;
         lastBeat = ts;
@@ -109,6 +113,7 @@ async function _resumeAndPlay(audio) {
     try {
         await audio.play();
         console.log("[audio] play() OK");
+        startFakeBeatLoop();
     } catch (e) {
         console.warn("[audio] play() blocked:", e.name, e.message);
     }
@@ -264,5 +269,4 @@ function syncBrowserAudio() {
 
 function initAudio() {
     document.addEventListener("click", unlockBrowserAudio);
-    document.addEventListener("touchstart", unlockBrowserAudio, { passive: true });
 }

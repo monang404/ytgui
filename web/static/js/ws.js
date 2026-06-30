@@ -153,6 +153,7 @@ function handleServerMessage(msg) {
             if (statusChanged) {
                 if (typeof renderNowPlaying === "function") renderNowPlaying();
                 if (typeof renderQueue === "function") renderQueue();
+                if (typeof renderRadio === "function") renderRadio();
                 if (typeof updateSearchPlayingState === "function") updateSearchPlayingState();
                 if (typeof updateDiscoverPlayingState === "function") updateDiscoverPlayingState();
             }
@@ -175,6 +176,7 @@ function handleServerMessage(msg) {
             store.discover_recent = msg.data.recent || [];
             store.discover_favorites = msg.data.favorites || [];
             store.discover_cached   = msg.data.cached_tracks || [];
+            store.discover_featured_artists = msg.data.featured_artists || [];
             renderDiscoverTab();
             renderRecentRow();
             break;

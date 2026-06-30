@@ -71,9 +71,25 @@
 /* Active dot (removed) */
 .nav-btn.active::after {
   display: none;
-}@media (max-width: 480px) {
-    .discover-section, .fav-card, .sr-item { flex: 1 1 100%; min-width: 0; }
 }
-@media (max-width: 480px) {
-    .discover-section, .fav-card, .sr-item { flex: 1 1 100%; min-width: 0; }
+
+.disc-row2 {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--s3);
+  padding-bottom: var(--s2);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.disc-row2::-webkit-scrollbar {
+  display: none;
+}
+
+
+
+
+/* ─── Safe Area Insets (iPhone notch / Android nav bar) ─── */
+
+
+
+

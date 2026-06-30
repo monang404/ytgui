@@ -96,6 +96,7 @@ function initDOM() {
         logToast: $("log-toast"),
         discFavorites: $("discover-favorites"),
         discRecent: $("discover-recent"),
-        discCached: $("discover-cached")
+        discCached: $("discover-cached"),
+        discArtists: $("discover-artists")
     });
 }
