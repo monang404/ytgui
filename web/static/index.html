@@ -82,12 +82,7 @@
 
             <!-- Tab: Now Playing -->
             <section id="tab-home" class="tab-panel full-player-view">
-                <!-- Ambient Backgrounds -->
-                <div class="ambient-bg-container" id="ambient-bg-wrap">
-                    <div id="ambient-bg-1" class="ambient-bg-layer active"></div>
-                    <div id="ambient-bg-2" class="ambient-bg-layer"></div>
-                    <div class="ambient-bg-overlay"></div>
-                </div>
+
 
 
                 <!-- ══ Hidden DOM — JANGAN HAPUS, dipakai renderNowPlaying() ══ -->
@@ -328,6 +323,16 @@
                     <div class="hashtag-pill skeleton-box" style="width:60px; height:24px; border-radius:12px;"></div>
                     <div class="hashtag-pill skeleton-box" style="width:100px; height:24px; border-radius:12px;"></div>
                     <div class="hashtag-pill skeleton-box" style="width:80px; height:24px; border-radius:12px;"></div>
+                </div>
+
+                <!-- Genre (Featured Genres) -->
+                <div class="section-label-row">
+                    <span class="label-text">Jelajahi Genre</span>
+                </div>
+                <div id="discover-genres" class="hashtag-cloud-container">
+                    <div class="hashtag-pill skeleton-box" style="width:70px; height:24px; border-radius:12px;"></div>
+                    <div class="hashtag-pill skeleton-box" style="width:50px; height:24px; border-radius:12px;"></div>
+                    <div class="hashtag-pill skeleton-box" style="width:90px; height:24px; border-radius:12px;"></div>
                 </div>
 
 
@@ -611,7 +616,7 @@
     <script src="/static/js/render/player.js" defer></script>
     <script src="/static/js/render/now-playing.js" defer></script>
     <script src="/static/js/render/queue.js?v=3" defer></script>
-    <script src="/static/js/render/discover.js?v=5" defer></script>
+    <script src="/static/js/render/discover.js?v=6" defer></script>
     <script src="/static/js/render/favorites.js" defer></script>
     <script src="/static/js/render/lyrics.js" defer></script>
     <script src="/static/js/render/search.js" defer></script>

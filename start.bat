@@ -64,9 +64,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo  [*] Cleaning Up Previous Sessions...
 taskkill /F /IM mpv.exe > nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr /R ":%YTGUI_PORT% " 2^>nul') do (
-    taskkill /F /PID %%a > nul 2>&1
-)
+powershell -Command "Get-Process -Id (Get-NetTCPConnection -LocalPort %YTGUI_PORT% -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force" > nul 2>&1
 
 :: ----------------------------------------------------------
 ::  ADMIN ACCESS INFO

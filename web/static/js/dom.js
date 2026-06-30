@@ -29,8 +29,6 @@ function initDOM() {
         vinylRecord: $("vinyl-record"),
         vinylCover: $("vinyl-cover"),
         vinylIcon: $("vinyl-icon"),
-        ambientBg1: $("ambient-bg-1"),
-        ambientBg2: $("ambient-bg-2"),
         lyricsWrap: $("lyrics-wrap"),
         lyricsTextContainer: $("lyrics-text-container"),
         homeEqualizer: $("home-equalizer"),
@@ -97,6 +95,7 @@ function initDOM() {
         discFavorites: $("discover-favorites"),
         discRecent: $("discover-recent"),
         discCached: $("discover-cached"),
-        discArtists: $("discover-artists")
+        discArtists: $("discover-artists"),
+        discGenres: $("discover-genres")
     });
 }

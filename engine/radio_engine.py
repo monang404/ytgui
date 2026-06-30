@@ -111,7 +111,7 @@ class RadioMode:
             await self._ensure_artists_loaded()
         except RuntimeError as e:
             await controller.bus.publish(LogMessageEvent(
-                message=f"Radio: {e}", room_id=controller.room_id
+                message=f"Radio: {e}"
             ))
             return
         self.state.radio_queue.clear()
@@ -158,7 +158,7 @@ class RadioMode:
             # Langsung pakai standby
             self.state.radio_queue.clear()
             self.state.radio_queue.extend(tracks[1:])
-            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+            await controller.bus.publish(QueueUpdatedEvent())
             await controller.play_track(tracks[0])
             # Siapkan standby berikutnya di background
             _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
@@ -172,9 +172,9 @@ class RadioMode:
             )
         except RuntimeError as e:
             # DB artists kosong — kirim pesan jelas ke frontend
-            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+            await controller.bus.publish(QueueUpdatedEvent())
             await controller.bus.publish(LogMessageEvent(
-                message=f"Radio: {e}", room_id=controller.room_id
+                message=f"Radio: {e}"
             ))
             return
         except (asyncio.TimeoutError, Exception):
@@ -183,15 +183,15 @@ class RadioMode:
         if quick_tracks:
             self.state.radio_queue.clear()
             self.state.radio_queue.extend(quick_tracks[1:])
-            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+            await controller.bus.publish(QueueUpdatedEvent())
             await controller.play_track(quick_tracks[0])
             # Background: fetch sisa artis dan masukkan ke queue + siapkan standby
             _track_task(self._bg_tasks, self._backfill_and_standby(controller), name="radio_backfill")
         else:
             # Broadcast state ulang agar frontend tidak stuck di "loading" tanpa info
-            await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+            await controller.bus.publish(QueueUpdatedEvent())
             await controller.bus.publish(LogMessageEvent(
-                message="Radio: Tidak ada hasil ditemukan.", room_id=controller.room_id
+                message="Radio: Tidak ada hasil ditemukan."
             ))
 
     async def _backfill_and_standby(self, controller: "PlaybackController") -> None:
@@ -209,7 +209,7 @@ class RadioMode:
                     self.state.radio_queue.extend(extra)
                     while len(self.state.radio_queue) > 30:
                         self.state.radio_queue.pop()
-                    await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+                    await controller.bus.publish(QueueUpdatedEvent())
             except Exception as e:
                 _log.warning(f"Radio backfill gagal: {e}")
 
@@ -259,7 +259,7 @@ class RadioMode:
             self._standby = []  # buang standby lama, minta yang fresh
 
         await controller.bus.publish(LogMessageEvent(
-            message="Mengacak playlist radio...", room_id=controller.room_id
+            message="Mengacak playlist radio..."
         ))
 
         try:
@@ -272,12 +272,12 @@ class RadioMode:
             )
         except RuntimeError as e:
             await controller.bus.publish(LogMessageEvent(
-                message=f"Radio: {e}", room_id=controller.room_id
+                message=f"Radio: {e}"
             ))
             return
         except asyncio.TimeoutError:
             await controller.bus.publish(LogMessageEvent(
-                message="Radio: Timeout saat mengambil lagu. Coba lagi.", room_id=controller.room_id
+                message="Radio: Timeout saat mengambil lagu. Coba lagi."
             ))
             return
         except Exception as e:
@@ -286,13 +286,13 @@ class RadioMode:
 
         if not tracks:
             await controller.bus.publish(LogMessageEvent(
-                message="Radio: Tidak ada hasil ditemukan.", room_id=controller.room_id
+                message="Radio: Tidak ada hasil ditemukan."
             ))
             return
 
         self.state.radio_queue.clear()
         self.state.radio_queue.extend(tracks[1:])
-        await controller.bus.publish(QueueUpdatedEvent(room_id=controller.room_id))
+        await controller.bus.publish(QueueUpdatedEvent())
         await controller.play_track(tracks[0])
 
         # Siapkan standby berikutnya di background untuk auto-refill

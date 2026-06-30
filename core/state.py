@@ -41,9 +41,6 @@ class TrackInfo:
 
 @dataclass
 class AppState:
-    # Room Identifier
-    room_id:         str = "default"
-
     # Playback
     status:          PlayerStatus  = PlayerStatus.IDLE
     playback_mode:   PlaybackMode  = PlaybackMode.QUEUE

@@ -75,7 +75,7 @@ class EventBus:
         event_type = type(event)
         
         # Record Metric
-        EVENT_COUNT.labels(event_type=event_type.__name__, room_id=event.room_id).inc()
+        EVENT_COUNT.labels(event_type=event_type.__name__).inc()
         
         active_handlers = []
         for ref in list(self._subscribers[event_type]):

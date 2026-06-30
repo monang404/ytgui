@@ -237,7 +237,7 @@ class MpvController:
                     import asyncio as _aio
                     try:
                         loop = _aio.get_running_loop()
-                        loop.create_task(self._bus.publish(TrackEndedEvent(reason="error", room_id=self._room_id)))
+                        loop.create_task(self._bus.publish(TrackEndedEvent(reason="error")))
                     except RuntimeError:
                         pass
 
@@ -253,16 +253,16 @@ class MpvController:
             name = msg.get("name")
             data = msg.get("data")
             if name == "time-pos" and isinstance(data, (int, float)):
-                await self._bus.publish(TrackProgressEvent(position=float(data), room_id=self._room_id))
+                await self._bus.publish(TrackProgressEvent(position=float(data)))
             elif name == "pause":
-                await self._bus.publish(TrackPauseChangedEvent(is_paused=bool(data), room_id=self._room_id))
+                await self._bus.publish(TrackPauseChangedEvent(is_paused=bool(data)))
             elif name == "duration" and isinstance(data, (int, float)):
                 from core.events import TrackDurationEvent
-                await self._bus.publish(TrackDurationEvent(duration=float(data), room_id=self._room_id))
+                await self._bus.publish(TrackDurationEvent(duration=float(data)))
         elif event == "end-file":
             reason = msg.get("reason", "")
             if reason in ("eof", "stop", "error"):
-                await self._bus.publish(TrackEndedEvent(reason=reason, room_id=self._room_id))
+                await self._bus.publish(TrackEndedEvent(reason=reason))
 
     async def _command(self, cmd: list) -> int:
         if not self.is_connected or not self._writer:

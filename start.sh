@@ -95,6 +95,12 @@ if command -v fuser &> /dev/null; then
     fuser -k ${YTGUI_PORT}/tcp > /dev/null 2>&1
 elif command -v lsof &> /dev/null; then
     lsof -ti tcp:${YTGUI_PORT} | xargs kill -9 > /dev/null 2>&1
+else
+    if command -v ss &> /dev/null; then
+        ss -lptn "sport = :${YTGUI_PORT}" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | xargs -r kill -9 > /dev/null 2>&1
+    elif command -v netstat &> /dev/null; then
+        netstat -nlp 2>/dev/null | grep ":${YTGUI_PORT} " | awk '{print $7}' | cut -d'/' -f1 | xargs -r kill -9 > /dev/null 2>&1
+    fi
 fi
 
 # ----------------------------------------------------------

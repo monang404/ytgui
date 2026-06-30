@@ -14,16 +14,17 @@ from server.handlers.http import serve_index, health_check, serve_stream, serve_
 from server.handlers.websocket import ws_handler, ConnectionManager
 from config import CACHE_DIR, STREAM_URL_TTL_SEC
 from core.ports import MediaExtractorPort, DatabasePort
-from core.room_manager import RoomManager
+from engine.playback.controller import PlaybackController
 
 logger = structlog.get_logger(__name__)
 STATIC_DIR = Path(__file__).parent.parent / "web" / "static"
 
-def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: DatabasePort) -> web.Application:
+def create_app(playback_controller: PlaybackController, ytdlp: MediaExtractorPort, db: DatabasePort) -> web.Application:
     app = web.Application()
     manager = ConnectionManager()
 
-    app["room_manager"] = room_manager
+    app["playback_controller"] = playback_controller
+    app["state"] = playback_controller.state
     app["ytdlp"] = ytdlp
     app["db"] = db
     app["manager"] = manager
@@ -36,7 +37,7 @@ def create_app(room_manager: RoomManager, ytdlp: MediaExtractorPort, db: Databas
 
     prefetch_service = StreamPrefetchService(db, ytdlp)
     broadcast_service = BroadcastService(manager)
-    setup_event_listeners(room_manager, prefetch_service, broadcast_service)
+    setup_event_listeners(playback_controller, prefetch_service, broadcast_service)
 
     app.router.add_get("/", serve_index)
     app.router.add_get("/admin", serve_index)

@@ -7,13 +7,13 @@ class BroadcastService:
     def __init__(self, manager: ConnectionManager):
         self.manager = manager
 
-    async def broadcast_state(self, state: AppState, room_id: str):
+    async def broadcast_state(self, state: AppState):
         await self.manager.broadcast({
             "type": "state",
             "data": state_to_dict(state),
-        }, room_id=room_id)
+        })
 
-    async def broadcast_progress(self, position: float, status_name: str, room_id: str):
+    async def broadcast_progress(self, position: float, status_name: str):
         await self.manager.broadcast({
             "type": "progress",
             "data": {
@@ -21,9 +21,9 @@ class BroadcastService:
                 "status": status_name,
                 "server_ts": time.time(),
             },
-        }, room_id=room_id)
+        })
 
-    async def broadcast_lyrics(self, state: AppState, room_id: str):
+    async def broadcast_lyrics(self, state: AppState):
         await self.manager.broadcast({
             "type": "lyrics",
             "data": {
@@ -33,10 +33,10 @@ class BroadcastService:
                 "lyrics_offset": state.lyrics_offset,
                 "lyrics_loading": getattr(state, "lyrics_loading", False),
             },
-        }, room_id=room_id)
+        })
 
-    async def broadcast_log(self, message: str, room_id: str):
+    async def broadcast_log(self, message: str):
         await self.manager.broadcast({
             "type": "log",
             "data": message,
-        }, room_id=room_id)
+        })

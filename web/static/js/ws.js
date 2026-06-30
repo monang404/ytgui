@@ -84,6 +84,10 @@ function wsSend(action, data) {
 function handleServerMessage(msg) {
     switch (msg.type) {
         case "auth_status":
+            if (dom.adminSubmitBtn) {
+                dom.adminSubmitBtn.disabled = false;
+                dom.adminSubmitBtn.textContent = "Login Admin";
+            }
             if (msg.data.success) {
                 store.userRole = "admin";
                 localStorage.setItem("ytgui_user_role", "admin");
@@ -177,6 +181,7 @@ function handleServerMessage(msg) {
             store.discover_favorites = msg.data.favorites || [];
             store.discover_cached   = msg.data.cached_tracks || [];
             store.discover_featured_artists = msg.data.featured_artists || [];
+            store.discover_featured_genres = msg.data.featured_genres || [];
             renderDiscoverTab();
             renderRecentRow();
             break;

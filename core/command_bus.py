@@ -25,7 +25,7 @@ class CommandBus:
         if command in self._handlers:
             del self._handlers[command]
 
-    async def execute(self, command: str, room_id: str = "default", data: Any = None) -> Any:
+    async def execute(self, command: str, data: Any = None) -> Any:
         if command not in self._handlers:
             raise RuntimeError(f"No handler registered for command '{command}'")
         
@@ -34,13 +34,12 @@ class CommandBus:
         status = "success"
         
         with tracer.start_as_current_span(f"CommandBus.execute:{command}") as span:
-            span.set_attribute("room_id", room_id)
             span.set_attribute("command", command)
             try:
                 if asyncio.iscoroutinefunction(handler):
-                    return await handler(room_id, data)
+                    return await handler(data)
                 else:
-                    return handler(room_id, data)
+                    return handler(data)
             except Exception as e:
                 status = "error"
                 span.record_exception(e)
@@ -48,8 +47,8 @@ class CommandBus:
                 raise
             finally:
                 duration = time.perf_counter() - start_time
-                COMMAND_LATENCY.labels(command_name=command, room_id=room_id).observe(duration)
-                COMMAND_COUNT.labels(command_name=command, room_id=room_id, status=status).inc()
+                COMMAND_LATENCY.labels(command_name=command).observe(duration)
+                COMMAND_COUNT.labels(command_name=command, status=status).inc()
 
 command_bus = CommandBus()
 

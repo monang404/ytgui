@@ -95,6 +95,44 @@ function renderDiscoverTab() {
         }
     }
 
+    if (dom.discGenres && store.discover_featured_genres) {
+        if (store.discover_featured_genres.length > 0) {
+            dom.discGenres.innerHTML = store.discover_featured_genres.map((genre, idx) => {
+                const name = typeof cleanTrackTitle === "function" ? escapeHtml(cleanTrackTitle(genre.nama_genre)) : escapeHtml(genre.nama_genre);
+                const hashtag = "#" + name.replace(/\s+/g, '');
+                
+                // Generasi gaya acak untuk Word Cloud
+                const hue = Math.floor(Math.random() * 360);
+                const saturation = 60 + Math.floor(Math.random() * 30);
+                const lightness = 50 + Math.floor(Math.random() * 20);
+                const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                
+                // Algoritma: Ukuran dasar 14px. Membesar +2px tiap kali diklik (maks 28px)
+                const clicks = genre.click_count || 0;
+                const bonusSize = Math.min(clicks * 2, 14); // Max +14px
+                const fontSize = 14 + bonusSize; // 14px - 28px
+                
+                return `<div class="hashtag-pill" data-genre="${escapeHtml(genre.nama_genre)}" style="color: ${color}; --base-size: ${fontSize}px;">${hashtag}</div>`;
+            }).join('');
+            
+            // Event delegation untuk hashtag click
+            dom.discGenres.onclick = (e) => {
+                const pill = e.target.closest('.hashtag-pill');
+                if (pill && pill.dataset.genre) {
+                    if (store.userRole !== 'admin') {
+                        if (typeof showLogToast === 'function') showLogToast("Hanya admin yang bisa memutar musik");
+                        return;
+                    }
+                    if (typeof showLogToast === 'function') showLogToast(`Memutar playlist dari genre ${pill.dataset.genre}...`);
+                    wsSend('enqueue_genre_songs', { genre: pill.dataset.genre });
+                    if (typeof switchTab === 'function') switchTab('home');
+                }
+            };
+        } else {
+            dom.discGenres.innerHTML = '';
+        }
+    }
+
     if (dom.discCached && store.discover_cached) {
         if (store.discover_cached.length === 0) {
             dom.discCached.innerHTML = '<div class="discover-empty"><i class="ti ti-box-off" style="font-size:32px; opacity:0.6; margin-bottom:12px; display:block;"></i>Tidak ada file tersimpan</div>';

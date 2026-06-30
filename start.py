@@ -50,6 +50,33 @@ class ServerManager(tk.Tk):
         self._build_ui()
         self._run_dependency_check()
         self._refresh_status()
+        self._check_first_run()
+
+    def _check_first_run(self):
+        password_file = BASE_DIR / "cache" / "admin_password.txt"
+        if not password_file.exists():
+            # Generate new password if not exists
+            try:
+                try:
+                    from core.security import hash_password
+                except ImportError:
+                    import hashlib
+                    import base64
+                    def hash_password(password: str) -> str:
+                        salt = secrets.token_bytes(16)
+                        key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+                        return f"pbkdf2:sha256:100000${base64.b64encode(salt).decode('utf-8')}${base64.b64encode(key).decode('utf-8')}"
+                
+                raw_password = secrets.token_urlsafe(12)
+                hashed_password = hash_password(raw_password)
+                
+                password_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(password_file, "w", encoding="utf-8") as f:
+                    f.write(hashed_password)
+                    
+                self.after(500, lambda: self._show_new_password_dialog(raw_password, is_first_run=True))
+            except Exception as e:
+                pass
 
     # ── Window setup ──────────────────────────────────────
     def _build_window(self):
@@ -321,14 +348,14 @@ class ServerManager(tk.Tk):
     def _get_pid_occupying_port(self, port: int) -> int | None:
         if sys.platform == "win32":
             try:
-                output = subprocess.check_output('netstat -a -n -o', shell=True, text=True)
+                output = subprocess.check_output('netstat -aon', shell=True, text=True)
                 for line in output.splitlines():
-                    if "LISTENING" in line:
+                    if "TCP" in line.upper():
                         parts = line.strip().split()
                         if len(parts) >= 5:
                             local_addr = parts[1]
                             pid = parts[-1]
-                            if local_addr.endswith(f":{port}") or local_addr.endswith(f"]:{port}"):
+                            if (local_addr.endswith(f":{port}") or local_addr.endswith(f"]:{port}")) and pid.isdigit() and pid != "0":
                                 return int(pid)
             except Exception:
                 pass
@@ -345,7 +372,14 @@ class ServerManager(tk.Tk):
                     if parts:
                         return int(parts[-1])
                 except Exception:
-                    pass
+                    try:
+                        output = subprocess.check_output(f'ss -lptn "sport = :{port}"', shell=True, text=True)
+                        import re
+                        m = re.search(r'pid=(\d+)', output)
+                        if m:
+                            return int(m.group(1))
+                    except Exception:
+                        pass
         return None
 
     def _kill_process_tree(self, pid: int):
@@ -507,10 +541,29 @@ class ServerManager(tk.Tk):
             return
         
         port = self.server_port
+        
+        # Ensure clean slate for mpv
+        if sys.platform == "win32":
+            try:
+                subprocess.run(["taskkill", "/F", "/IM", "mpv.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+        else:
+            try:
+                subprocess.run(["pkill", "-f", "mpv"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+
         if self._check_port_in_use(port):
-            self._write_log(f"Cannot start: Port {port} is already in use.", "err")
-            self._refresh_status()
-            return
+            self._write_log(f"Port {port} is in use. Attempting to kill conflicting process...", "accent")
+            pid = self._get_pid_occupying_port(port)
+            if pid:
+                self._kill_process_tree(pid)
+                time.sleep(1)
+            if self._check_port_in_use(port):
+                self._write_log(f"Cannot start: Port {port} is still in use after kill attempt.", "err")
+                self._refresh_status()
+                return
 
         self._write_log(f"Starting server on port {port}...", "accent")
         env = os.environ.copy()
@@ -518,6 +571,7 @@ class ServerManager(tk.Tk):
         env["YTGUI_PORT"] = str(port)
         env["PYTHONUTF8"] = "1"
         env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUNBUFFERED"] = "1"
         
         kwargs = {}
         if sys.platform == "win32":
@@ -552,21 +606,12 @@ class ServerManager(tk.Tk):
         self._last_stdout_line = ""
         start_time = time.time()
         success = False
-        last_log = start_time
         while time.time() - start_time < 120:  # wait up to 120 seconds (2 minutes)
             if not self._is_running():
                 break
             if self._check_port_in_use(port):
                 success = True
                 break
-            
-            now = time.time()
-            if now - last_log >= 3.0:  # print status every 3 seconds
-                elapsed = int(now - start_time)
-                status_info = f" -> {self._last_stdout_line}" if self._last_stdout_line else ""
-                self._write_log(f"Waiting... ({elapsed}s elapsed){status_info}", "dim")
-                last_log = now
-                
             time.sleep(0.5)
             
         if success:
@@ -729,9 +774,9 @@ class ServerManager(tk.Tk):
         except Exception as e:
             self._write_log(f"Error resetting password: {e}", "err")
 
-    def _show_new_password_dialog(self, raw_password):
+    def _show_new_password_dialog(self, raw_password, is_first_run=False):
         dialog = tk.Toplevel(self)
-        dialog.title("Password Admin Baru")
+        dialog.title("Password Admin" if is_first_run else "Password Admin Baru")
         dialog.geometry("400x240")
         dialog.configure(bg=BG)
         dialog.resizable(False, False)
@@ -744,8 +789,9 @@ class ServerManager(tk.Tk):
         dialog.geometry(f"+{x}+{y}")
         
         # Title
+        title_text = "🔑 Password Admin Dibuat Otomatis" if is_first_run else "🔑 Password Admin Berhasil Direset"
         tk.Label(
-            dialog, text="🔑 Password Admin Berhasil Direset",
+            dialog, text=title_text,
             bg=BG, fg=ACCENT, font=("Segoe UI", 12, "bold"),
             pady=10
         ).pack()

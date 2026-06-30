@@ -6,7 +6,7 @@ from core.state import TrackInfo
 @dataclass
 class DomainEvent:
     """Base class for all domain events."""
-    room_id: str = "default"
+    pass
 
 @dataclass
 class TrackStartedEvent(DomainEvent):

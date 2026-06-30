@@ -19,13 +19,6 @@ function renderNowPlaying() {
                             }
                         });
                     }
-                    if (dom.ambientBg1 && dom.ambientBg2) {
-                        const activeBg = dom.ambientBg1.classList.contains('active') ? dom.ambientBg1 : dom.ambientBg2;
-                        const inactiveBg = activeBg === dom.ambientBg1 ? dom.ambientBg2 : dom.ambientBg1;
-                        inactiveBg.style.backgroundImage = `url(${url})`;
-                        inactiveBg.classList.add('active');
-                        activeBg.classList.remove('active');
-                    }
                 }
             });
         } else {
@@ -54,12 +47,23 @@ function renderNowPlaying() {
         }
     }
 
+    if (dom.homeEqualizer) {
+        const hasLyrics = store.lyrics_lines && store.lyrics_lines.length > 0;
+        dom.homeEqualizer.style.display = (!hasLyrics && store.status === "PLAYING") ? "flex" : "none";
+    }
+
     if (dom.vinylRecord) {
         if (store.status === "PLAYING") {
             dom.vinylRecord.classList.add("playing");
         } else {
             dom.vinylRecord.classList.remove("playing");
         }
+    }
+
+    if (!t || (!t.video_id && store.status !== "LOADING")) {
+        document.body.setAttribute("data-player-state", "IDLE");
+    } else {
+        document.body.setAttribute("data-player-state", store.status);
     }
 
     if (store.status === "LOADING") {

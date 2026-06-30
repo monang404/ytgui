@@ -25,7 +25,6 @@ logger = structlog.get_logger(__name__)
 class PlaybackController:
     def __init__(
         self,
-        room_id: str,
         bus: EventBus,
         state: AppState,
         mpv: AudioPlayerPort,
@@ -35,7 +34,6 @@ class PlaybackController:
         queue_mode: QueueMode,
         radio_mode: RadioMode
     ):
-        self.room_id = room_id
         self.bus = bus
         self.state = state
         self.mpv = mpv
@@ -61,7 +59,7 @@ class PlaybackController:
                 self.state.current_track.duration = int(event.duration)
                 # Simpan metadata durasi ke database agar cache berikutnya sudah tahu durasinya
                 safe_create_task(self.resolver.db.upsert_track(self.state.current_track), name="upsert_track_duration")
-            await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+            await self.bus.publish(QueueUpdatedEvent())
 
     async def play_track(self, track: TrackInfo):
         async with self._play_lock:  # A-05: cegah concurrent play_track race
@@ -86,7 +84,7 @@ class PlaybackController:
                 if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
                     # BACKEND-FIX-01: Pastikan mpv silent di browser mode.
                     await self.mpv.set_volume(0)
-                    await self.bus.publish(LogMessageEvent(message="Audio output is browser, mpv silent (volume=0).", room_id=self.room_id))
+                    await self.bus.publish(LogMessageEvent(message="Audio output is browser, mpv silent (volume=0)."))
                 else:
                     await self.mpv.set_volume(self.state.volume)
 
@@ -94,7 +92,7 @@ class PlaybackController:
 
                 self.state.status = PlayerStatus.PLAYING
                 self._retry_count = 0  # Reset retry count on success
-                await self.bus.publish(TrackStartedEvent(track=track, room_id=self.room_id))
+                await self.bus.publish(TrackStartedEvent(track=track))
 
                 # Fetch duration actively if not available
                 if self.state.duration == 0:
@@ -104,11 +102,11 @@ class PlaybackController:
                 logger.error(f"Failed to play track {track.title}: {e}", exc_info=True)
                 self.state.status = PlayerStatus.ERROR
                 self.state.error_msg = f"Error: {e}"
-                await self.bus.publish(LogMessageEvent(message=f"Gagal memutar lagu: {track.title} | {type(e).__name__}: {str(e)}", room_id=self.room_id))
+                await self.bus.publish(LogMessageEvent(message=f"Gagal memutar lagu: {track.title} | {type(e).__name__}: {str(e)}"))
 
                 self._retry_count += 1
                 if self._retry_count >= 3:
-                    await self.bus.publish(LogMessageEvent(message="Terlalu banyak kegagalan beruntun. Pemutaran dihentikan.", room_id=self.room_id))
+                    await self.bus.publish(LogMessageEvent(message="Terlalu banyak kegagalan beruntun. Pemutaran dihentikan."))
                     self._retry_count = 0
                 else:
                     backoff = 2 ** self._retry_count
@@ -127,7 +125,7 @@ class PlaybackController:
             self.state.duration = dur
             track.duration = int(dur)
             safe_create_task(self.resolver.db.upsert_track(track), name="upsert_track_duration_poll")
-            await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+            await self.bus.publish(QueueUpdatedEvent())
         else:
             # Coba sekali lagi setelah 5 detik
             await asyncio.sleep(5)
@@ -137,14 +135,14 @@ class PlaybackController:
                     self.state.duration = dur
                     track.duration = int(dur)
                     safe_create_task(self.resolver.db.upsert_track(track), name="upsert_track_duration_poll")
-                    await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+                    await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_cmd_play_track(self, track: TrackInfo):
         async with self._lock:
             if self.state.playback_mode == PlaybackMode.RADIO:
                 await self.radio_mode.on_deactivated()
                 self.state.playback_mode = PlaybackMode.QUEUE
-                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+                await self.bus.publish(QueueUpdatedEvent())
             await self.play_track(track)
 
     async def _on_track_ended(self, event: TrackEndedEvent):
@@ -165,7 +163,7 @@ class PlaybackController:
                 self.state.status = PlayerStatus.IDLE
         elif reason == "error":
             self.state.status = PlayerStatus.ERROR
-            await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran", room_id=self.room_id))
+            await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran"))
             await asyncio.sleep(2)
             # Batalkan autoplay jika user sudah stop atau ganti lagu selama sleep
             if self.state.status == PlayerStatus.IDLE:
@@ -205,7 +203,7 @@ class PlaybackController:
                 self.state.current_track = None 
                 await self.play_track(track)
             else:
-                await self.bus.publish(LogMessageEvent(message="Tidak ada lagu sebelumnya", room_id=self.room_id))
+                await self.bus.publish(LogMessageEvent(message="Tidak ada lagu sebelumnya"))
 
     async def _on_stop(self, _data=None):
         self._retry_count = 0  # TASK-0.2: reset retry state agar tidak bocor ke lagu berikutnya
@@ -217,8 +215,8 @@ class PlaybackController:
         self.state.position = 0.0
         self.state.lyrics_lines = []
         self.state.lyrics_index = 0
-        await self.bus.publish(LogMessageEvent(message="Pemutaran dihentikan", room_id=self.room_id))
-        await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+        await self.bus.publish(LogMessageEvent(message="Pemutaran dihentikan"))
+        await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_seek(self, position: float):
         if self.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED):
@@ -245,8 +243,8 @@ class PlaybackController:
                     self.state.status = PlayerStatus.LOADING  # signal ke frontend bahwa radio sedang fetch
                     should_activate_radio = True
 
-                await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}", room_id=self.room_id))
-                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+                await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
+                await self.bus.publish(QueueUpdatedEvent())
 
         # on_activated di luar lock: fetch DB + ytdlp bisa lama,
         # command pause/stop/skip tetap bisa masuk selama proses ini.
@@ -266,13 +264,13 @@ class PlaybackController:
             if 0 <= index < len(self.state.queue):
                 removed = self.state.queue[index]
                 del self.state.queue[index]
-                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
-                await self.bus.publish(LogMessageEvent(message=f"Dihapus dari antrean: {removed.title}", room_id=self.room_id))
+                await self.bus.publish(QueueUpdatedEvent())
+                await self.bus.publish(LogMessageEvent(message=f"Dihapus dari antrean: {removed.title}"))
 
     async def _on_queue_add(self, track: TrackInfo):
         self.state.queue.append(track)
-        await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
-        await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}", room_id=self.room_id))
+        await self.bus.publish(QueueUpdatedEvent())
+        await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}"))
 
     async def _on_queue_reorder(self, data: dict):
         async with self._lock:
@@ -284,7 +282,7 @@ class PlaybackController:
                     item = q[from_index]
                     del q[from_index]
                     q.insert(to_index, item)
-                    await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+                    await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_radio_randomize(self, data=None):
         # Reset state di dalam lock (cepat), fetch di luar lock (background)
@@ -299,11 +297,11 @@ class PlaybackController:
                 self.state.status = PlayerStatus.LOADING
                 self.state.position = 0.0
                 self.radio_mode._artist_rotation = []
-                await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
-                await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio...", room_id=self.room_id))
+                await self.bus.publish(QueueUpdatedEvent())
+                await self.bus.publish(LogMessageEvent(message="Mengacak ulang stasiun radio..."))
                 should_fetch = True
             else:
-                await self.bus.publish(LogMessageEvent(message="Radio tidak aktif", room_id=self.room_id))
+                await self.bus.publish(LogMessageEvent(message="Radio tidak aktif"))
 
         if should_fetch:
             from core.task_utils import safe_create_task
@@ -327,16 +325,16 @@ class PlaybackController:
             await self.mpv.set_volume(0)
         else:
             await self.mpv.set_volume(self.state.volume)
-        await self.bus.publish(LogMessageEvent(message=f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}", room_id=self.room_id))
-        await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+        await self.bus.publish(LogMessageEvent(message=f"Output suara diubah ke: {'Browser' if output == AudioOutput.BROWSER else 'HP'}"))
+        await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_set_sponsorblock(self, enabled: bool):
         self.state.sponsorblock_active = enabled
-        await self.bus.publish(LogMessageEvent(message=f"SponsorBlock: {'ON' if enabled else 'OFF'}", room_id=self.room_id))
-        await self.bus.publish(QueueUpdatedEvent(room_id=self.room_id))
+        await self.bus.publish(LogMessageEvent(message=f"SponsorBlock: {'ON' if enabled else 'OFF'}"))
+        await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_lyrics_offset(self, data: dict):
         offset = data.get("offset", 0.0)
         self.state.lyrics_offset = float(offset)
         from core.events import LyricsUpdatedEvent
-        await self.bus.publish(LyricsUpdatedEvent(room_id=self.room_id))
+        await self.bus.publish(LyricsUpdatedEvent())

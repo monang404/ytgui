@@ -27,59 +27,45 @@ class ConnectionManager:
         self.login_attempts = {}
         self.command_history = {}
 
-    async def connect(self, ws, room_id):
-        self.active_connections.append((ws, room_id))
-        ACTIVE_WEBSOCKETS.labels(room_id=room_id).inc()
-        logger.info(f"WebSocket connected to room {room_id}. Total clients: {len(self.active_connections)}")
+    async def connect(self, ws):
+        self.active_connections.append(ws)
+        ACTIVE_WEBSOCKETS.inc()
+        logger.info(f"WebSocket connected. Total clients: {len(self.active_connections)}")
 
     def disconnect(self, ws):
-        disconnected_rooms = [r for w, r in self.active_connections if w == ws]
-        for r in disconnected_rooms:
-            ACTIVE_WEBSOCKETS.labels(room_id=r).dec()
-            
-        self.active_connections = [(w, r) for w, r in self.active_connections if w != ws]
+        if ws in self.active_connections:
+            self.active_connections.remove(ws)
+            ACTIVE_WEBSOCKETS.dec()
         if ws in self.authenticated_connections:
             self.authenticated_connections.remove(ws)
         logger.info(f"WebSocket disconnected. Total clients: {len(self.active_connections)}")
 
-    async def broadcast(self, message: dict, room_id: str = None):
+    async def broadcast(self, message: dict):
         data = json.dumps(message, ensure_ascii=False)
         dead = []
-        for ws, r_id in self.active_connections:
-            if room_id is None or r_id == room_id:
-                try:
-                    await ws.send_str(data)
-                except Exception:
-                    dead.append(ws)
+        for ws in self.active_connections:
+            try:
+                await ws.send_str(data)
+            except Exception:
+                dead.append(ws)
         for ws in dead:
             self.disconnect(ws)
 
-_ROOM_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
-MAX_ROOMS = 10
-
 async def ws_handler(request):
-    room_id = request.query.get("room", "default")
-    if not _ROOM_ID_RE.match(room_id):
-        return web.HTTPBadRequest(text="Invalid room_id: hanya huruf, angka, '-', '_', maksimum 64 karakter")
-        
-    room_manager = request.app["room_manager"]
+    playback_controller = request.app["playback_controller"]
+    state = request.app["state"]
     manager = request.app["manager"]
     db = request.app["db"]
     ytdlp = request.app["ytdlp"]
     
-    if room_id not in room_manager.rooms and len(room_manager.rooms) >= MAX_ROOMS:
-        return web.HTTPTooManyRequests(text="Batas maksimum room tercapai")
-
-    room = await room_manager.get_or_create_room(room_id)
-    
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-    await manager.connect(ws, room_id)
+    await manager.connect(ws)
 
     try:
         await ws.send_str(json.dumps({
             "type": "state",
-            "data": state_to_dict(room.state),
+            "data": state_to_dict(state),
         }, ensure_ascii=False))
     except Exception:
         manager.disconnect(ws)
@@ -92,7 +78,7 @@ async def ws_handler(request):
                     data = json.loads(msg.data)
                 except json.JSONDecodeError:
                     continue
-                await handle_ws_message(data, ws, request.remote, room.state, ytdlp, manager, db, room_id)
+                await handle_ws_message(data, ws, request.remote, state, ytdlp, manager, db)
             elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSE):
                 break
     except Exception as e:
@@ -102,7 +88,7 @@ async def ws_handler(request):
 
     return ws
 
-async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager, db, room_id: str):
+async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager, db):
     msg_type = msg.get("type")
     action = msg.get("action", "")
     data = msg.get("data", {})
@@ -145,13 +131,15 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
             favorites = await ds.get_favorites(15)
             cached = await ds.get_cached(15)
             featured_artists = await ds.get_featured_artists(100)
+            featured_genres = await ds.get_featured_genres(100)
             await ws.send_str(json.dumps({
                 "type": "discover_data",
                 "data": {
                     "recent": [track_to_dict(t) for t in recent],
                     "favorites": [track_to_dict(t) for t in favorites],
                     "cached_tracks": [track_to_dict(t) for t in cached],
-                    "featured_artists": featured_artists
+                    "featured_artists": featured_artists,
+                    "featured_genres": featured_genres
                 }
             }, ensure_ascii=False))
 
@@ -181,72 +169,89 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
                 favorites = await ds.get_favorites(15)
                 cached = await ds.get_cached(15)
                 featured_artists = await ds.get_featured_artists(100)
+                featured_genres = await ds.get_featured_genres(100)
                 await manager.broadcast({
                     "type": "discover_data",
                     "data": {
                         "recent": [track_to_dict(t) for t in recent],
                         "favorites": [track_to_dict(t) for t in favorites],
                         "cached_tracks": [track_to_dict(t) for t in cached],
-                        "featured_artists": featured_artists
+                        "featured_artists": featured_artists,
+                        "featured_genres": featured_genres
                     }
                 })
+
+        elif action == "enqueue_genre_songs":
+            genre_name = data.get("genre")
+            if genre_name:
+                await db.increment_genre_click(genre_name)
+                songs = await db.get_genre_songs(genre_name, total_limit=12, max_per_artist=3)
+                
+                if songs:
+                    await command_bus.execute(CMD_SET_MODE, PlaybackMode.QUEUE)
+                    state.queue.clear()
+                    
+                    for track in songs:
+                        await command_bus.execute(CMD_QUEUE_ADD, track)
+                        
+                    await command_bus.execute(CMD_QUEUE_SELECT, 0)
 
         elif action == "play_track":
             track = dict_to_track(data)
             if track:
-                await command_bus.execute(CMD_PLAY_TRACK, room_id, track)
+                await command_bus.execute(CMD_PLAY_TRACK, track)
 
         elif action == "toggle_pause":
-            await command_bus.execute(CMD_TOGGLE_PAUSE, room_id)
+            await command_bus.execute(CMD_TOGGLE_PAUSE)
 
         elif action == "next":
-            await command_bus.execute(CMD_NEXT, room_id, data)
+            await command_bus.execute(CMD_NEXT, data)
 
         elif action == "prev":
-            await command_bus.execute(CMD_PREV, room_id)
+            await command_bus.execute(CMD_PREV)
 
         elif action == "stop":
-            await command_bus.execute(CMD_STOP, room_id)
+            await command_bus.execute(CMD_STOP)
 
         elif action == "seek":
             position = data.get("position", 0)
-            await command_bus.execute(CMD_SEEK, room_id, float(position))
+            await command_bus.execute(CMD_SEEK, float(position))
 
         elif action == "volume_up":
-            await command_bus.execute(CMD_VOLUME_UP, room_id)
+            await command_bus.execute(CMD_VOLUME_UP)
 
         elif action == "volume_down":
-            await command_bus.execute(CMD_VOLUME_DOWN, room_id)
+            await command_bus.execute(CMD_VOLUME_DOWN)
 
         elif action == "volume_set":
             vol = data.get("volume", 80)
-            await command_bus.execute(CMD_VOLUME_SET, room_id, {"volume": int(vol)})
+            await command_bus.execute(CMD_VOLUME_SET, {"volume": int(vol)})
 
         elif action == "download":
-            await command_bus.execute(CMD_DOWNLOAD, room_id)
+            await command_bus.execute(CMD_DOWNLOAD)
 
         elif action == "set_mode":
             mode_str = data.get("mode", "queue").upper()
             mode = PlaybackMode.RADIO if mode_str == "RADIO" else PlaybackMode.QUEUE
-            await command_bus.execute(CMD_SET_MODE, room_id, mode)
+            await command_bus.execute(CMD_SET_MODE, mode)
 
         elif action == "queue_select":
             index = data.get("index", 0)
-            await command_bus.execute(CMD_QUEUE_SELECT, room_id, int(index))
+            await command_bus.execute(CMD_QUEUE_SELECT, int(index))
 
         elif action == "queue_remove":
             index = data.get("index", 0)
-            await command_bus.execute(CMD_QUEUE_REMOVE, room_id, int(index))
+            await command_bus.execute(CMD_QUEUE_REMOVE, int(index))
 
         elif action == "queue_add":
             track = dict_to_track(data)
             if track:
-                await command_bus.execute(CMD_QUEUE_ADD, room_id, track)
+                await command_bus.execute(CMD_QUEUE_ADD, track)
 
         elif action == "queue_reorder":
             from_idx = int(data.get("from_index", 0))
             to_idx = int(data.get("to_index", 0))
-            await command_bus.execute(CMD_QUEUE_REORDER, room_id, {"from_index": from_idx, "to_index": to_idx})
+            await command_bus.execute(CMD_QUEUE_REORDER, {"from_index": from_idx, "to_index": to_idx})
 
         elif action == "enqueue_artist_songs":
             artist_name = data.get("artist")
@@ -255,30 +260,30 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
                 if songs:
                     await db.increment_artist_click(artist_name)
                     
-                    await command_bus.execute(CMD_SET_MODE, room_id, PlaybackMode.QUEUE)
+                    await command_bus.execute(CMD_SET_MODE, PlaybackMode.QUEUE)
                     state.queue.clear()
                     
                     for track in songs:
-                        await command_bus.execute(CMD_QUEUE_ADD, room_id, track)
+                        await command_bus.execute(CMD_QUEUE_ADD, track)
                         
-                    await command_bus.execute(CMD_QUEUE_SELECT, room_id, 0)
+                    await command_bus.execute(CMD_QUEUE_SELECT, 0)
 
         elif action == "radio_randomize":
             seed_artist = data.get("seed_artist")
-            await command_bus.execute(CMD_RADIO_RANDOMIZE, room_id, {"seed_artist": seed_artist})
+            await command_bus.execute(CMD_RADIO_RANDOMIZE, {"seed_artist": seed_artist})
 
         elif action == "set_output":
             output_str = data.get("output", "device")
             output_val = AudioOutput.BROWSER if output_str == "browser" else AudioOutput.DEVICE
-            await command_bus.execute(CMD_SET_OUTPUT, room_id, output_val)
+            await command_bus.execute(CMD_SET_OUTPUT, output_val)
 
         elif action == "set_sponsorblock":
             enabled = data.get("enabled", True)
-            await command_bus.execute(CMD_SET_SPONSORBLOCK, room_id, bool(enabled))
+            await command_bus.execute(CMD_SET_SPONSORBLOCK, bool(enabled))
 
         elif action == "lyrics_offset":
             offset = data.get("offset", 0.0)
-            await command_bus.execute(CMD_LYRICS_OFFSET, room_id, {"offset": float(offset)})
+            await command_bus.execute(CMD_LYRICS_OFFSET, {"offset": float(offset)})
 
     except Exception as e:
         logger.error(f"Error handling WS command '{action}': {e}", exc_info=True)

@@ -94,54 +94,7 @@
   will-change: opacity;
 }
 
-/* ── Ambient Background System ── */
-.ambient-bg-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-  background-color: var(--bg-primary);
-}
 
-.ambient-bg-layer {
-  position: absolute;
-  top: -20%;
-  left: -20%;
-  right: -20%;
-  bottom: -20%;
-  background-size: cover;
-  background-position: center;
-  /* UI-01 fix: blur lebih ringan, GPU pre-allocate layer */
-  filter: blur(60px) brightness(var(--beat-bg-brightness, 0.25));
-  will-change: opacity, filter;
-  opacity: 0;
-  transition: opacity 0.8s ease-in-out;
-  animation: ambientDrift 25s infinite alternate ease-in-out;
-  animation-play-state: paused;
-  transform: translate(0, 0);
-}
-
-/* UI-01 fix: aktifkan animasi hanya saat lagu bermain */
-body[data-player-state="PLAYING"] .ambient-bg-layer {
-  animation-play-state: running;
-}
-
-.ambient-bg-layer.active {
-  opacity: 1;
-}
-
-.ambient-bg-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, rgba(13, 15, 20, 0.4) 0%, rgba(13, 15, 20, 0.95) 55%, rgba(13, 15, 20, 1) 100%);
-}
 
 
 

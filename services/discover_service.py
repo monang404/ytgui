@@ -108,3 +108,23 @@ class DiscoverService:
         except Exception:
             pass
         return artists
+
+    async def get_featured_genres(self, n: int) -> list[dict]:
+        """Mengambil n genre acak dari tabel genres beserta click_count."""
+        if not getattr(self.db, '_conn', None):
+            return []
+            
+        genres = []
+        try:
+            async with self.db._conn.execute(
+                "SELECT id, nama_genre, COALESCE(click_count, 0) as click_count FROM genres ORDER BY RANDOM() LIMIT ?", (n,)
+            ) as cursor:
+                async for row in cursor:
+                    genres.append({
+                        "id": row["id"],
+                        "nama_genre": row["nama_genre"],
+                        "click_count": row["click_count"]
+                    })
+        except Exception as e:
+            print(f"Error in get_featured_genres: {e}")
+        return genres

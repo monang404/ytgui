@@ -15,7 +15,7 @@ from engine.download_manager import DownloadManager
 from engine.command_router import CommandRouter
 from plugins.notifications import TermuxNowPlaying
 from core.task_utils import safe_create_task
-from core.room_manager import RoomManager
+
 from config import BASE_DIR, WEB_HOST, WEB_PORT
 
 setup_logging()
@@ -56,19 +56,36 @@ async def main():
     # 3. Shared HTTP session
     http_session = aiohttp.ClientSession()
     
-    # 4. Initialize Room Manager
-    print("  [4/5] Menyusun Room Manager (Multi-room)...")
-    room_manager = RoomManager(db, ytdlp, http_session, SponsorBlockHandler, LyricsFetcher)
+    # 4. Global Services Initialization
+    from engine.queue_manager import QueueMode
+    from engine.radio_engine import RadioMode
+    from engine.volume_service import VolumeService
+    from engine.playback.controller import PlaybackController
+    from cache.resolver import CacheResolver
+
+    resolver = CacheResolver(db, ytdlp)
     
-    # Pre-create default room
-    default_room = await room_manager.get_or_create_room("default")
+    sponsorblock = SponsorBlockHandler(
+        mpv, state=state, session=http_session, event_bus=bus
+    )
+    lyrics_fetcher = LyricsFetcher(
+        state, session=http_session, event_bus=bus
+    )
     
-    # 5. Global Services
-    download_manager = DownloadManager(bus, default_room.state, ytdlp)
-    command_router = CommandRouter(room_manager)
+    queue_mode = QueueMode()
+    radio_mode = RadioMode(ytdlp, state, db=db)
+    
+    volume_service = VolumeService(bus, mpv, state)
+    playback_controller = PlaybackController(
+        bus, state, mpv, resolver,
+        sponsorblock, lyrics_fetcher, queue_mode, radio_mode
+    )
+    
+    download_manager = DownloadManager(bus, state, ytdlp)
+    command_router = CommandRouter(playback_controller, volume_service)
     
     # Termux now-playing notification (no-op outside Termux)
-    nowplaying = TermuxNowPlaying(bus, default_room.state)
+    nowplaying = TermuxNowPlaying(bus, state)
     await nowplaying.start()
 
     # Connectivity Check
@@ -79,46 +96,42 @@ async def main():
                     "https://connectivitycheck.gstatic.com/generate_204",
                     timeout=aiohttp.ClientTimeout(total=3)
                 ) as r:
-                    is_online = (r.status == 204)
+                    state.is_online = (r.status == 204)
             except (aiohttp.ClientError, asyncio.TimeoutError):
-                is_online = False
+                state.is_online = False
             except Exception as e:
                 structlog.get_logger(__name__).warning(f"Connectivity check unexpected error: {e}")
-                is_online = False
-            
-            for room in room_manager.rooms.values():
-                room.state.is_online = is_online
+                state.is_online = False
                 
             await asyncio.sleep(30)
 
     connectivity_task = safe_create_task(check_connectivity(), name="connectivity_checker")
     tasks = [connectivity_task]
     
-    # 7.5 MPV auto-reconnect checker (Per room)
+    # 7.5 MPV auto-reconnect checker
     async def mpv_reconnect_checker():
         while True:
             await asyncio.sleep(5)
-            for room in list(room_manager.rooms.values()):
-                if not getattr(room.mpv, "is_connected", False) and room.state.status != PlayerStatus.ERROR:
-                    structlog.get_logger(__name__).warning(f"MPV terputus di room {room.room_id}! Mencoba reconnect...")
-                    try:
-                        await room.mpv.close()
-                    except Exception:
-                        pass
-                    try:
-                        await room.mpv.connect()
-                        if room.state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED) and room.state.current_track:
-                            uri = await room.resolver.resolve(room.state.current_track)
-                            await room.mpv.play(uri)
-                            await room.mpv.seek(room.state.position)
-                            if getattr(room.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
-                                await room.mpv.set_volume(0)
-                            else:
-                                await room.mpv.set_volume(room.state.volume)
-                            if room.state.status == PlayerStatus.PLAYING:
-                                await room.mpv.resume()
-                    except Exception as e:
-                        structlog.get_logger(__name__).error(f"MPV reconnect failed for room {room.room_id}: {e}")
+            if not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
+                structlog.get_logger(__name__).warning(f"MPV terputus! Mencoba reconnect...")
+                try:
+                    await mpv.close()
+                except Exception:
+                    pass
+                try:
+                    await mpv.connect()
+                    if state.status in (PlayerStatus.PLAYING, PlayerStatus.PAUSED) and state.current_track:
+                        uri = await resolver.resolve(state.current_track)
+                        await mpv.play(uri)
+                        await mpv.seek(state.position)
+                        if getattr(state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
+                            await mpv.set_volume(0)
+                        else:
+                            await mpv.set_volume(state.volume)
+                        if state.status == PlayerStatus.PLAYING:
+                            await mpv.resume()
+                except Exception as e:
+                    structlog.get_logger(__name__).error(f"MPV reconnect failed: {e}")
 
     tasks.append(safe_create_task(mpv_reconnect_checker(), name="mpv_reconnect_checker"))
     
@@ -126,7 +139,7 @@ async def main():
     try:
         from server.app import create_app, run_server
         
-        app = create_app(room_manager, ytdlp, db)
+        app = create_app(playback_controller, ytdlp, db)
         
         host = WEB_HOST
         port = WEB_PORT
@@ -142,19 +155,19 @@ async def main():
             
         url_client = f"http://{display_host}:{port}"
         url_admin = f"http://{display_host}:{port}/admin"
-        print(f"╔══════════════════════════════════════════════════╗")
-        print(f"║   YTGUI Web Server                               ║")
-        print(f"║   Client : {url_client:<37} ║")
-        print(f"║   Admin  : {url_admin:<37} ║")
+        print(f"=====================================================")
+        print(f"|   YTGUI Web Server                                |")
+        print(f"|   Client : {url_client:<37} |")
+        print(f"|   Admin  : {url_admin:<37} |")
         
         from config import ADMIN_USERNAME, ADMIN_PASSWORD, IS_PASSWORD_AUTO_GENERATED
         if IS_PASSWORD_AUTO_GENERATED:
-            print(f"║                                                  ║")
-            print(f"║   Kredensial Mode Admin:                         ║")
-            print(f"║   User: {ADMIN_USERNAME:<40} ║")
-            print(f"║   Pass: {ADMIN_PASSWORD:<40} ║")
-            print(f"║   (Tersimpan: cache/admin_password.txt)          ║")
-        print(f"╚══════════════════════════════════════════════════╝")
+            print(f"|                                                   |")
+            print(f"|   Kredensial Mode Admin:                          |")
+            print(f"|   User: {ADMIN_USERNAME:<40} |")
+            print(f"|   Pass: {ADMIN_PASSWORD:<40} |")
+            print(f"|   (Tersimpan: cache/admin_password.txt)           |")
+        print(f"=====================================================")
         
         await run_server(app, host=host, port=port)
 
@@ -176,7 +189,10 @@ async def main():
         
         # Cleanup resources
         await nowplaying.cleanup()
-        await room_manager.shutdown()
+        try: await mpv.close()
+        except: pass
+        lyrics_fetcher.cleanup()
+        sponsorblock.cleanup()
         ytdlp.cancel_download()
         await http_session.close()
         await db.close()

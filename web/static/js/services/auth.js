@@ -35,10 +35,25 @@ function login(user, pass) {
         dom.loginErrorMsg.textContent = "Isi username dan password!";
         return;
     }
+    
+    if (dom.adminSubmitBtn) {
+        dom.adminSubmitBtn.disabled = true;
+        dom.adminSubmitBtn.textContent = "Menghubungkan...";
+    }
+    dom.loginErrorMsg.textContent = "";
+    
     store.adminUsername = user;
     store.adminPassword = pass;
     
-    wsSend("auth", { username: user, password: pass });
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+        wsSend("auth", { username: user, password: pass });
+    } else {
+        dom.loginErrorMsg.textContent = "Koneksi server terputus. Silakan tunggu/refresh.";
+        if (dom.adminSubmitBtn) {
+            dom.adminSubmitBtn.disabled = false;
+            dom.adminSubmitBtn.textContent = "Login Admin";
+        }
+    }
 }
 
 function logout() {
