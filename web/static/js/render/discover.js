@@ -17,7 +17,10 @@ function renderDiscoverList(container, items, emptyHtml, createTemplate, updateI
     }
     
     const existing = Array.from(container.children);
-    if (existing.length === 1 && existing[0].classList.contains('discover-empty')) {
+    if (existing.length > 0 && (existing[0].classList.contains('skeleton-box') || existing[0].querySelector('.skeleton-box'))) {
+        container.innerHTML = '';
+        existing.length = 0;
+    } else if (existing.length === 1 && existing[0].classList.contains('discover-empty')) {
         existing[0].remove();
         existing.shift();
     }
