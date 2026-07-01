@@ -1,5 +1,8 @@
 function renderPlayerBar() {
-    document.body.dataset.playerState = store.status || "IDLE";
+    // PATCH-ANDROID-AUDIO-01: dulu baris ini menimpa data-player-state dengan logic
+    // berbeda dari now-playing.js (cuma cek store.status, gak cek track),
+    // bikin idle-view bisa nyangkut salah. Sekarang pakai fungsi bersama.
+    if (typeof syncPlayerStateAttr === "function") syncPlayerStateAttr();
     const t = store.current_track;
 
     if (store.status === "LOADING") {

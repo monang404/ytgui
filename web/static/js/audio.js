@@ -106,6 +106,40 @@ function resumeVisualizerLoop() {
     if (!_vizRafId && analyser) startVisualizerLoop();
 }
 
+// PATCH-ANDROID-AUDIO-01
+window.audioBlocked = false;
+
+function _showTapToPlayBanner() {
+    let el = document.getElementById('audio-unlock-banner');
+    if (!el) {
+        el = document.createElement('button');
+        el.id = 'audio-unlock-banner';
+        el.type = 'button';
+        el.textContent = '\ud83d\udd0a Tap untuk lanjut memutar';
+        el.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);' +
+            'z-index:9999;padding:10px 18px;border-radius:999px;border:none;' +
+            'background:var(--accent,#1db954);color:#fff;font-weight:600;font-size:14px;' +
+            'box-shadow:0 4px 16px rgba(0,0,0,.35);cursor:pointer;';
+        el.addEventListener('click', () => {
+            _hideTapToPlayBanner();
+            if (typeof unlockBrowserAudio === "function") unlockBrowserAudio();
+            const audio = getOrInitAudio();
+            if (audio && audio.src && !audio.src.startsWith('data:')) {
+                _resumeAndPlay(audio);
+            } else if (typeof syncBrowserAudio === "function") {
+                syncBrowserAudio();
+            }
+        });
+        document.body.appendChild(el);
+    }
+    el.style.display = 'block';
+}
+
+function _hideTapToPlayBanner() {
+    const el = document.getElementById('audio-unlock-banner');
+    if (el) el.style.display = 'none';
+}
+
 async function _resumeAndPlay(audio) {
     if (audioCtx && audioCtx.state === 'suspended') {
         try { await audioCtx.resume(); } catch (e) { console.warn("[audio] ctx resume failed:", e); }
@@ -113,9 +147,13 @@ async function _resumeAndPlay(audio) {
     try {
         await audio.play();
         console.log("[audio] play() OK");
+        window.audioBlocked = false;
+        _hideTapToPlayBanner();
         startFakeBeatLoop();
     } catch (e) {
         console.warn("[audio] play() blocked:", e.name, e.message);
+        window.audioBlocked = true;
+        _showTapToPlayBanner();
     }
 }
 
@@ -146,8 +184,15 @@ document.addEventListener('visibilitychange', () => {
 // syncBrowserAudio() load src nyata → oncanplay → audio.play() diizinkan.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function unlockBrowserAudio() {
-    if (audioUnlocked || _unlocking) return;
+function unlockBrowserAudio(forcePlay) {
+    if (audioUnlocked || _unlocking) {
+        // PATCH-AUDIO-UNLOCK-RACE-01: kalau sudah unlocked sebelumnya tapi dipanggil lagi
+        // dengan forcePlay (dari klik tombol play), tetap teruskan intent
+        // itu ke syncBrowserAudio supaya tidak bergantung pada store.status
+        // yang mungkin sudah ke-flip duluan oleh klik yang sama.
+        if (forcePlay && audioUnlocked) syncBrowserAudio(true);
+        return;
+    }
     _unlocking = true;
     console.log("[audio] unlocking via AudioContext...");
 
@@ -159,7 +204,7 @@ function unlockBrowserAudio() {
         audioUnlocked = true;
         _unlocking = false;
         _lastLoadedVideoId = null;
-        syncBrowserAudio();
+        syncBrowserAudio(forcePlay);
         return;
     }
 
@@ -180,7 +225,7 @@ function unlockBrowserAudio() {
         initVisualizer();
         // Reset agar syncBrowserAudio load src nyata dengan oncanplay
         _lastLoadedVideoId = null;
-        syncBrowserAudio();
+        syncBrowserAudio(forcePlay);
     };
 
     if (ctx.state === 'suspended') {
@@ -190,7 +235,7 @@ function unlockBrowserAudio() {
             _unlocking = false;
             audioUnlocked = true;
             _lastLoadedVideoId = null;
-            syncBrowserAudio();
+            syncBrowserAudio(forcePlay);
         });
     } else {
         // ctx sudah running (bisa terjadi di desktop)
@@ -198,7 +243,7 @@ function unlockBrowserAudio() {
     }
 }
 
-function syncBrowserAudio() {
+function syncBrowserAudio(forcePlay) {
     const isBrowser = store.userRole === "client" || store.audio_output === "browser";
     const audio = getOrInitAudio();
 
@@ -222,6 +267,10 @@ function syncBrowserAudio() {
 
     if (_lastLoadedVideoId !== track.video_id) {
         _lastLoadedVideoId = track.video_id;
+        // PATCH-ANDROID-AUDIO-01: track baru -> reset status block, kasih kesempatan baru
+        // buat autoplay (banner lama kalau ada juga disembunyikan dulu).
+        window.audioBlocked = false;
+        if (typeof _hideTapToPlayBanner === "function") _hideTapToPlayBanner();
         audio.src = expectedSrc;
         audio.volume = Math.max(0, Math.min(1, (store.volume || 80) / 100));
 
@@ -247,7 +296,15 @@ function syncBrowserAudio() {
             if (store.position > 5 && Math.abs(audio.currentTime - store.position) > 5) {
                 audio.currentTime = store.position;
             }
-            if (store.status === "PLAYING") {
+            // PATCH-AUDIO-UNLOCK-RACE-01: dulu cuma cek store.status === "PLAYING". Tapi
+            // store.status bisa keburu di-flip secara optimistik oleh klik
+            // tombol play yang JUSTRU memicu unlockBrowserAudio() ->
+            // syncBrowserAudio() ini sendiri. Akibatnya pas oncanplay fire,
+            // store.status sudah salah, jadi _resumeAndPlay() tidak pernah
+            // dipanggil -> audio diam, tidak ada banner pun. forcePlay=true
+            // dipakai saat dipanggil dari user gesture asli (unlock), jadi
+            // gesture itu sendiri sudah cukup sinyal untuk play.
+            if (forcePlay || store.status === "PLAYING") {
                 console.log("[audio] canplay → play:", track.video_id);
                 _resumeAndPlay(audio);
             }
@@ -258,7 +315,7 @@ function syncBrowserAudio() {
 
     // Track sama
     audio.volume = Math.max(0, Math.min(1, (store.volume || 80) / 100));
-    if (store.status === "PLAYING") {
+    if (forcePlay || store.status === "PLAYING") {
         if (audio.paused && audio.src && !audio.src.startsWith("data:") && audioUnlocked) {
             _resumeAndPlay(audio);
         }

@@ -60,11 +60,10 @@ function renderNowPlaying() {
         }
     }
 
-    if (!t || (!t.video_id && store.status !== "LOADING")) {
-        document.body.setAttribute("data-player-state", "IDLE");
-    } else {
-        document.body.setAttribute("data-player-state", store.status);
-    }
+    // PATCH-ANDROID-AUDIO-01: satu-satunya tempat yang nentuin data-player-state,
+    // dipanggil juga dari player.js & ws.js (progress tick) supaya nggak
+    // ada dua sumber kebenaran yang bisa desync.
+    syncPlayerStateAttr();
 
     if (store.status === "LOADING") {
         dom.npTitle.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:8px; vertical-align:-3px; width:20px; height:20px;"></span> ⏳ Memuat...';
@@ -93,4 +92,12 @@ function renderNowPlaying() {
     }
 }
 
-
+// PATCH-ANDROID-AUDIO-01
+function syncPlayerStateAttr() {
+    const t = store.current_track;
+    if (!t || (!t.video_id && store.status !== "LOADING")) {
+        document.body.setAttribute("data-player-state", "IDLE");
+    } else {
+        document.body.setAttribute("data-player-state", store.status);
+    }
+}

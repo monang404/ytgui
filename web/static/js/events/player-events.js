@@ -9,14 +9,19 @@ function initPlayerEvents() {
 
     dom.btnPlay.addEventListener("click", () => {
         if (store.userRole === "admin") {
-            store.status = store.status === "PLAYING" ? "PAUSED" : "PLAYING";
+            // PATCH-AUDIO-UNLOCK-RACE-01: simpan intent SEBELUM store.status di-flip, supaya
+            // syncBrowserAudio() di bawah tahu persis apa yang user maksud
+            // (play/pause), bukan menebak ulang dari store.status yang baru
+            // saja diubah oleh baris ini sendiri.
+            const wantsPlay = store.status !== "PLAYING";
+            store.status = wantsPlay ? "PLAYING" : "PAUSED";
             window.lastToggleTime = Date.now();
             if (typeof renderPlayBtn === "function") renderPlayBtn();
             if (typeof renderNowPlaying === "function") renderNowPlaying();
             if (typeof renderQueue === "function") renderQueue();
             if (store.audio_output === "browser" && typeof syncBrowserAudio === "function") {
-                unlockBrowserAudio();
-                syncBrowserAudio();
+                unlockBrowserAudio(wantsPlay);
+                syncBrowserAudio(wantsPlay);
             }
             wsSend("toggle_pause");
         }

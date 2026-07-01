@@ -145,7 +145,11 @@ function handleServerMessage(msg) {
                     // Terjadi saat AudioContext suspended (radio auto-switch tanpa user interaction).
                     // Coba resume AudioContext + play ulang tanpa menunggu user klik.
                     // audio.readyState >= 2 = HAVE_CURRENT_DATA — audio sudah ter-load, aman di-play.
-                    if (typeof _resumeAndPlay === "function") {
+                    // PATCH-ANDROID-AUDIO-01: kalau sebelumnya sudah ketauan diblock browser,
+                    // jangan retry diam2 tiap detik (spam gagal) — tunggu user
+                    // tap tombol "tap to play" (lihat audio.js), itu pasti lolos
+                    // autoplay policy krn ada user gesture beneran.
+                    if (!window.audioBlocked && typeof _resumeAndPlay === "function") {
                         _resumeAndPlay(audio);
                     }
                 }
@@ -154,6 +158,10 @@ function handleServerMessage(msg) {
             renderProgress();
 
             renderPlayBtn();
+            // PATCH-ANDROID-AUDIO-01: dipanggil tiap tick (bukan cuma saat statusChanged)
+            // supaya data-player-state / idle-view selalu sinkron dgn
+            // store.status & store.current_track yang sebenarnya.
+            if (typeof syncPlayerStateAttr === "function") syncPlayerStateAttr();
             if (statusChanged) {
                 if (typeof renderNowPlaying === "function") renderNowPlaying();
                 if (typeof renderQueue === "function") renderQueue();

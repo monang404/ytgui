@@ -135,7 +135,18 @@ class RadioMode:
                 _track_task(self._bg_tasks, self._ensure_standby(controller), name="radio_ensure_standby")
             await controller.play_track(track)
         else:
-            # Queue habis — ambil dari standby atau fetch ulang
+            # PATCH-RADIO-EMPTY-QUEUE-01: Queue habis — _start() jalan di background (bisa
+            # sampai ~20 detik kalau standby belum siap & harus fetch+resolve
+            # ulang dari yt-dlp). Sebelumnya state (current_track/status)
+            # dibiarkan apa adanya selama window itu -> frontend tidak
+            # diberi tahu apa-apa, jadi UI nyangkut pada info lagu lama yang
+            # sudah selesai (kelihatan idle/stuck), baru update mendadak
+            # begitu _start() selesai. Sekarang: set status LOADING dan
+            # broadcast QueueUpdatedEvent SEKARANG juga, supaya UI tahu
+            # "lagi nyari lagu radio berikutnya" selama window itu, alih-alih
+            # diam/stale.
+            self.state.status = PlayerStatus.LOADING
+            await controller.bus.publish(QueueUpdatedEvent())
             _track_task(self._bg_tasks, self._start(controller), name="radio_refill")
 
     # ── inti: start dengan standby atau fetch cepat ───────────

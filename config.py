@@ -32,6 +32,13 @@ AUTOPLAY_THRESHOLD = 2
 SPONSORBLOCK_CATS = ["sponsor", "intro", "outro", "selfpromo"]
 LYRICS_API_BASE = "https://lrclib.net/api"
 STREAM_URL_TTL_SEC = 21600
+# PATCH-YTDLP-RESOLVE-TIMEOUT-01: yt-dlp.get_stream_url() sebelumnya tidak punya batas waktu
+# sama sekali -> kalau network Termux lambat/flaky, proses bisa hang TANPA
+# BATAS tanpa pernah throw exception, sehingga play_track() nyangkut
+# selamanya di status LOADING tanpa ada sinyal error/idle ke UI (kelihatan
+# seperti "stuck" tanpa pesan jelas). Timeout ini memaksa gagal cepat
+# supaya error/retry-path yang sudah ada di play_track() bisa jalan.
+YTDLP_RESOLVE_TIMEOUT_SEC = 25
 
 # Web Server
 WEB_HOST = os.environ.get("YTGUI_HOST", "0.0.0.0")

@@ -3,7 +3,7 @@ import yt_dlp
 import re
 from concurrent.futures import ThreadPoolExecutor
 from core.state import TrackInfo
-from config import CACHE_DIR
+from config import CACHE_DIR, YTDLP_RESOLVE_TIMEOUT_SEC
 
 class YtDlpClient:
     """
@@ -80,12 +80,25 @@ class YtDlpClient:
         url = f"https://www.youtube.com/watch?v={video_id}"
         loop = asyncio.get_running_loop()
         try:
-            info = await loop.run_in_executor(self._executor, self._extract_sync, url, opts)
+            # PATCH-YTDLP-RESOLVE-TIMEOUT-01: dulu run_in_executor() di sini tidak punya batas
+            # waktu -> network lambat/flaky bisa bikin proses hang tanpa
+            # batas tanpa pernah throw, jadi play_track() nyangkut selamanya
+            # di status LOADING. Sekarang dibungkus asyncio.wait_for supaya
+            # gagal cepat & jelas kalau kelamaan.
+            info = await asyncio.wait_for(
+                loop.run_in_executor(self._executor, self._extract_sync, url, opts),
+                timeout=YTDLP_RESOLVE_TIMEOUT_SEC,
+            )
             if info:
                 stream_url = self._pick_audio_url(info)
                 if stream_url:
                     return stream_url
             raise RuntimeError(f"yt-dlp returned no stream URL for {video_id}")
+        except asyncio.TimeoutError:
+            _log.error(f"get_stream_url timed out after {YTDLP_RESOLVE_TIMEOUT_SEC}s for {video_id}")
+            raise RuntimeError(
+                f"Timeout ({YTDLP_RESOLVE_TIMEOUT_SEC}s) saat mengambil stream URL untuk {video_id}"
+            )
         except RuntimeError:
             raise
         except Exception as e:

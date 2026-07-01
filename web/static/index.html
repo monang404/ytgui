@@ -608,6 +608,49 @@
     <!-- ═══ Log Toast ═══ -->
     <div id="log-toast"></div>
 
+    <script>
+    // PATCH-SW-KILLSWITCH-01: Service Worker registration sudah di-DISABLE di main.js,
+    // tapi SW lama yang sempat ter-register di sesi sebelumnya tetap aktif
+    // di browser dan terus melayani JS/CSS dari cache lamanya sendiri,
+    // lepas dari perubahan apapun di server/disk. Ini sebabnya patch.sh
+    // sudah jalan benar tapi browser "tidak berubah". Jalankan SEKALI di
+    // awal load, sebelum script lain: unregister semua SW yang nyangkut +
+    // hapus semua Cache Storage punya origin ini, lalu kalau memang ada
+    // yang dihapus, force reload sekali biar fetch ulang semua asset
+    // langsung dari network (bukan dari SW yang baru mati).
+    (function () {
+        "use strict";
+        if (!('serviceWorker' in navigator)) return;
+        var didCleanup = false;
+
+        var unregisterAll = navigator.serviceWorker.getRegistrations()
+            .then(function (regs) {
+                if (!regs.length) return;
+                didCleanup = true;
+                return Promise.all(regs.map(function (r) { return r.unregister(); }));
+            })
+            .catch(function (e) { console.warn('[sw-kill] unregister failed:', e); });
+
+        var clearCaches = ('caches' in window)
+            ? caches.keys().then(function (keys) {
+                if (!keys.length) return;
+                didCleanup = true;
+                return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }).catch(function (e) { console.warn('[sw-kill] cache clear failed:', e); })
+            : Promise.resolve();
+
+        Promise.all([unregisterAll, clearCaches]).then(function () {
+            if (didCleanup && !sessionStorage.getItem('sw_killswitch_reloaded')) {
+                console.log('[sw-kill] stale service worker / cache dibersihkan, reload sekali...');
+                sessionStorage.setItem('sw_killswitch_reloaded', '1');
+                location.reload();
+            } else if (didCleanup) {
+                console.log('[sw-kill] dibersihkan (reload sudah pernah dilakukan sesi ini).');
+            }
+        });
+    })();
+    </script>
+
     <script src="/static/js/config.js" defer></script>
     <script src="/static/js/store.js" defer></script>
     <script src="/static/js/dom.js" defer></script>

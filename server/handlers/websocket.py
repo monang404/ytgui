@@ -254,19 +254,25 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
             await command_bus.execute(CMD_QUEUE_REORDER, {"from_index": from_idx, "to_index": to_idx})
 
         elif action == "enqueue_artist_songs":
+            # PATCH-ANDROID-AUDIO-01: jangan CMD_SET_MODE dulu (itu nge-null current_track
+            # + set IDLE secara instan -> flash "Belum ada lagu" sebelum
+            # track baru siap, kerasa banget di device lambat spt Termux).
+            # Pakai CMD_PLAY_TRACK utk lagu pertama: path yg sama dgn klik
+            # search result, sudah handle keluar dari RADIO tanpa nge-null
+            # track lama. Sisanya masuk antrean seperti biasa.
             artist_name = data.get("artist")
             if artist_name:
                 songs = await db.get_artist_songs_strict(artist=artist_name, limit=10)
                 if songs:
                     await db.increment_artist_click(artist_name)
-                    
-                    await command_bus.execute(CMD_SET_MODE, PlaybackMode.QUEUE)
+
                     state.queue.clear()
-                    
-                    for track in songs:
+                    first_track, rest_tracks = songs[0], songs[1:]
+
+                    for track in rest_tracks:
                         await command_bus.execute(CMD_QUEUE_ADD, track)
-                        
-                    await command_bus.execute(CMD_QUEUE_SELECT, 0)
+
+                    await command_bus.execute(CMD_PLAY_TRACK, first_track)
 
         elif action == "radio_randomize":
             seed_artist = data.get("seed_artist")
