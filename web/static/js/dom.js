@@ -85,6 +85,7 @@ function initDOM() {
         actionTitle: $("action-sheet-title"),
         actionPlayNow: $("action-play-now"),
         actionEnqueue: $("action-enqueue"),
+        actionDelete: $("action-delete"),
         actionCancel: $("action-cancel"),
         helpSheet: $("help-sheet"),
         helpCloseBtn: $("help-close-btn"),

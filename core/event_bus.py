@@ -28,6 +28,10 @@ class EventBus:
     def __init__(self):
         self._subscribers = defaultdict(list)
 
+    # CATATAN PENTING (L-3):
+    # Metode class/instance akan disimpan sebagai weak reference.
+    # Namun, fungsi biasa, lambda, atau closure akan disimpan sebagai
+    # strong reference, yang bisa menyebabkan memory leak jika tidak di-unsubscribe!
     def subscribe(self, event_type: Type[E], handler: Callable[[E], Any]):
         # Gunakan weakref untuk method agar tidak memory leak
         if inspect.ismethod(handler):
@@ -78,7 +82,7 @@ class EventBus:
         EVENT_COUNT.labels(event_type=event_type.__name__).inc()
         
         active_handlers = []
-        for ref in list(self._subscribers[event_type]):
+        for ref in list(self._subscribers.get(event_type, [])):
             if isinstance(ref, weakref.ref):
                 handler = ref()
                 if handler is None:

@@ -268,9 +268,16 @@ class PlaybackController:
                 await self.bus.publish(LogMessageEvent(message=f"Dihapus dari antrean: {removed.title}"))
 
     async def _on_queue_add(self, track: TrackInfo):
-        self.state.queue.append(track)
-        await self.bus.publish(QueueUpdatedEvent())
-        await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}"))
+        async with self._lock:
+            self.state.queue.append(track)
+            await self.bus.publish(QueueUpdatedEvent())
+            await self.bus.publish(LogMessageEvent(message=f"Ditambahkan ke antrean: {track.title}"))
+
+    async def _on_queue_replace(self, tracks: list[TrackInfo]):
+        async with self._lock:
+            self.state.queue.clear()
+            self.state.queue.extend(tracks)
+            await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_queue_reorder(self, data: dict):
         async with self._lock:

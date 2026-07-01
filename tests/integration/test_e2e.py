@@ -11,7 +11,7 @@ import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 from server.app import create_app
-from core.room_manager import RoomManager
+from engine.playback.controller import PlaybackController
 from core.ports import DatabasePort, MediaExtractorPort
 from core.state import TrackInfo, AppState, PlayerStatus
 
@@ -39,28 +39,16 @@ def mock_ytdlp():
 
 
 @pytest.fixture
-def mock_room_manager(mock_db, mock_ytdlp):
-    """Creates a fully mocked RoomManager that returns a fake room without MPV."""
-    manager = MagicMock(spec=RoomManager)
-    
-    # Create a fake room-like object
-    fake_room = MagicMock()
-    fake_state = AppState(room_id="default")
-    fake_room.state = fake_state
-    fake_room.playback = MagicMock()
-    fake_room.playback.mpv = MagicMock()
-    fake_room.playback.mpv.is_connected = True
-    
-    # TASK-1.4: rooms dict is required by handle_websocket for room validation
-    manager.rooms = {"default": fake_room}
-    manager.get_or_create_room = AsyncMock(return_value=fake_room)
-    return manager
+def mock_playback_controller(mock_db, mock_ytdlp):
+    controller = MagicMock(spec=PlaybackController)
+    controller.state = AppState()
+    return controller
 
 
 @pytest.mark.asyncio
-async def test_e2e_health_endpoint(aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
+async def test_e2e_health_endpoint(aiohttp_client, mock_playback_controller, mock_ytdlp, mock_db):
     """PATCH-3-05: Verifikasi endpoint /health."""
-    app = create_app(mock_room_manager, mock_ytdlp, mock_db)
+    app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
     
     resp = await client.get("/health")
@@ -71,9 +59,9 @@ async def test_e2e_health_endpoint(aiohttp_client, mock_room_manager, mock_ytdlp
 
 
 @pytest.mark.asyncio
-async def test_e2e_metrics_endpoint(aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
+async def test_e2e_metrics_endpoint(aiohttp_client, mock_playback_controller, mock_ytdlp, mock_db):
     """PATCH-3-04: Verifikasi endpoint /metrics tersedia (Prometheus format)."""
-    app = create_app(mock_room_manager, mock_ytdlp, mock_db)
+    app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
     
     resp = await client.get("/metrics")
@@ -84,12 +72,12 @@ async def test_e2e_metrics_endpoint(aiohttp_client, mock_room_manager, mock_ytdl
 
 
 @pytest.mark.asyncio
-async def test_e2e_websocket_connect_initial_state(aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
+async def test_e2e_websocket_connect_initial_state(aiohttp_client, mock_playback_controller, mock_ytdlp, mock_db):
     """PATCH-3-05: Verifikasi WS konek dan menerima initial state."""
-    app = create_app(mock_room_manager, mock_ytdlp, mock_db)
+    app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
     
-    ws = await client.ws_connect("/ws?room=default")
+    ws = await client.ws_connect("/ws")
     
     # First message: initial state broadcast
     msg = await ws.receive()
@@ -102,12 +90,12 @@ async def test_e2e_websocket_connect_initial_state(aiohttp_client, mock_room_man
 
 
 @pytest.mark.asyncio
-async def test_e2e_websocket_auth_with_token(aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
+async def test_e2e_websocket_auth_with_token(aiohttp_client, mock_playback_controller, mock_ytdlp, mock_db):
     """PATCH-3-05: Verifikasi WS autentikasi token berhasil."""
-    app = create_app(mock_room_manager, mock_ytdlp, mock_db)
+    app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
     
-    ws = await client.ws_connect("/ws?room=default")
+    ws = await client.ws_connect("/ws")
     
     # Consume initial state
     await ws.receive()
@@ -128,12 +116,12 @@ async def test_e2e_websocket_auth_with_token(aiohttp_client, mock_room_manager, 
 
 
 @pytest.mark.asyncio
-async def test_e2e_websocket_search(aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
+async def test_e2e_websocket_search(aiohttp_client, mock_playback_controller, mock_ytdlp, mock_db):
     """PATCH-3-05: Verifikasi WS search command mengembalikan hasil."""
-    app = create_app(mock_room_manager, mock_ytdlp, mock_db)
+    app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
     
-    ws = await client.ws_connect("/ws?room=default")
+    ws = await client.ws_connect("/ws")
     
     # Consume initial state
     await ws.receive()
@@ -159,12 +147,12 @@ async def test_e2e_websocket_search(aiohttp_client, mock_room_manager, mock_ytdl
 
 
 @pytest.mark.asyncio
-async def test_e2e_websocket_unauthenticated_command_rejected(aiohttp_client, mock_room_manager, mock_ytdlp, mock_db):
+async def test_e2e_websocket_unauthenticated_command_rejected(aiohttp_client, mock_playback_controller, mock_ytdlp, mock_db):
     """PATCH-3-05: Verifikasi command ditolak bila belum autentikasi."""
-    app = create_app(mock_room_manager, mock_ytdlp, mock_db)
+    app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
     
-    ws = await client.ws_connect("/ws?room=default")
+    ws = await client.ws_connect("/ws")
     
     # Consume initial state
     await ws.receive()

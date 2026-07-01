@@ -31,6 +31,7 @@ class MpvController:
         self._request_id = 0
         self._pending: dict[int, asyncio.Future] = {}
         self._req_lock = asyncio.Lock()  # RC-02: lindungi increment _request_id
+        self._reconnect_lock = asyncio.Lock()  # C-3 fix
         self._observer_task = None
         self.is_connected = False
         self._mpv_process = None
@@ -43,6 +44,12 @@ class MpvController:
         self._bus = event_bus
 
     async def connect(self):
+        async with self._reconnect_lock:
+            if self.is_connected:
+                return
+            await self._do_connect()
+
+    async def _do_connect(self):
         import shutil
         
         ytdl_path = shutil.which("yt-dlp")
@@ -267,15 +274,15 @@ class MpvController:
     async def _command(self, cmd: list) -> int:
         if not self.is_connected or not self._writer:
             return 0
-        async with self._req_lock:  # RC-02: atomic increment
+        async with self._req_lock:
             self._request_id += 1
             req_id = self._request_id
-        payload = json.dumps({"command": cmd, "request_id": req_id}) + "\n"
-        try:
-            self._writer.write(payload.encode())
-            await self._writer.drain()
-        except OSError:
-            self.is_connected = False
+            payload = json.dumps({"command": cmd, "request_id": req_id}) + "\n"
+            try:
+                self._writer.write(payload.encode())
+                await self._writer.drain()
+            except OSError:
+                self.is_connected = False
         return req_id
 
     async def _get_property(self, prop: str):

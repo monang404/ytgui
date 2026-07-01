@@ -31,8 +31,8 @@ ACTIVE_WEBSOCKETS = Gauge(
 # --- OpenTelemetry Tracing ---
 def setup_tracing():
     provider = TracerProvider()
-    processor = BatchSpanProcessor(ConsoleSpanExporter())
-    provider.add_span_processor(processor)
+    # processor = BatchSpanProcessor(ConsoleSpanExporter())
+    # provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
     return trace.get_tracer("ytplayer.core")
 

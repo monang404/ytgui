@@ -25,7 +25,7 @@ class YtDlpClient:
 
     def __init__(self):
         self.is_cancelled = False
-        self._executor = ThreadPoolExecutor(max_workers=2)
+        self._executor = ThreadPoolExecutor(max_workers=4)
 
     def cancel_download(self):
         self.is_cancelled = True

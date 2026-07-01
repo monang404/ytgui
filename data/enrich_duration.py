@@ -42,7 +42,7 @@ def main():
             song['durasi_detik'] = dur
         return dur
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(process_song, song): song for song in songs_to_fetch}
         
         completed = 0

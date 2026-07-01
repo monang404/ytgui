@@ -92,6 +92,9 @@ function playSearchTrack(track) {
 function showActionModal(track) {
     window.pendingTrack = track;
     dom.actionTitle.textContent = track.title;
+    if (dom.actionDelete) {
+        dom.actionDelete.style.display = (track.local_path || track.is_cached) ? 'block' : 'none';
+    }
     if (dom.actionSheet) dom.actionSheet.classList.add("open");
     if (dom.mainOverlay) dom.mainOverlay.classList.add("open");
 }

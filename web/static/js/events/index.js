@@ -18,7 +18,7 @@ function initEvents() {
             if (window.safeStorage) {
                 window.safeStorage.set("ytgui_user_role", "client");
             } else {
-                localStorage.setItem("ytgui_user_role", "client");
+                window.safeStorage.set("ytgui_user_role", "client");
             }
             if (typeof applyRoleUI === "function") applyRoleUI();
             if (typeof unlockBrowserAudio === "function") unlockBrowserAudio();

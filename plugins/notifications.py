@@ -139,6 +139,17 @@ class TermuxNowPlaying:
 
     async def cleanup(self):
         self._stop.set()
+        
+        # Unblock the FIFO reader thread
+        if self._available and hasattr(self, "_fifo_path"):
+            try:
+                import os
+                fd = os.open(self._fifo_path, os.O_WRONLY | os.O_NONBLOCK)
+                os.write(fd, b"\n")
+                os.close(fd)
+            except OSError:
+                pass
+                
         if self._available:
             try:
                 proc = await asyncio.create_subprocess_exec(

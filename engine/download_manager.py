@@ -24,7 +24,7 @@ class DownloadManager:
         
         command_bus.register(CMD_DOWNLOAD, self._on_download)
         
-    async def _on_download(self, room_id: str, track: TrackInfo | None = None):  # TASK-0.4: tambah room_id sesuai CommandBus convention
+    async def _on_download(self, track: TrackInfo | None = None):
         target = track or self.state.current_track
         if not target:
             await self.bus.publish(LogMessageEvent(message="Tidak ada lagu yang dipilih untuk di-download"))
@@ -60,7 +60,19 @@ class DownloadManager:
                 track.local_path = local_path
                 self.state.download_progress = None
                 
-                await self.bus.publish(LogMessageEvent(message=f"Download selesai: {track.title}"))
+                # Copy to downloads folder with nice name
+                import shutil
+                from pathlib import Path
+                import re
+                downloads_dir = Path("downloads")
+                downloads_dir.mkdir(exist_ok=True)
+                safe_artist = re.sub(r'[\\/*?:"<>|]', "", track.artist)
+                safe_title = re.sub(r'[\\/*?:"<>|]', "", track.title)
+                user_path = downloads_dir / f"{safe_artist} - {safe_title}.mp3"
+                if not user_path.exists():
+                    shutil.copy2(local_path, user_path)
+                
+                await self.bus.publish(LogMessageEvent(message=f"Download sukses: {track.title} (Tersimpan di folder 'downloads')"))
                 await self.bus.publish(DownloadCompleteEvent(track=track))
                 
             except Exception as e:
@@ -70,3 +82,5 @@ class DownloadManager:
 
     def _update_progress(self, percent: float):
         self.state.download_progress = percent
+        from core.events import DownloadProgressEvent
+        safe_create_task(self.bus.publish(DownloadProgressEvent(progress=percent)), name="pub_dl_prog")

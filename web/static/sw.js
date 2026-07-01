@@ -7,7 +7,6 @@ const STATIC_CACHE = `${CACHE_VERSION}-static`;
 // Assets yang di-cache saat install
 const PRECACHE_ASSETS = [
     '/',
-    '/static/index.html',
     '/static/css/base.css',
     '/static/css/tokens.css',
     '/static/css/components.css',
@@ -33,7 +32,13 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(STATIC_CACHE)
-            .then(cache => cache.addAll(PRECACHE_ASSETS))
+            .then(cache => {
+                return Promise.all(
+                    PRECACHE_ASSETS.map(url => 
+                        cache.add(url).catch(err => console.warn('Cache add failed for', url, err))
+                    )
+                );
+            })
             .then(() => self.skipWaiting())
     );
 });

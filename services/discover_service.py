@@ -101,7 +101,7 @@ class DiscoverService:
         artists = []
         try:
             async with self.db._conn.execute(
-                "SELECT id, nama, kategori, tahun_aktif, COALESCE(click_count, 0) as click_count FROM artists ORDER BY RANDOM() LIMIT ?", (n,)
+                "SELECT id, nama, kategori, tahun_aktif, COALESCE(click_count, 0) as click_count FROM artists WHERE id IN (SELECT id FROM artists ORDER BY RANDOM() LIMIT ?)", (n,)
             ) as cursor:
                 async for row in cursor:
                     artists.append(dict(row))
@@ -117,7 +117,7 @@ class DiscoverService:
         genres = []
         try:
             async with self.db._conn.execute(
-                "SELECT id, nama_genre, COALESCE(click_count, 0) as click_count FROM genres ORDER BY RANDOM() LIMIT ?", (n,)
+                "SELECT id, nama_genre, COALESCE(click_count, 0) as click_count FROM genres WHERE id IN (SELECT id FROM genres ORDER BY RANDOM() LIMIT ?)", (n,)
             ) as cursor:
                 async for row in cursor:
                     genres.append({

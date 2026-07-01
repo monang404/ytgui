@@ -189,6 +189,14 @@ class Database:
         )
         await self._conn.commit()
 
+    async def set_local_path(self, video_id: str, local_path: str | None):
+        """Set local_path explicitly (can be used to clear it by passing None)."""
+        await self._conn.execute(
+            "UPDATE tracks SET local_path=? WHERE video_id=?",
+            (local_path, video_id)
+        )
+        await self._conn.commit()
+
     async def increment_play_count(self, video_id: str):
         """MED-10 fix: Only called when a track actually starts playing."""
         ts = int(time.time())

@@ -40,3 +40,9 @@ class BroadcastService:
             "type": "log",
             "data": message,
         })
+
+    async def broadcast_download_progress(self, progress: float):
+        await self.manager.broadcast({
+            "type": "download_progress",
+            "data": progress,
+        })

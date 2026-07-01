@@ -49,7 +49,7 @@ echo -e "${CYAN}[*]${RESET} Checking Python Dependencies..."
 MISSING_DEPS=0
 DEPS="aiohttp aiosqlite yt_dlp syncedlyrics structlog prometheus_client opentelemetry"
 for dep in $DEPS; do
-    if ! python3 -c "import $dep" &> /dev/null; then
+    if ! python -c "import $dep" &> /dev/null; then
         echo -e "    ${RED}[-]${RESET} Missing module: $dep"
         MISSING_DEPS=1
     fi
@@ -135,7 +135,7 @@ echo ""
 echo -e "${GREEN}[*] Starting Server...${RESET}"
 sleep 1
 
-python3 main.py
+python main.py
 
 if [ $? -ne 0 ]; then
     echo -e "\n${RED}[X] Server terminated with an error.${RESET}"

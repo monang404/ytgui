@@ -45,6 +45,7 @@ async def main():
     mpv = MpvController()
     try:
         await mpv.connect()
+        mpv.is_available = True
     except Exception as e:
         structlog.get_logger(__name__).error(f"mpv not available: {e}")
         state.error_msg = (
@@ -52,6 +53,7 @@ async def main():
             "atau install MPV dan tambahkan ke PATH (Windows/Linux)."
         )
         state.status = PlayerStatus.ERROR
+        mpv.is_available = False
     
     # 3. Shared HTTP session
     http_session = aiohttp.ClientSession()
@@ -103,7 +105,7 @@ async def main():
                 structlog.get_logger(__name__).warning(f"Connectivity check unexpected error: {e}")
                 state.is_online = False
                 
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
 
     connectivity_task = safe_create_task(check_connectivity(), name="connectivity_checker")
     tasks = [connectivity_task]
@@ -112,7 +114,7 @@ async def main():
     async def mpv_reconnect_checker():
         while True:
             await asyncio.sleep(5)
-            if not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
+            if getattr(mpv, "is_available", True) and not getattr(mpv, "is_connected", False) and state.status != PlayerStatus.ERROR:
                 structlog.get_logger(__name__).warning(f"MPV terputus! Mencoba reconnect...")
                 try:
                     await mpv.close()

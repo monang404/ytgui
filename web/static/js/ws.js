@@ -40,11 +40,11 @@ function wsConnect() {
         }
         
         if (store.userRole === "admin") {
-            const token = localStorage.getItem("ytgui_session_token");
+            const token = window.safeStorage.get("ytgui_session_token");
             if (token) {
                 wsSend("auth", { token: token });
             }
-            const savedOutput = localStorage.getItem("ytgui_audio_output") || "browser";
+            const savedOutput = window.safeStorage.get("ytgui_audio_output") || "browser";
             wsSend("set_output", { output: savedOutput });
         } else if (store.userRole === "client") {
             if (store.active_tab === "home" || store.active_tab === "discover") {
@@ -90,11 +90,11 @@ function handleServerMessage(msg) {
             }
             if (msg.data.success) {
                 store.userRole = "admin";
-                localStorage.setItem("ytgui_user_role", "admin");
+                window.safeStorage.set("ytgui_user_role", "admin");
                 if (msg.data.token) {
-                    localStorage.setItem("ytgui_session_token", msg.data.token);
+                    window.safeStorage.set("ytgui_session_token", msg.data.token);
                 }
-                localStorage.removeItem("ytgui_admin_password");
+                window.safeStorage.remove("ytgui_admin_password");
                 dom.loginErrorMsg.textContent = "";
                 dom.portalLoginForm.classList.add("hidden");
                 applyRoleUI();
@@ -204,6 +204,11 @@ function handleServerMessage(msg) {
             break;
         case "error":
             showLogToast("Error: " + msg.data);
+            break;
+        case "download_progress":
+            store.download_progress = msg.data;
+            if (typeof renderPlayerBar === "function") renderPlayerBar();
+            if (typeof renderSettingsSheet === "function") renderSettingsSheet();
             break;
     }
 }

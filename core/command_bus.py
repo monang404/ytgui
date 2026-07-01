@@ -68,6 +68,7 @@ CMD_SET_OUTPUT   = "cmd.set.output"        # data: AudioOutput
 CMD_SET_SPONSORBLOCK = "cmd.set.sponsorblock" # data: bool
 CMD_QUEUE_SELECT = "cmd.queue.select"      # data: int (index)
 CMD_QUEUE_ADD    = "cmd.queue.add"         # data: TrackInfo
+CMD_QUEUE_REPLACE= "cmd.queue.replace"     # data: list[TrackInfo]
 CMD_QUEUE_REMOVE = "cmd.queue.remove"      # data: int (index)
 CMD_QUEUE_REORDER = "cmd.queue.reorder"    # data: {"from_index": int, "to_index": int}
 CMD_RADIO_RANDOMIZE = "cmd.radio.randomize"

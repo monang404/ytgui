@@ -36,7 +36,9 @@ class LyricsUpdatedEvent(DomainEvent):
 class DownloadCompleteEvent(DomainEvent):
     track: Optional[TrackInfo] = None
 
-
+@dataclass
+class DownloadProgressEvent(DomainEvent):
+    progress: float = 0.0
 
 @dataclass
 class LogMessageEvent(DomainEvent):

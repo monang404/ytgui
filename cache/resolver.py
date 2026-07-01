@@ -27,7 +27,8 @@ class CacheResolver:
         # Rule 1: Local file — ini yang benar-benar berguna
         if row and row.local_path:
             path = row.local_path
-            if os.path.isfile(path):
+            import asyncio
+            if await asyncio.to_thread(os.path.isfile, path):
                 track.local_path = path
                 return path
 

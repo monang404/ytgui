@@ -2,7 +2,7 @@ import time
 import structlog
 from core.events import (
     TrackStartedEvent, TrackProgressEvent, QueueUpdatedEvent, LyricsUpdatedEvent,
-    DownloadCompleteEvent, LogMessageEvent, TrackPauseChangedEvent
+    DownloadCompleteEvent, LogMessageEvent, TrackPauseChangedEvent, DownloadProgressEvent
 )
 from core.task_utils import safe_create_task
 
@@ -47,6 +47,27 @@ def setup_event_listeners(
 
     async def _on_download_complete(event: DownloadCompleteEvent):
         await broadcast_service.broadcast_state(playback_controller.state)
+        if event.track:
+            safe_create_task(playback_controller.resolver.db.upsert_track(event.track, local_path=event.track.local_path), name="upsert_dl_track")
+            # Broadcast updated discover data to refresh cached list
+            from services.discover_service import DiscoverService
+            from server.serializers import track_to_dict
+            ds = DiscoverService(playback_controller.resolver.db)
+            recent = await ds.get_recent(15)
+            favorites = await ds.get_favorites(15)
+            cached = await ds.get_cached(15)
+            featured_artists = await ds.get_featured_artists(100)
+            featured_genres = await ds.get_featured_genres(100)
+            await broadcast_service.manager.broadcast({
+                "type": "discover_data",
+                "data": {
+                    "recent": [track_to_dict(t) for t in recent],
+                    "favorites": [track_to_dict(t) for t in favorites],
+                    "cached_tracks": [track_to_dict(t) for t in cached],
+                    "featured_artists": featured_artists,
+                    "featured_genres": featured_genres
+                }
+            })
 
     async def _on_log_message(event: LogMessageEvent):
         msg = event.message
@@ -56,6 +77,9 @@ def setup_event_listeners(
     async def _on_pause_changed(event: TrackPauseChangedEvent):
         await broadcast_service.broadcast_progress(playback_controller.state.position, playback_controller.state.status.name)
 
+    async def _on_download_progress(event: DownloadProgressEvent):
+        await broadcast_service.broadcast_download_progress(event.progress)
+
     bus = playback_controller.bus
     bus.subscribe(TrackStartedEvent, _on_track_started)
     bus.subscribe(TrackProgressEvent, _on_track_progress)
@@ -64,4 +88,5 @@ def setup_event_listeners(
     bus.subscribe(DownloadCompleteEvent, _on_download_complete)
     bus.subscribe(LogMessageEvent, _on_log_message)
     bus.subscribe(TrackPauseChangedEvent, _on_pause_changed)
+    bus.subscribe(DownloadProgressEvent, _on_download_progress)
     logger.info("EventBus subscriptions set up for Web Server")

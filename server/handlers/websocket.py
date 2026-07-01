@@ -9,7 +9,7 @@ from core.command_bus import (
     command_bus, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE,
     CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_VOLUME_UP, CMD_VOLUME_DOWN, CMD_VOLUME_SET,
     CMD_DOWNLOAD, CMD_SET_MODE, CMD_SET_OUTPUT, CMD_SET_SPONSORBLOCK, CMD_QUEUE_SELECT,
-    CMD_QUEUE_ADD, CMD_QUEUE_REMOVE, CMD_QUEUE_REORDER, CMD_RADIO_RANDOMIZE, CMD_LYRICS_OFFSET
+    CMD_QUEUE_ADD, CMD_QUEUE_REPLACE, CMD_QUEUE_REMOVE, CMD_QUEUE_REORDER, CMD_RADIO_RANDOMIZE, CMD_LYRICS_OFFSET
 )
 from core.state import PlaybackMode, AudioOutput
 from server.serializers import state_to_dict, dict_to_track, track_to_dict
@@ -26,6 +26,8 @@ class ConnectionManager:
         self.session_tokens = {}
         self.login_attempts = {}
         self.command_history = {}
+        import asyncio
+        self.rl_lock = asyncio.Lock()
 
     async def connect(self, ws):
         self.active_connections.append(ws)
@@ -108,7 +110,7 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
         }))
         return
 
-    if not check_rate_limit(manager, client_ip, now):
+    if not await check_rate_limit(manager, client_ip, now):
         await ws.send_str(json.dumps({
             "type": "error",
             "data": "Terlalu banyak permintaan. Mohon tunggu sesaat."
@@ -189,11 +191,7 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
                 
                 if songs:
                     await command_bus.execute(CMD_SET_MODE, PlaybackMode.QUEUE)
-                    state.queue.clear()
-                    
-                    for track in songs:
-                        await command_bus.execute(CMD_QUEUE_ADD, track)
-                        
+                    await command_bus.execute(CMD_QUEUE_REPLACE, songs)
                     await command_bus.execute(CMD_QUEUE_SELECT, 0)
 
         elif action == "play_track":
@@ -228,7 +226,68 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
             await command_bus.execute(CMD_VOLUME_SET, {"volume": int(vol)})
 
         elif action == "download":
-            await command_bus.execute(CMD_DOWNLOAD)
+            track = dict_to_track(data) if data else None
+            await command_bus.execute(CMD_DOWNLOAD, track)
+
+        elif action == "delete_download":
+            track = dict_to_track(data) if data else None
+            if track and track.video_id:
+                db_track = await db.get_track(track.video_id)
+                if db_track and db_track.local_path:
+                    import os
+                    from pathlib import Path
+                    import re
+                    
+                    # Hapus file cache
+                    if os.path.exists(db_track.local_path):
+                        try:
+                            os.remove(db_track.local_path)
+                        except Exception as e:
+                            logger.error(f"Gagal menghapus cache {db_track.local_path}: {e}")
+                            
+                    # Hapus file downloads
+                    safe_artist = re.sub(r'[\\/*?:"<>|]', "", db_track.artist)
+                    safe_title = re.sub(r'[\\/*?:"<>|]', "", db_track.title)
+                    user_path = Path("downloads") / f"{safe_artist} - {safe_title}.mp3"
+                    if user_path.exists():
+                        try:
+                            os.remove(str(user_path))
+                        except:
+                            pass
+                            
+                    # Update DB
+                    db_track.local_path = None
+                    await db.set_local_path(db_track.video_id, None)
+                    
+                    # Update current state if playing this track
+                    if state.current_track and state.current_track.video_id == db_track.video_id:
+                        state.current_track.local_path = None
+                        await manager.broadcast({
+                            "type": "state",
+                            "data": state_to_dict(state)
+                        })
+                        
+                    # Update discover
+                    ds = DiscoverService(db)
+                    recent = await ds.get_recent(15)
+                    favorites = await ds.get_favorites(15)
+                    cached = await ds.get_cached(15)
+                    featured_artists = await ds.get_featured_artists(100)
+                    featured_genres = await ds.get_featured_genres(100)
+                    await manager.broadcast({
+                        "type": "discover_data",
+                        "data": {
+                            "recent": [track_to_dict(t) for t in recent],
+                            "favorites": [track_to_dict(t) for t in favorites],
+                            "cached_tracks": [track_to_dict(t) for t in cached],
+                            "featured_artists": featured_artists,
+                            "featured_genres": featured_genres
+                        }
+                    })
+                    await manager.broadcast({
+                        "type": "log",
+                        "data": f"Unduhan dihapus: {db_track.title}"
+                    })
 
         elif action == "set_mode":
             mode_str = data.get("mode", "queue").upper()
@@ -266,12 +325,8 @@ async def handle_ws_message(msg: dict, ws, client_ip: str, state, ytdlp, manager
                 if songs:
                     await db.increment_artist_click(artist_name)
 
-                    state.queue.clear()
                     first_track, rest_tracks = songs[0], songs[1:]
-
-                    for track in rest_tracks:
-                        await command_bus.execute(CMD_QUEUE_ADD, track)
-
+                    await command_bus.execute(CMD_QUEUE_REPLACE, rest_tracks)
                     await command_bus.execute(CMD_PLAY_TRACK, first_track)
 
         elif action == "radio_randomize":

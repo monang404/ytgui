@@ -18,16 +18,8 @@ async def health_check(request):
     db = request.app["db"]
     db_status = "connected" if db.conn else "disconnected"
     
-    rm = request.app["room_manager"]
-    try:
-        rooms = getattr(rm, "_rooms", {})
-        if rooms:
-            first_room = next(iter(rooms.values()))
-            mpv_ok = getattr(getattr(first_room, "mpv", None), "is_connected", False)
-        else:
-            mpv_ok = True
-    except Exception:
-        mpv_ok = False
+    pc = request.app.get("playback_controller")
+    mpv_ok = getattr(getattr(pc, "mpv", None), "is_connected", False)
     mpv_status = "connected" if mpv_ok else "not_started"
     
     return web.json_response({
@@ -138,7 +130,7 @@ async def serve_stream(request):
 
                 await response.prepare(request)
 
-                async for chunk in upstream.content.iter_chunked(65536):
+                async for chunk in upstream.content.iter_chunked(16384):
                     await response.write(chunk)
 
                 await response.write_eof()

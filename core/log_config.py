@@ -19,6 +19,9 @@ def simple_renderer(logger, name, event_dict):
     return f"[{ts}] {level}: {event}{extra_str}"
 
 def setup_logging():
+    import queue
+    from logging.handlers import QueueHandler, QueueListener
+
     log_path = BASE_DIR / "ytplayer.log"
     _file_handler = RotatingFileHandler(
         log_path,
@@ -28,10 +31,15 @@ def setup_logging():
     )
     _console_handler = logging.StreamHandler(sys.stdout)
     
+    log_queue = queue.Queue(-1)
+    queue_handler = QueueHandler(log_queue)
+    listener = QueueListener(log_queue, _file_handler, _console_handler)
+    listener.start()
+    
     logging.basicConfig(
         format="%(message)s",
         level=logging.INFO,
-        handlers=[_file_handler, _console_handler]
+        handlers=[queue_handler]
     )
 
     structlog.configure(

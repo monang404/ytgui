@@ -4,8 +4,13 @@ bagas.fm — Server Manager
 Jalankan: python start.py
 """
 
-import tkinter as tk
-from tkinter import scrolledtext, messagebox
+try:
+    import tkinter as tk
+    from tkinter import scrolledtext, messagebox
+except ImportError:
+    import sys
+    print("Tkinter is not available. Please run `python main.py` directly or use `start.sh` on headless environments like Termux.", file=sys.stderr)
+    sys.exit(1)
 import subprocess
 import threading
 import sys
@@ -73,6 +78,11 @@ class ServerManager(tk.Tk):
                 password_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(password_file, "w", encoding="utf-8") as f:
                     f.write(hashed_password)
+                try:
+                    import stat
+                    password_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
+                except OSError:
+                    pass
                     
                 self.after(500, lambda: self._show_new_password_dialog(raw_password, is_first_run=True))
             except Exception as e:
@@ -768,6 +778,11 @@ class ServerManager(tk.Tk):
             password_file.parent.mkdir(parents=True, exist_ok=True)
             with open(password_file, "w", encoding="utf-8") as f:
                 f.write(hashed_password)
+            try:
+                import stat
+                password_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
+            except OSError:
+                pass
                 
             self._show_new_password_dialog(raw_password)
             self._write_log("Admin password has been reset successfully.", "ok")

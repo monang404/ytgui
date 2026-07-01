@@ -77,6 +77,7 @@ function initPlayerEvents() {
     if (dom.btnDownload) {
         dom.btnDownload.addEventListener("click", () => {
             if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
+            if (typeof closeMainOverlay === "function") closeMainOverlay();
             if (store.userRole === "admin") wsSend("download");
         });
     }
@@ -270,6 +271,16 @@ function initPlayerEvents() {
 
     if (dom.actionCancel) {
         dom.actionCancel.addEventListener("click", () => {
+            if (typeof hideActionModal === "function") hideActionModal();
+        });
+    }
+
+    if (dom.actionDelete) {
+        dom.actionDelete.addEventListener("click", () => {
+            if (store.userRole !== "admin") return;
+            if (window.pendingTrack) {
+                wsSend("delete_download", window.pendingTrack);
+            }
             if (typeof hideActionModal === "function") hideActionModal();
         });
     }

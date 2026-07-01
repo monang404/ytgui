@@ -75,6 +75,11 @@ else:
         _password_file.parent.mkdir(parents=True, exist_ok=True)
         with open(_password_file, "w", encoding="utf-8") as f:
             f.write(ADMIN_PASSWORD)
+        try:
+            import stat
+            _password_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        except OSError:
+            pass
         
         print(f"\\n==========================================")
         print(f"PASSWORD ADMIN GENERATED: {raw_password}")
