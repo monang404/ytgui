@@ -58,9 +58,10 @@
   cursor: pointer; width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
   border-radius: var(--r-sm);
-  transition: color var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 .btn-prev:hover, .btn-next:hover { color: var(--text-1); }
+.btn-prev:active, .btn-next:active { transform: scale(0.92); }
 
 
 

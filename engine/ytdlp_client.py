@@ -21,6 +21,7 @@ class YtDlpClient:
         "extract_flat": False,
         "format": "bestaudio[ext=m4a]/bestaudio/best",
         "format_sort": ["abr", "asr"],
+        "concurrent_fragment_downloads": 5,
     }
 
     def __init__(self):

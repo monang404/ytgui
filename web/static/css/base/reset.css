@@ -14,4 +14,6 @@ html, body {
   background: var(--bg-primary);
   overflow: hidden;
   overscroll-behavior: none;  /* C-12: cegah scroll-bleed di iOS Safari */
+  touch-action: manipulation; /* Removes 300ms tap delay */
+  -webkit-tap-highlight-color: transparent;
 }

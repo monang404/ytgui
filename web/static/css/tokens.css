@@ -65,8 +65,8 @@
    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.50);
 
    /* ── Motion ── */
-   --dur-fast: 120ms;
-   --dur-normal: 180ms;
+   --dur-fast: 80ms;
+   --dur-normal: 150ms;
    --ease: cubic-bezier(0.0, 0.0, 0.2, 1);
 
    /* ── Status ── */

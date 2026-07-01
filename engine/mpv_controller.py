@@ -55,7 +55,12 @@ class MpvController:
         common_args = [
             "--no-video", "--idle",
             "--ytdl-format=bestaudio/best",
-            "--audio-pitch-correction=yes"
+            "--audio-pitch-correction=yes",
+            "--cache=yes",
+            "--demuxer-max-bytes=50M",
+            "--demuxer-max-back-bytes=20M",
+            "--demuxer-readahead-secs=60",
+            "--audio-buffer=0",
         ]
 
         if os.name == 'nt':
