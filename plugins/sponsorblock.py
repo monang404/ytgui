@@ -71,7 +71,7 @@ class SponsorBlockHandler:
             return
 
         for start, end in self.segments:
-            if start <= current_pos <= start + 0.6:
+            if start <= current_pos < end:
                 await self.mpv.seek(end)
                 await self._bus.publish(LogMessageEvent(message=f"Melewati sponsor ({int(start)}s - {int(end)}s)"))
                 break
