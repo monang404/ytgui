@@ -147,8 +147,9 @@ class PlaybackController:
             await asyncio.sleep(0.35)
             await self._on_next(next_data)
         elif reason == "stop":
-            if self.state.status not in (PlayerStatus.IDLE,):
-                self.state.status = PlayerStatus.IDLE
+            # Abaikan event "stop" dari MPV karena ini otomatis terpanggil saat `loadfile` (ganti lagu).
+            # State IDLE diset secara eksplisit di `_on_stop()` jika user/sistem benar-benar berhenti.
+            pass
         elif reason == "error":
             self.state.status = PlayerStatus.ERROR
             await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran"))
