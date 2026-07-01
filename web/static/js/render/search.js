@@ -47,12 +47,11 @@ function renderSearchResults(results) {
         duration.className = "sr-duration";
         duration.textContent = formatTime(track.duration);
 
-        // 3-dots context menu button
         const moreBtn = document.createElement("button");
         moreBtn.className = "sr-more-btn";
         moreBtn.innerHTML = '<i class="ti ti-dots-vertical"></i>';
         moreBtn.addEventListener("click", (e) => {
-            e.stopPropagation(); // Prevent playing track
+            e.stopPropagation();
             if (typeof showActionModal === "function") showActionModal(track);
         });
 

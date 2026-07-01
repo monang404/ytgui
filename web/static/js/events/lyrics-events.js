@@ -62,6 +62,7 @@ function initLyricsEvents() {
                 store.lyrics_offset = (store.lyrics_offset || 0) - 0.5;
                 if (typeof updateOffsetDisplay === "function") updateOffsetDisplay();
                 if (typeof syncLocalLyrics === "function") syncLocalLyrics();
+                wsSend("lyrics_offset", { offset: store.lyrics_offset });
                 showLyricSync();
             });
         }
@@ -72,6 +73,7 @@ function initLyricsEvents() {
                 store.lyrics_offset = (store.lyrics_offset || 0) + 0.5;
                 if (typeof updateOffsetDisplay === "function") updateOffsetDisplay();
                 if (typeof syncLocalLyrics === "function") syncLocalLyrics();
+                wsSend("lyrics_offset", { offset: store.lyrics_offset });
                 showLyricSync();
             });
         }

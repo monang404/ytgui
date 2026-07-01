@@ -51,7 +51,7 @@
   width: 78%;
   max-width: 300px;
   aspect-ratio: 1 / 1;
-  border-radius: 24px;
+  border-radius: var(--r-lg);
   overflow: hidden;
   background: var(--bg-elevated);
   box-shadow:
@@ -215,7 +215,7 @@
 .home-recent-thumb, .radio-queue-thumb {
   width: 46px;
   height: 46px;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   overflow: hidden;
   background: var(--bg-elevated);
   flex-shrink: 0;
@@ -340,8 +340,8 @@
   gap: 8px;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: var(--s1) var(--s3);
+  border-radius: var(--r-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   opacity: 0;
   transform: translateY(-10px);
@@ -369,7 +369,7 @@ body[data-has-lyrics="false"] .lyric-sync-ctrls {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: var(--s1);
   transition: color 0.2s, transform 0.2s;
 }
 
@@ -484,13 +484,11 @@ body[data-active-tab="home"] #player-bar {
 /* Hover & active colors for player controls */
 .btn-prev,
 .btn-next {
-  color: #fff !important;
+  color: var(--text-1) !important;
 }
 
 .btn-prev:hover,
-.btn-next:hover,
-.btn-shuffle:hover,
-.btn-repeat:hover {
+.btn-next:hover {
   color: var(--accent) !important;
 }
 
@@ -501,6 +499,7 @@ body[data-active-tab="home"] #player-bar {
   padding: var(--s3) var(--s5) var(--s4);
   flex-shrink: 0;
   position: relative;
+  min-height: 64px;
 }
 
 
@@ -524,7 +523,7 @@ body[data-active-tab="home"] #player-bar {
   font-weight: var(--w-medium);
   background: var(--accent-dark); color: var(--accent);
 }
-.pb-badge.queue { background: rgba(96,165,250,0.12); color: #60a5fa; }
+.pb-badge.queue { background: rgba(96,165,250,0.12); color: var(--accent); }
 
 /* Progress bar */
 .pb-seek {
@@ -570,7 +569,7 @@ body[data-active-tab="home"] #player-bar {
 .pb-badge-sm.cached { background: rgba(34,197,94,0.12); color: var(--green); }
 .pb-badge-sm.stream { display: none !important; }
 .pb-badge-sm.sb     { display: none !important; }
-.pb-badge-sm.dl     { background: rgba(96,165,250,0.12); color: #60a5fa; }
+.pb-badge-sm.dl     { background: rgba(96,165,250,0.12); color: var(--accent); }
 
 /* ── Mini player (non-home tabs) ── */
 

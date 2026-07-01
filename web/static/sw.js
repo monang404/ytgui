@@ -1,10 +1,7 @@
-// ── Service Worker — bagas.fm Phase 6 ──
-// Strategy: Cache-first untuk static assets, network-first untuk API/WS
 
 const CACHE_VERSION = 'bagas-fm-20260627_1117-dev';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
-// Assets yang di-cache saat install
 const PRECACHE_ASSETS = [
     '/',
     '/static/css/base.css',
@@ -28,7 +25,6 @@ const PRECACHE_ASSETS = [
     '/static/js/render/search.js',
 ];
 
-// Install: pre-cache static assets
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(STATIC_CACHE)
@@ -43,7 +39,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate: hapus cache lama
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -55,22 +50,18 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: cache-first untuk static, network-only untuk WS dan API
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Skip WebSocket dan API requests
     if (url.pathname.startsWith('/ws') || url.pathname.startsWith('/api')) {
-        return; // Biarkan browser handle secara normal
+        return;
     }
 
-    // Cache-first untuk static assets
     if (event.request.method === 'GET') {
         event.respondWith(
             caches.match(event.request).then(cached => {
                 if (cached) return cached;
                 return fetch(event.request).then(response => {
-                    // Cache response baru
                     if (response.ok) {
                         const cloned = response.clone();
                         caches.open(STATIC_CACHE).then(cache => cache.put(event.request, cloned));
@@ -78,7 +69,6 @@ self.addEventListener('fetch', (event) => {
                     return response;
                 });
             }).catch(() => {
-                // Offline fallback
                 if (event.request.headers.get('accept').includes('text/html')) {
                     return caches.match('/static/index.html');
                 }

@@ -17,7 +17,7 @@ class CommandRouter:
     def __init__(self, playback_controller, volume_service):
         self.playback_controller = playback_controller
         self.volume_service = volume_service
-        
+
         command_bus.register(CMD_PLAY_TRACK, self._route(lambda c, data: c._on_cmd_play_track(data)))
         command_bus.register(CMD_TOGGLE_PAUSE, self._route(lambda c, data: c._on_cmd_toggle_pause(data)))
         command_bus.register(CMD_NEXT, self._route(lambda c, data: c._on_next(data)))
@@ -34,7 +34,7 @@ class CommandRouter:
         command_bus.register(CMD_SET_OUTPUT, self._route(lambda c, data: c._on_set_output(data)))
         command_bus.register(CMD_SET_SPONSORBLOCK, self._route(lambda c, data: c._on_set_sponsorblock(data)))
         command_bus.register(CMD_LYRICS_OFFSET, self._route(lambda c, data: c._on_lyrics_offset(data)))
-        
+
         command_bus.register(CMD_VOLUME_UP, self._route_volume(lambda v, data: v._on_volume_up(data)))
         command_bus.register(CMD_VOLUME_DOWN, self._route_volume(lambda v, data: v._on_volume_down(data)))
         command_bus.register(CMD_VOLUME_SET, self._route_volume(lambda v, data: v._on_volume_set(data)))

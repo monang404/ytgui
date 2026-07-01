@@ -22,9 +22,9 @@ class LyricsFetcher:
         self.state = state
         self.lyrics_data: list[tuple[float, str]] = []
         self._session = session
-        self._owns_session = False  # True jika kita yang buat, kita yang harus tutup
+        self._owns_session = False
         self._current_generation = 0
-        # TASK-3.4: Injected per-room bus (fallback ke global jika belum direfactor)
+        # Injected bus (fallback ke global bus)
         if event_bus is None:
             from core.event_bus import bus as _global_bus
             event_bus = _global_bus
@@ -63,52 +63,46 @@ class LyricsFetcher:
         self.state.lyrics_index = 0
         self.state.lyrics_offset = 0.0
         self.state.lyrics_loading = True
-        
+
         self._current_generation += 1
         gen = self._current_generation
-        
+
         await self._bus.publish(LyricsUpdatedEvent())
 
         try:
             session = self._get_session()
-            if True:  # dummy block untuk menjaga indentasi try/except di bawah
-                # 1. Coba pencarian spesifik (exact match) dengan durasi
-                url_get = f"{LYRICS_API_BASE}/get"
-                params_get = {"track_name": title, "artist_name": artist, "duration": duration}
-                lrc = None
-                
-                async with session.get(url_get, params=params_get, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+            url_get = f"{LYRICS_API_BASE}/get"
+            params_get = {"track_name": title, "artist_name": artist, "duration": duration}
+            lrc = None
+
+            async with session.get(url_get, params=params_get, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
+
+            clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
+            for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
+                clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
+            clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
+
+            if "-" in title:
+                search_query = clean_title
+            else:
+                search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
+
+            if not lrc:
+                url_search = f"{LYRICS_API_BASE}/search"
+                params_search = {"q": search_query}
+
+                async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                     if resp.status == 200:
-                        data = await resp.json()
-                        lrc = data.get("syncedLyrics") or data.get("plainLyrics", "")
+                        results = await resp.json()
+                        if isinstance(results, list):
+                            for res in results:
+                                lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
+                                if lrc:
+                                    break
 
-                # Bersihkan judul secara umum (karena info dari YouTube sering kotor)
-                clean_title = re.sub(r'[\(\[].*?[\)\]]', '', title)
-                for kw in ['official', 'music video', 'lyric', 'lyrics', 'audio', 'video', 'mv', 'hq']:
-                    clean_title = re.sub(rf'\b{kw}s?\b', '', clean_title, flags=re.IGNORECASE)
-                clean_title = re.sub(r'\s+', ' ', clean_title).strip('- ')
-                
-                # Buat search query yang lebih bersih
-                if "-" in title:
-                    search_query = clean_title
-                else:
-                    search_query = f"{clean_title} {artist}" if artist and artist.lower() not in ["unknown", "topic"] else clean_title
-
-                # 2. Jika gagal karena durasi tidak persis sama (sering terjadi di YouTube), gunakan fallback search
-                if not lrc:
-                    url_search = f"{LYRICS_API_BASE}/search"
-                    params_search = {"q": search_query}
-                    
-                    async with session.get(url_search, params=params_search, timeout=aiohttp.ClientTimeout(total=5)) as resp:
-                        if resp.status == 200:
-                            results = await resp.json()
-                            if isinstance(results, list):
-                                for res in results:
-                                    lrc = res.get("syncedLyrics") or res.get("plainLyrics", "")
-                                    if lrc:
-                                        break
-            
-            # 3. Ultimate Fallback: gunakan pustaka syncedlyrics untuk mencari di Musixmatch, NetEase, dll.
             if not lrc:
                 logger.info("lrclib failed. Falling back to syncedlyrics (Musixmatch/NetEase/etc)...")
                 logger.info(f"syncedlyrics query: {search_query}")
@@ -118,18 +112,17 @@ class LyricsFetcher:
                 except asyncio.TimeoutError:
                     logger.warning("syncedlyrics timeout (5.0s)")
                     lrc = None
-            
+
             if self._current_generation == gen:
                 if lrc:
                     self.lyrics_data = self._parse_lrc(lrc)
-                    # LOW-07 fix: Store CLEAN lines (no timestamps) for display
                     self.state.lyrics_lines = [text for _, text in self.lyrics_data]
                     self.state.lyrics_timestamps = [t for t, _ in self.lyrics_data]
                     await self._bus.publish(LyricsUpdatedEvent())
                     logger.info(f"Lyrics: fetched {len(self.lyrics_data)} lines")
                 else:
                     logger.info("Lyrics: No lyrics found anywhere")
-                
+
         except Exception as e:
             if self._current_generation == gen:
                 logger.debug(f"Lyrics fetch failed: {e}")
@@ -150,13 +143,11 @@ class LyricsFetcher:
             if m:
                 minutes, seconds, text = m.groups()
                 timestamp = int(minutes) * 60 + float(seconds)
-                # LOW-07: Only store the clean text, not the [MM:SS.ss] prefix
                 result.append((timestamp, text.strip()))
             else:
-                # Plain text line (no timestamp)
                 if line:
                     result.append((0.0, line))
-        
+
         return sorted(result, key=lambda x: x[0])
 
     async def _on_progress(self, event: TrackProgressEvent):
@@ -172,7 +163,7 @@ class LyricsFetcher:
         adjusted_position = position + self.state.lyrics_offset
         active_idx = bisect.bisect_right(timestamps, adjusted_position) - 1
         active_idx = max(0, active_idx)
-                
+
         if self.state.lyrics_index != active_idx:
             self.state.lyrics_index = active_idx
             await self._bus.publish(LyricsUpdatedEvent())

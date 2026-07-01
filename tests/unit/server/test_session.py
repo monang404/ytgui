@@ -54,7 +54,6 @@ class TestSessionPersistence:
         expires_at = int(time.time()) + 86400
         await temp_db.create_session(token, expires_at)
 
-        # Verify it was stored
         async with temp_db._conn.execute(
             "SELECT * FROM sessions WHERE token = ?", (token,)
         ) as cursor:
@@ -64,7 +63,7 @@ class TestSessionPersistence:
     async def test_verify_session_valid(self, temp_db):
         """Session token yang valid (belum expired) harus terverifikasi."""
         token = "valid_token_123"
-        expires_at = int(time.time()) + 86400  # 24 jam dari sekarang
+        expires_at = int(time.time()) + 86400
         await temp_db.create_session(token, expires_at)
 
         result = await temp_db.verify_session(token)
@@ -73,7 +72,7 @@ class TestSessionPersistence:
     async def test_verify_session_expired(self, temp_db):
         """Session token yang expired harus ditolak."""
         token = "expired_token_456"
-        expires_at = int(time.time()) - 100  # Sudah expired
+        expires_at = int(time.time()) - 100
         await temp_db.create_session(token, expires_at)
 
         result = await temp_db.verify_session(token)
@@ -97,7 +96,6 @@ class TestSessionPersistence:
 
     async def test_cleanup_sessions(self, temp_db):
         """cleanup_sessions harus menghapus semua token expired."""
-        # Create mix of valid and expired tokens
         now = int(time.time())
         await temp_db.create_session("valid_1", now + 86400)
         await temp_db.create_session("valid_2", now + 3600)
@@ -106,10 +104,8 @@ class TestSessionPersistence:
 
         await temp_db.cleanup_sessions()
 
-        # Valid tokens should still exist
         assert await temp_db.verify_session("valid_1") is True
         assert await temp_db.verify_session("valid_2") is True
-        # Expired tokens should be cleaned up
         assert await temp_db.verify_session("expired_1") is False
         assert await temp_db.verify_session("expired_2") is False
 

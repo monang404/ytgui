@@ -34,8 +34,7 @@ class TestUpsertTrackNoTempOverwrite:
 
     async def test_update_stream_url_only_exists(self):
         """Method update_stream_url_only harus ada di Database class."""
-        assert hasattr(Database, "update_stream_url_only"), \
-            "Database harus punya method update_stream_url_only"
+        assert hasattr(Database, "update_stream_url_only"),            "Database harus punya method update_stream_url_only"
 
     async def test_update_stream_url_only_preserves_metadata(self, temp_db):
         """Setelah update_stream_url_only, title/artist/duration TIDAK BOLEH berubah."""
@@ -45,13 +44,10 @@ class TestUpsertTrackNoTempOverwrite:
             artist="Original Artist",
             duration=300,
         )
-        # Insert track dengan metadata asli
         await temp_db.upsert_track(track, stream_url="https://example.com/old_url")
 
-        # Update hanya stream_url
         await temp_db.update_stream_url_only("test123abcde", "https://example.com/new_url")
 
-        # Verifikasi metadata TIDAK berubah
         row = await temp_db.get_track("test123abcde")
         assert row is not None
         assert row.title == "Original Title", "Title tidak boleh berubah setelah update_stream_url_only"
@@ -68,15 +64,14 @@ class TestUpsertTrackNoTempOverwrite:
             duration=200,
         )
         await temp_db.upsert_track(track, stream_url="https://example.com/url1")
-        
+
         row_before = await temp_db.get_track("test456abcde")
         ts_before = row_before.stream_url_ts
 
-        # Small delay to ensure timestamp changes
         await asyncio.sleep(0.1)
 
         await temp_db.update_stream_url_only("test456abcde", "https://example.com/url2")
-        
+
         row_after = await temp_db.get_track("test456abcde")
         assert row_after.stream_url_ts >= ts_before, "stream_url_ts harus terupdate"
 
@@ -92,7 +87,6 @@ class TestUpsertTrackNoTempOverwrite:
         )
         await temp_db.upsert_track(real_track, stream_url="https://example.com/old")
 
-        # Simulasi prefetch: HANYA update stream_url
         await temp_db.update_stream_url_only("realtrack0001", "https://example.com/new")
 
         row = await temp_db.get_track("realtrack0001")
@@ -109,18 +103,15 @@ class TestUpsertTrackNoTempOverwrite:
             duration=300,
         )
         await temp_db.upsert_track(track)
-        
-        # Default is_favorite should be 0
+
         row = await temp_db.get_track("test_fav_123")
         assert row.is_favorite == 0
-        
-        # Toggle -> 1
+
         new_status = await temp_db.toggle_favorite("test_fav_123")
         assert new_status == 1
         row = await temp_db.get_track("test_fav_123")
         assert row.is_favorite == 1
-        
-        # Toggle -> 0
+
         new_status = await temp_db.toggle_favorite("test_fav_123")
         assert new_status == 0
         row = await temp_db.get_track("test_fav_123")

@@ -17,11 +17,11 @@ async def serve_index(request):
 async def health_check(request):
     db = request.app["db"]
     db_status = "connected" if db.conn else "disconnected"
-    
+
     pc = request.app.get("playback_controller")
     mpv_ok = getattr(getattr(pc, "mpv", None), "is_connected", False)
     mpv_status = "connected" if mpv_ok else "not_started"
-    
+
     return web.json_response({
         "status": "ok" if db_status == "connected" else "degraded",
         "db": db_status,
@@ -57,8 +57,6 @@ async def serve_stream(request):
 
     http_session = request.app.get("http_session")
     if not http_session:
-        # Tidak ada proxy session — redirect langsung ke YouTube stream URL.
-        # Harus fetch dulu jika belum ada di cache agar tidak redirect ke "".
         if not stream_url:
             try:
                 stream_url = await ytdlp.get_stream_url(video_id)
@@ -66,7 +64,6 @@ async def serve_stream(request):
             except Exception as e:
                 logger.error(f"Gagal fetch stream URL untuk redirect: {e}")
                 return web.HTTPServiceUnavailable(text="Stream tidak tersedia saat ini")
-        # Validasi domain sebelum redirect (cegah open-redirect / SSRF)
         from urllib.parse import urlparse as _urlparse
         _p = _urlparse(stream_url)
         _domain = _p.netloc.lower()
@@ -119,7 +116,7 @@ async def serve_stream(request):
                         "Cache-Control": "private, max-age=3600",
                     }
                 )
-                
+
                 if "Content-Range" in upstream.headers:
                     response.headers["Content-Range"] = upstream.headers["Content-Range"]
                 if "Content-Length" in upstream.headers:

@@ -1,19 +1,6 @@
 let ws = null;
 let wsReconnectTimer = null;
 
-// ── Dirty Flag Rendering — Phase 4 ──
-// Mencegah renderQueue dan renderRadio dipanggil setiap progress tick
-let _lastQueueSnapshot = null;
-let _lastRadioSnapshot = null;
-
-function _queueChanged(newState) {
-    const snap = JSON.stringify(newState.queue || []);
-    if (snap !== _lastQueueSnapshot) {
-        _lastQueueSnapshot = snap;
-        return true;
-    }
-    return false;
-}
 
 function wsConnect() {
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -21,7 +8,6 @@ function wsConnect() {
 
     showConnectionToast("Menghubungkan...", "connecting");
 
-    // Tutup koneksi lama jika masih ada (BUG-003: mencegah concurrent connections)
     if (ws && ws.readyState !== WebSocket.CLOSED) {
         ws.onclose = null;
         ws.onerror = null;
@@ -114,7 +100,6 @@ function handleServerMessage(msg) {
         case "state":
             Object.assign(store, msg.data);
             renderFullState();
-            // BUG-007: jangan sync audio saat user masih di portal screen
             if (store.userRole !== 'portal') {
                 syncBrowserAudio();
             }
@@ -135,20 +120,12 @@ function handleServerMessage(msg) {
             if (store.audio_output === "browser" && store.status === "PLAYING") {
                 const audio = getOrInitAudio();
                 if (!audio.paused && audio.src && !audio.src.startsWith("data:")) {
-                    // Sync posisi
                     const diff = Math.abs(audio.currentTime - store.position);
                     if (diff > 0.5 && store.position > 2) {
                         audio.currentTime = store.position;
                     }
                 } else if (audio.paused && audio.src && !audio.src.startsWith("data:") && audio.readyState >= 2) {
-                    // FIX-RADIO-08: Audio stuck paused padahal status PLAYING.
-                    // Terjadi saat AudioContext suspended (radio auto-switch tanpa user interaction).
-                    // Coba resume AudioContext + play ulang tanpa menunggu user klik.
-                    // audio.readyState >= 2 = HAVE_CURRENT_DATA — audio sudah ter-load, aman di-play.
                     // PATCH-ANDROID-AUDIO-01: kalau sebelumnya sudah ketauan diblock browser,
-                    // jangan retry diam2 tiap detik (spam gagal) — tunggu user
-                    // tap tombol "tap to play" (lihat audio.js), itu pasti lolos
-                    // autoplay policy krn ada user gesture beneran.
                     if (!window.audioBlocked && typeof _resumeAndPlay === "function") {
                         _resumeAndPlay(audio);
                     }
@@ -159,8 +136,6 @@ function handleServerMessage(msg) {
 
             renderPlayBtn();
             // PATCH-ANDROID-AUDIO-01: dipanggil tiap tick (bukan cuma saat statusChanged)
-            // supaya data-player-state / idle-view selalu sinkron dgn
-            // store.status & store.current_track yang sebenarnya.
             if (typeof syncPlayerStateAttr === "function") syncPlayerStateAttr();
             if (statusChanged) {
                 if (typeof renderNowPlaying === "function") renderNowPlaying();

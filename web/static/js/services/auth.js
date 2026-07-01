@@ -16,10 +16,6 @@ function applyRoleUI() {
         document.body.classList.remove("client-mode");
         dom.logoutBtn.style.display = "flex";
         switchTab("home");
-        // FIX BUG-1: setelah #app visible, paksa recalculate tinggi viewport.
-        // Android Chrome tidak auto-fire visualViewport resize saat element
-        // berubah dari display:none ke display:flex, sehingga nav-bar bisa
-        // terpotong sampai user scroll atau resize manual.
         if (window.visualViewport) {
             const _app = document.getElementById("app");
             if (_app) {
@@ -57,7 +53,6 @@ function login(user, pass) {
 }
 
 function logout() {
-    // 1. Stop local browser/client audio
     if (typeof localAudio !== "undefined" && localAudio) {
         try {
             localAudio.pause();
@@ -72,7 +67,6 @@ function logout() {
         _lastLoadedVideoId = null;
     }
 
-    // 2. Stop server playback if admin
     if (store.userRole === "admin") {
         try {
             wsSend("stop");
@@ -81,7 +75,6 @@ function logout() {
         }
     }
 
-    // 3. Clear store & local storage
     store.userRole = "portal";
     store.adminUsername = "";
     store.adminPassword = "";
@@ -90,12 +83,10 @@ function logout() {
     safeStorage.remove("ytgui_admin_password");
     safeStorage.remove("ytgui_session_token");
 
-    // 4. Close settings sheet UI if open
     if (typeof closeSettings === "function") {
         closeSettings();
     }
 
-    // 5. Redirect or adjust view
     if (window.location.pathname !== "/admin") {
         setTimeout(() => {
             if (window.ws) {

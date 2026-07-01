@@ -19,7 +19,7 @@
   - **Admin Mode (Kontrol Penuh)**: Membutuhkan login username & password. Password dienkripsi secara kuat (*hashed*) demi keamanan tingkat enterprise.
   - **Client Mode (Dengar Saja / Intercom)**: Akses instan tanpa password. Musik akan otomatis dialirkan (streaming) ke browser klien.
   - **Fitur Logout & Switch Mode**: Memudahkan pengguna keluar dari sesi dan beralih peran.
-- **⚡ Arsitektur Enterprise & Multi-room**: Dibangun dengan *Hexagonal Architecture* (*Ports and Adapters*), pola *CommandBus & EventBus*, serta mendukung **Multi-room** (pemisahan *state* antar ruangan/klien secara independen). Dilengkapi dengan *Structured Logging* (JSON) untuk kemudahan *troubleshooting*.
+- **⚡ Arsitektur Terstruktur**: Dibangun dengan *Hexagonal Architecture* (*Ports and Adapters*) dan pola *CommandBus & EventBus*. Dilengkapi dengan *Structured Logging* (JSON) untuk kemudahan *troubleshooting*.
 
 ---
 

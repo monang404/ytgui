@@ -23,12 +23,10 @@ import importlib.util
 import shutil
 import secrets
 
-# ── Config ────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
 SERVER_PORT = int(os.environ.get("YTGUI_PORT", 8765))
 PYTHON     = sys.executable
 
-# ── Colors (bagas.fm dark theme) ─────────────────────────
 BG         = "#0E0E12"
 BG_SURFACE = "#151518"
 BG_CARD    = "#1C1C22"
@@ -40,11 +38,148 @@ GREEN      = "#22C55E"
 RED        = "#EF4444"
 BORDER     = "#2A2A32"
 
+class DependencyChecker:
+    @staticmethod
+    def check_dependencies():
+        deps = {
+            "yt-dlp": "yt_dlp",
+            "aiosqlite": "aiosqlite",
+            "aiohttp": "aiohttp",
+            "syncedlyrics": "syncedlyrics",
+            "structlog": "structlog",
+            "prometheus_client": "prometheus_client",
+            "opentelemetry": "opentelemetry"
+        }
+        missing = []
+        for label, import_name in deps.items():
+            try:
+                spec = importlib.util.find_spec(import_name)
+                if spec is None:
+                    missing.append(label)
+            except Exception:
+                missing.append(label)
+
+        mpv_ok = shutil.which("mpv") is not None
+        return missing, mpv_ok
+
+
+class ServerProcessManager:
+    def __init__(self, base_dir, python_exec):
+        self.process = None
+        self.base_dir = base_dir
+        self.python_exec = python_exec
+
+    def is_running(self) -> bool:
+        return self.process is not None and self.process.poll() is None
+
+    def check_port_in_use(self, port: int) -> bool:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            return s.connect_ex(('127.0.0.1', port)) == 0
+
+    def get_pid_occupying_port(self, port: int) -> int | None:
+        if sys.platform == "win32":
+            try:
+                output = subprocess.check_output(['netstat', '-aon'], text=True)
+                for line in output.splitlines():
+                    if "TCP" in line.upper():
+                        parts = line.strip().split()
+                        if len(parts) >= 5:
+                            local_addr = parts[1]
+                            pid = parts[-1]
+                            if (local_addr.endswith(f":{port}") or local_addr.endswith(f"]:{port}")) and pid.isdigit() and pid != "0":
+                                return int(pid)
+            except Exception:
+                pass
+        else:
+            try:
+                output = subprocess.check_output(['lsof', '-t', f'-i:{port}'], text=True)
+                pids = output.strip().split()
+                if pids:
+                    return int(pids[0])
+            except Exception:
+                try:
+                    output = subprocess.check_output(['fuser', f'{port}/tcp'], text=True)
+                    parts = output.strip().split()
+                    if parts:
+                        return int(parts[-1])
+                except Exception:
+                    try:
+                        output = subprocess.check_output(['ss', '-lptn', f'sport = :{port}'], text=True)
+                        import re
+                        m = re.search(r'pid=(\d+)', output)
+                        if m:
+                            return int(m.group(1))
+                    except Exception:
+                        pass
+        return None
+
+    def kill_process_tree(self, pid: int):
+        if sys.platform == "win32":
+            try:
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception:
+                pass
+        else:
+            try:
+                import signal
+                os.killpg(os.getpgid(pid), signal.SIGKILL)
+            except Exception:
+                try:
+                    import signal
+                    os.kill(pid, signal.SIGKILL)
+                except Exception:
+                    pass
+
+    def start(self, port, env, on_log_cb=None):
+        kwargs = {}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+        else:
+            kwargs["preexec_fn"] = os.setsid
+
+        self.process = subprocess.Popen(
+            [self.python_exec, "main.py"],
+            cwd=str(self.base_dir),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True, bufsize=1,
+            errors="replace",
+            encoding="utf-8",
+            **kwargs
+        )
+
+        if on_log_cb:
+            def _pipe():
+                try:
+                    for line in self.process.stdout:
+                        line = line.rstrip()
+                        if not line:
+                            continue
+                        tag = "err" if any(w in line.lower() for w in ("error", "exception", "traceback", "critical")) else "ok" if any(w in line.lower() for w in ("started", "ready", "listening", "running")) else ""
+                        on_log_cb(line, tag)
+                except Exception:
+                    pass
+                on_log_cb("── process ended ──", "dim")
+            threading.Thread(target=_pipe, daemon=True).start()
+
+    def wait_stop(self):
+        try:
+            self.process.wait(timeout=6)
+        except subprocess.TimeoutExpired:
+            try:
+                self.process.kill()
+            except Exception:
+                pass
+
 class ServerManager(tk.Tk):
     def __init__(self):
         super().__init__()
+        
+        self.pm = ServerProcessManager(BASE_DIR, PYTHON)
+        self.dc = DependencyChecker()
 
-        self.process: subprocess.Popen | None = None
         self._log_lock = threading.Lock()
         self._conflict_pid = None
         self._last_stdout_line = ""
@@ -60,21 +195,12 @@ class ServerManager(tk.Tk):
     def _check_first_run(self):
         password_file = BASE_DIR / "cache" / "admin_password.txt"
         if not password_file.exists():
-            # Generate new password if not exists
             try:
-                try:
-                    from core.security import hash_password
-                except ImportError:
-                    import hashlib
-                    import base64
-                    def hash_password(password: str) -> str:
-                        salt = secrets.token_bytes(16)
-                        key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
-                        return f"pbkdf2:sha256:100000${base64.b64encode(salt).decode('utf-8')}${base64.b64encode(key).decode('utf-8')}"
-                
+                from core.security import hash_password
+
                 raw_password = secrets.token_urlsafe(12)
                 hashed_password = hash_password(raw_password)
-                
+
                 password_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(password_file, "w", encoding="utf-8") as f:
                     f.write(hashed_password)
@@ -83,12 +209,11 @@ class ServerManager(tk.Tk):
                     password_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
                 except OSError:
                     pass
-                    
+
                 self.after(500, lambda: self._show_new_password_dialog(raw_password, is_first_run=True))
             except Exception as e:
-                pass
+                self._write_log(f"First-run check failed: {e}", "err")
 
-    # ── Window setup ──────────────────────────────────────
     def _build_window(self):
         self.title("bagas.fm — Server Manager")
         self.geometry("600x680")
@@ -96,7 +221,6 @@ class ServerManager(tk.Tk):
         self.configure(bg=BG)
         self.resizable(True, True)
 
-        # Center on screen
         self.update_idletasks()
         x = (self.winfo_screenwidth()  - 600) // 2
         y = (self.winfo_screenheight() - 680) // 2
@@ -107,9 +231,7 @@ class ServerManager(tk.Tk):
         except Exception:
             pass
 
-    # ── UI Layout ─────────────────────────────────────────
     def _build_ui(self):
-        # ── Header ──
         header = tk.Frame(self, bg=BG_SURFACE, pady=14)
         header.pack(fill="x")
 
@@ -124,7 +246,6 @@ class ServerManager(tk.Tk):
             font=("Segoe UI", 9),
         ).pack()
 
-        # ── Status Card ──
         status_frame = tk.Frame(self, bg=BG_CARD, pady=12, padx=16)
         status_frame.pack(fill="x", padx=16, pady=(14, 0))
 
@@ -144,7 +265,6 @@ class ServerManager(tk.Tk):
         )
         self._status_label.pack(side="left")
 
-        # Port configuration input inside Status Frame
         port_frame = tk.Frame(status_frame, bg=BG_CARD)
         port_frame.pack(side="right")
 
@@ -169,7 +289,6 @@ class ServerManager(tk.Tk):
         )
         self._pid_label.pack(side="right", padx=(0, 12))
 
-        # Conflict action panel (Kill conflicting process)
         self._btn_kill_conflict = tk.Button(
             status_frame, text="☠  Kill Conflict Process",
             fg=RED, bg="#2A0A0A", font=("Segoe UI", 8, "bold"),
@@ -177,7 +296,6 @@ class ServerManager(tk.Tk):
             command=self._on_kill_conflict
         )
 
-        # ── Buttons ──
         btn_frame = tk.Frame(self, bg=BG, pady=10)
         btn_frame.pack(fill="x", padx=16)
         btn_frame.columnconfigure((0, 1, 2, 3), weight=1)
@@ -199,7 +317,6 @@ class ServerManager(tk.Tk):
             self._on_open, col=3
         )
 
-        # ── Admin Credentials Frame ──
         admin_frame = tk.Frame(self, bg=BG_CARD, pady=10, padx=16)
         admin_frame.pack(fill="x", padx=16, pady=(4, 0))
 
@@ -222,13 +339,11 @@ class ServerManager(tk.Tk):
         )
         btn_reset.pack(side="right")
 
-        # Hover effect for reset button
         def on_enter_reset(e): btn_reset.config(bg=BG, fg=TEXT_1)
         def on_leave_reset(e): btn_reset.config(bg=BG_SURFACE, fg=ACCENT)
         btn_reset.bind("<Enter>", on_enter_reset)
         btn_reset.bind("<Leave>", on_leave_reset)
 
-        # ── Quick Links Frame ──
         links_frame = tk.Frame(self, bg=BG_CARD, pady=10, padx=16)
         links_frame.pack(fill="x", padx=16, pady=(10, 0))
 
@@ -242,7 +357,6 @@ class ServerManager(tk.Tk):
         self._link_health = self._make_link(links_frame, "System Health", "/health", 1, 2)
         self._link_metrics = self._make_link(links_frame, "Metrics API", "/metrics", 1, 3)
 
-        # ── Dependencies Frame ──
         deps_frame = tk.Frame(self, bg=BG_CARD, pady=10, padx=16)
         deps_frame.pack(fill="x", padx=16, pady=(10, 0))
 
@@ -258,7 +372,6 @@ class ServerManager(tk.Tk):
         )
         self._deps_status.pack(fill="x")
 
-        # ── Log area ──
         log_header = tk.Frame(self, bg=BG, pady=0)
         log_header.pack(fill="x", padx=16, pady=(10, 0))
         tk.Label(
@@ -342,7 +455,6 @@ class ServerManager(tk.Tk):
         lbl.bind("<Leave>", on_leave)
         return lbl
 
-    # ── Helpers for Network and Port check ─────────────────
     @property
     def server_port(self) -> int:
         try:
@@ -350,91 +462,9 @@ class ServerManager(tk.Tk):
         except ValueError:
             return 8765
 
-    def _check_port_in_use(self, port: int) -> bool:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(0.5)
-            return s.connect_ex(('127.0.0.1', port)) == 0
-
-    def _get_pid_occupying_port(self, port: int) -> int | None:
-        if sys.platform == "win32":
-            try:
-                output = subprocess.check_output('netstat -aon', shell=True, text=True)
-                for line in output.splitlines():
-                    if "TCP" in line.upper():
-                        parts = line.strip().split()
-                        if len(parts) >= 5:
-                            local_addr = parts[1]
-                            pid = parts[-1]
-                            if (local_addr.endswith(f":{port}") or local_addr.endswith(f"]:{port}")) and pid.isdigit() and pid != "0":
-                                return int(pid)
-            except Exception:
-                pass
-        else:
-            try:
-                output = subprocess.check_output(f'lsof -t -i:{port}', shell=True, text=True)
-                pids = output.strip().split()
-                if pids:
-                    return int(pids[0])
-            except Exception:
-                try:
-                    output = subprocess.check_output(f'fuser {port}/tcp', shell=True, text=True)
-                    parts = output.strip().split()
-                    if parts:
-                        return int(parts[-1])
-                except Exception:
-                    try:
-                        output = subprocess.check_output(f'ss -lptn "sport = :{port}"', shell=True, text=True)
-                        import re
-                        m = re.search(r'pid=(\d+)', output)
-                        if m:
-                            return int(m.group(1))
-                    except Exception:
-                        pass
-        return None
-
-    def _kill_process_tree(self, pid: int):
-        if sys.platform == "win32":
-            try:
-                subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except Exception:
-                pass
-        else:
-            try:
-                import os
-                import signal
-                os.killpg(os.getpgid(pid), signal.SIGKILL)
-            except Exception:
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except Exception:
-                    pass
-
-    # ── Dependency Checker ─────────────────────────────────
-    def _check_dependencies(self):
-        deps = {
-            "yt-dlp": "yt_dlp",
-            "aiosqlite": "aiosqlite",
-            "aiohttp": "aiohttp",
-            "syncedlyrics": "syncedlyrics",
-            "structlog": "structlog",
-            "prometheus_client": "prometheus_client",
-            "opentelemetry": "opentelemetry"
-        }
-        missing = []
-        for label, import_name in deps.items():
-            try:
-                spec = importlib.util.find_spec(import_name)
-                if spec is None:
-                    missing.append(label)
-            except Exception:
-                missing.append(label)
-        
-        mpv_ok = shutil.which("mpv") is not None
-        return missing, mpv_ok
-
     def _run_dependency_check(self):
         def _thread_fn():
-            missing, mpv_ok = self._check_dependencies()
+            missing, mpv_ok = self.dc.check_dependencies()
             if not missing and mpv_ok:
                 status_text = "✓ Python Libraries: OK  ·  ✓ MPV Audio Player: OK"
                 color = GREEN
@@ -450,23 +480,19 @@ class ServerManager(tk.Tk):
                     parts.append("✓ MPV Player: OK")
                 status_text = "  ·  ".join(parts)
                 color = RED
-                
-            self.after(0, lambda: self._deps_status.config(text=status_text, fg=color))
-        
-        threading.Thread(target=_thread_fn, daemon=True).start()
 
-    # ── Status ────────────────────────────────────────────
-    def _is_running(self) -> bool:
-        return self.process is not None and self.process.poll() is None
+            self.after(0, lambda: self._deps_status.config(text=status_text, fg=color))
+
+        threading.Thread(target=_thread_fn, daemon=True).start()
 
     def _refresh_status(self):
         port = self.server_port
-        running = self._is_running()
+        running = self.pm.is_running()
 
         if running:
             status = "RUNNING"
             color = GREEN
-            self._pid_label.config(text=f"PID {self.process.pid}  ·  :{port}")
+            self._pid_label.config(text=f"PID {self.pm.process.pid}  ·  :{port}")
             self._btn_start.config(state="disabled")
             self._btn_stop.config(state="normal")
             self._btn_restart.config(state="normal")
@@ -476,9 +502,9 @@ class ServerManager(tk.Tk):
         else:
             in_use = False
             conflict_pid = None
-            if self._check_port_in_use(port):
+            if self.pm.check_port_in_use(port):
                 in_use = True
-                conflict_pid = self._get_pid_occupying_port(port)
+                conflict_pid = self.pm.get_pid_occupying_port(port)
 
             if in_use:
                 status = "CONFLICT"
@@ -490,7 +516,7 @@ class ServerManager(tk.Tk):
                 self._btn_restart.config(state="disabled")
                 self._btn_open.config(state="normal")
                 self._port_entry.config(state="normal")
-                
+
                 self._conflict_pid = conflict_pid
                 self._btn_kill_conflict.config(text=f"☠  Kill Process (PID {conflict_pid})" if conflict_pid else "☠  Kill Port Owner")
                 self._btn_kill_conflict.pack(side="right", padx=(5, 0))
@@ -505,16 +531,13 @@ class ServerManager(tk.Tk):
                 self._port_entry.config(state="normal")
                 self._btn_kill_conflict.pack_forget()
 
-        # Update Dot
         self._dot.delete("all")
         self._dot.create_oval(1, 1, 9, 9, fill=color, outline="")
 
-        # Update status label text
         self._status_label.config(text=status, fg=color)
 
         self.after(2000, self._refresh_status)
 
-    # ── Log helpers ───────────────────────────────────────
     def _write_log(self, msg: str, tag: str = ""):
         def _do():
             self._log.config(state="normal")
@@ -530,29 +553,12 @@ class ServerManager(tk.Tk):
         self._log.delete("1.0", "end")
         self._log.config(state="disabled")
 
-    def _pipe_stdout(self):
-        """Baca stdout server, kirim ke log."""
-        try:
-            for line in self.process.stdout:
-                line = line.rstrip()
-                if not line:
-                    continue
-                self._last_stdout_line = line
-                tag = "err" if any(w in line.lower() for w in ("error", "exception", "traceback", "critical")) else \
-                      "ok"  if any(w in line.lower() for w in ("started", "ready", "listening", "running")) else ""
-                self._write_log(line, tag)
-        except Exception:
-            pass
-        self._write_log("── process ended ──", "dim")
-
-    # ── Button handlers ───────────────────────────────────
     def _on_start(self):
-        if self._is_running():
+        if self.pm.is_running():
             return
-        
+
         port = self.server_port
-        
-        # Ensure clean slate for mpv
+
         if sys.platform == "win32":
             try:
                 subprocess.run(["taskkill", "/F", "/IM", "mpv.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -564,13 +570,13 @@ class ServerManager(tk.Tk):
             except Exception:
                 pass
 
-        if self._check_port_in_use(port):
+        if self.pm.check_port_in_use(port):
             self._write_log(f"Port {port} is in use. Attempting to kill conflicting process...", "accent")
-            pid = self._get_pid_occupying_port(port)
+            pid = self.pm.get_pid_occupying_port(port)
             if pid:
-                self._kill_process_tree(pid)
+                self.pm.kill_process_tree(pid)
                 time.sleep(1)
-            if self._check_port_in_use(port):
+            if self.pm.check_port_in_use(port):
                 self._write_log(f"Cannot start: Port {port} is still in use after kill attempt.", "err")
                 self._refresh_status()
                 return
@@ -582,33 +588,24 @@ class ServerManager(tk.Tk):
         env["PYTHONUTF8"] = "1"
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
-        
+
         kwargs = {}
         if sys.platform == "win32":
             kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
         else:
             kwargs["preexec_fn"] = os.setsid
-            
+
         try:
-            self.process = subprocess.Popen(
-                [PYTHON, "main.py"],
-                cwd=str(BASE_DIR),
-                env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True, bufsize=1,
-                errors="replace",
-                encoding="utf-8",
-                **kwargs
-            )
-            threading.Thread(target=self._pipe_stdout, daemon=True).start()
-            self._write_log(f"Server process created — PID {self.process.pid}", "ok")
-            
-            # Start thread to poll port and show popup when server is fully ready
+            def on_log(line, tag):
+                self._last_stdout_line = line
+                self._write_log(line, tag)
+            self.pm.start(port, env, on_log_cb=on_log)
+            self._write_log(f"Server process created — PID {self.pm.process.pid}", "ok")
+
             threading.Thread(target=self._wait_for_server_ready, args=(port,), daemon=True).start()
         except Exception as e:
             self._write_log(f"Failed to start: {e}", "err")
-            
+
         self._refresh_status()
 
     def _wait_for_server_ready(self, port: int):
@@ -616,19 +613,19 @@ class ServerManager(tk.Tk):
         self._last_stdout_line = ""
         start_time = time.time()
         success = False
-        while time.time() - start_time < 120:  # wait up to 120 seconds (2 minutes)
-            if not self._is_running():
+        while time.time() - start_time < 120:
+            if not self.pm.is_running():
                 break
-            if self._check_port_in_use(port):
+            if self.pm.check_port_in_use(port):
                 success = True
                 break
             time.sleep(0.5)
-            
+
         if success:
             self._write_log(f"Server is fully active and listening on port {port}!", "ok")
             self.after(0, lambda: self._show_server_ready_popup(port))
         else:
-            if not self._is_running():
+            if not self.pm.is_running():
                 self._write_log("Server process terminated unexpectedly.", "err")
             else:
                 self._write_log("Server failed to respond on port in time (120s timeout).", "err")
@@ -641,32 +638,27 @@ class ServerManager(tk.Tk):
         popup.resizable(False, False)
         popup.transient(self)
         popup.grab_set()
-        
-        # Center popup relative to main window
+
         x = self.winfo_x() + (self.winfo_width() - 380) // 2
         y = self.winfo_y() + (self.winfo_height() - 200) // 2
         popup.geometry(f"+{x}+{y}")
-        
-        # Title
+
         tk.Label(
             popup, text="🚀 Server Berhasil Dijalankan!",
             bg=BG, fg=GREEN, font=("Segoe UI", 12, "bold"),
             pady=15
         ).pack()
-        
-        # Message
+
         tk.Label(
-            popup, 
-            text=f"Server ytgui aktif pada port {port}.\nSilakan login untuk mengelola room.",
+            popup,
+            text=f"Server ytgui aktif pada port {port}.\nSilakan login untuk mengelola musik.",
             bg=BG, fg=TEXT_2, font=("Segoe UI", 10),
             justify="center"
         ).pack(pady=(0, 15))
-        
-        # Action Buttons frame
+
         btn_frame = tk.Frame(popup, bg=BG)
         btn_frame.pack(pady=10)
-        
-        # Buka Halaman Login
+
         btn_login = tk.Button(
             btn_frame, text="🔑 Buka Halaman Login", bg=ACCENT, fg=BG,
             font=("Segoe UI", 10, "bold"), relief="flat", bd=0,
@@ -674,8 +666,7 @@ class ServerManager(tk.Tk):
             command=lambda: [webbrowser.open(f"http://localhost:{port}/admin"), popup.destroy()]
         )
         btn_login.pack(side="left", padx=5)
-        
-        # Tutup button
+
         btn_close = tk.Button(
             btn_frame, text="Tutup", bg=BG_CARD, fg=TEXT_2,
             font=("Segoe UI", 10, "bold"), relief="flat", bd=0,
@@ -683,50 +674,36 @@ class ServerManager(tk.Tk):
             command=popup.destroy
         )
         btn_close.pack(side="left", padx=5)
-        
-        # Hover effects
+
         def on_enter_login(e): btn_login.config(bg=TEXT_1)
         def on_leave_login(e): btn_login.config(bg=ACCENT)
         btn_login.bind("<Enter>", on_enter_login)
         btn_login.bind("<Leave>", on_leave_login)
-        
+
         def on_enter_close(e): btn_close.config(bg=BORDER, fg=TEXT_1)
         def on_leave_close(e): btn_close.config(bg=BG_CARD, fg=TEXT_2)
         btn_close.bind("<Enter>", on_enter_close)
         btn_close.bind("<Leave>", on_leave_close)
 
     def _on_stop(self):
-        if not self._is_running():
+        if not self.pm.is_running():
             return
         self._write_log("Stopping server...", "accent")
         try:
-            self._kill_process_tree(self.process.pid)
-            threading.Thread(target=self._wait_stop, daemon=True).start()
+            self.pm.kill_process_tree(self.pm.process.pid)
+            threading.Thread(target=self.pm.wait_stop, daemon=True).start()
         except Exception as e:
             self._write_log(f"Error terminating: {e}", "err")
-
-    def _wait_stop(self):
-        try:
-            self.process.wait(timeout=6)
-        except subprocess.TimeoutExpired:
-            try:
-                self.process.kill()
-            except Exception:
-                pass
-            self._write_log("Force killed.", "err")
 
     def _on_restart(self):
         self._write_log("Restarting...", "accent")
         def _do():
-            if self._is_running():
+            if self.pm.is_running():
                 try:
-                    self._kill_process_tree(self.process.pid)
-                    self.process.wait(timeout=6)
-                except subprocess.TimeoutExpired:
-                    try:
-                        self.process.kill()
-                    except Exception:
-                        pass
+                    self.pm.kill_process_tree(self.pm.process.pid)
+                    self.pm.wait_stop()
+                except Exception:
+                    pass
             time.sleep(0.8)
             self.after(0, self._on_start)
         threading.Thread(target=_do, daemon=True).start()
@@ -739,41 +716,31 @@ class ServerManager(tk.Tk):
         pid = getattr(self, "_conflict_pid", None)
         port = self.server_port
         if not pid:
-            pid = self._get_pid_occupying_port(port)
-            
+            pid = self.pm.get_pid_occupying_port(port)
+
         if pid:
             self._write_log(f"Killing process tree using port {port} (PID {pid})...", "accent")
-            self._kill_process_tree(pid)
+            self.pm.kill_process_tree(pid)
             time.sleep(0.8)
-            if not self._check_port_in_use(port):
+            if not self.pm.check_port_in_use(port):
                 self._write_log(f"Port {port} successfully cleared!", "ok")
             else:
                 self._write_log(f"Failed to clear port {port}.", "err")
         else:
             self._write_log(f"Cannot identify PID for port {port}.", "err")
-            
+
         self._refresh_status()
 
     def _on_reset_password(self):
-        # Confirm with user first
         if not messagebox.askyesno("Reset Password", "Apakah Anda yakin ingin mereset password admin? Ini akan menimpa password yang ada."):
             return
-            
+
         try:
-            # Import hash function
-            try:
-                from core.security import hash_password
-            except ImportError:
-                import hashlib
-                import base64
-                def hash_password(password: str) -> str:
-                    salt = secrets.token_bytes(16)
-                    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
-                    return f"pbkdf2:sha256:100000${base64.b64encode(salt).decode('utf-8')}${base64.b64encode(key).decode('utf-8')}"
-            
+            from core.security import hash_password
+
             raw_password = secrets.token_urlsafe(12)
             hashed_password = hash_password(raw_password)
-            
+
             password_file = BASE_DIR / "cache" / "admin_password.txt"
             password_file.parent.mkdir(parents=True, exist_ok=True)
             with open(password_file, "w", encoding="utf-8") as f:
@@ -783,7 +750,7 @@ class ServerManager(tk.Tk):
                 password_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
             except OSError:
                 pass
-                
+
             self._show_new_password_dialog(raw_password)
             self._write_log("Admin password has been reset successfully.", "ok")
         except Exception as e:
@@ -797,61 +764,57 @@ class ServerManager(tk.Tk):
         dialog.resizable(False, False)
         dialog.transient(self)
         dialog.grab_set()
-        
-        # Center dialog relative to main window
+
         x = self.winfo_x() + (self.winfo_width() - 400) // 2
         y = self.winfo_y() + (self.winfo_height() - 240) // 2
         dialog.geometry(f"+{x}+{y}")
-        
-        # Title
+
         title_text = "🔑 Password Admin Dibuat Otomatis" if is_first_run else "🔑 Password Admin Berhasil Direset"
         tk.Label(
             dialog, text=title_text,
             bg=BG, fg=ACCENT, font=("Segoe UI", 12, "bold"),
             pady=10
         ).pack()
-        
+
         # Warning
         warning_label = tk.Label(
-            dialog, 
+            dialog,
             text="Simpan password ini baik-baik!\nPassword ini tidak akan ditampilkan lagi setelah jendela ini ditutup.",
             bg=BG, fg=RED, font=("Segoe UI", 9, "italic"),
             justify="center"
         )
         warning_label.pack(pady=(0, 10))
-        
-        # Password entry field (read-only for easy copy)
+
         frame = tk.Frame(dialog, bg=BG_CARD, padx=10, pady=10, highlightbackground=BORDER, highlightthickness=1)
         frame.pack(fill="x", padx=20, pady=5)
-        
+
         tk.Label(frame, text="Username: admin", bg=BG_CARD, fg=TEXT_2, font=("Segoe UI", 9)).pack(anchor="w")
-        
+
         pass_frame = tk.Frame(frame, bg=BG_CARD)
         pass_frame.pack(fill="x", pady=(5, 0))
-        
+
         entry = tk.Entry(
-            pass_frame, bg=BG_SURFACE, fg=TEXT_1, 
+            pass_frame, bg=BG_SURFACE, fg=TEXT_1,
             font=("Consolas", 11, "bold"), relief="flat",
             highlightthickness=0
         )
         entry.insert(0, raw_password)
         entry.config(state="readonly")
         entry.pack(side="left", fill="x", expand=True, ipady=4)
-        
+
         def copy_pass():
             self.clipboard_clear()
             self.clipboard_append(raw_password)
             btn_copy.config(text="✓ Copied", fg=GREEN)
             dialog.after(2000, lambda: btn_copy.config(text="📋 Copy", fg=TEXT_1))
-            
+
         btn_copy = tk.Button(
             pass_frame, text="📋 Copy", bg=BG_CARD, fg=TEXT_1,
             font=("Segoe UI", 8, "bold"), relief="flat", bd=0,
             cursor="hand2", command=copy_pass, padx=8
         )
         btn_copy.pack(side="right", padx=(5, 0))
-        
-        # Close button
+
         btn_close = tk.Button(
             dialog, text="Tutup", bg=ACCENT, fg=BG,
             font=("Segoe UI", 9, "bold"), relief="flat", bd=0,
@@ -859,11 +822,10 @@ class ServerManager(tk.Tk):
         )
         btn_close.pack(pady=15)
 
-    # ── Clean exit ────────────────────────────────────────
     def destroy(self):
-        if self._is_running():
+        if self.pm.is_running():
             try:
-                self._kill_process_tree(self.process.pid)
+                self.pm.kill_process_tree(self.pm.process.pid)
             except Exception:
                 pass
         super().destroy()

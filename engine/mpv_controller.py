@@ -8,7 +8,7 @@ from core.events import TrackProgressEvent, TrackEndedEvent, TrackPauseChangedEv
 from core.state import PlayerStatus
 from core.task_utils import safe_create_task
 from core.exceptions import MpvConnectionError
-
+from core.constants import MAX_VOLUME
 logger = structlog.get_logger(__name__)
 
 class MpvController:
@@ -22,22 +22,19 @@ class MpvController:
     MED-11: Basic reconnection support via is_connected flag.
     """
 
-    def __init__(self, socket_path: str = None, tcp_port: str = None, event_bus: EventBus = None, room_id: str = "default"):
-        # BACKEND-FIX-02: simpan room_id agar events yang di-publish ke bus
-        # punya room_id yang benar, bukan selalu "default".
-        self._room_id = room_id
+    def __init__(self, socket_path: str = None, tcp_port: str = None, event_bus: EventBus = None):
         self._reader = None
         self._writer = None
         self._request_id = 0
         self._pending: dict[int, asyncio.Future] = {}
         self._req_lock = asyncio.Lock()  # RC-02: lindungi increment _request_id
-        self._reconnect_lock = asyncio.Lock()  # C-3 fix
+        self._reconnect_lock = asyncio.Lock()
         self._observer_task = None
         self.is_connected = False
         self._mpv_process = None
         self.socket_path = socket_path or MPV_SOCKET
         self.tcp_port = tcp_port or os.environ.get("YT_PLAYER_MPV_PORT", "12345")
-        # TASK-3.3: Injected per-room bus (fallback ke global jika belum direfactor)
+        # Injected bus (fallback ke global bus)
         if event_bus is None:
             from core.event_bus import bus as _global_bus
             event_bus = _global_bus
@@ -51,17 +48,16 @@ class MpvController:
 
     async def _do_connect(self):
         import shutil
-        
+
         ytdl_path = shutil.which("yt-dlp")
         ytdl_arg = f"--script-opts=ytdl_hook-ytdl_path={ytdl_path}" if ytdl_path else ""
-        
-        # Auto-spawn mpv in background
+
         common_args = [
             "--no-video", "--idle",
             "--ytdl-format=bestaudio/best",
             "--audio-pitch-correction=yes"
         ]
-        
+
         if os.name == 'nt':
             cmd = ["mpv"] + common_args + [f"--input-ipc-server=tcp://127.0.0.1:{self.tcp_port}"]
             if ytdl_arg: cmd.insert(1, ytdl_arg)
@@ -74,7 +70,7 @@ class MpvController:
                     pass
             cmd = ["mpv"] + common_args + [f"--input-ipc-server={self.socket_path}"]
             if ytdl_arg: cmd.insert(1, ytdl_arg)
-            
+
         try:
             self._mpv_process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -83,14 +79,13 @@ class MpvController:
                 stdin=asyncio.subprocess.DEVNULL
             )
             if os.name != 'nt':
-                # Poll sampai socket tersedia, max 5 detik
-                # TASK-2.3 fix: gunakan self.socket_path (per-room), bukan MPV_SOCKET global
+                # gunakan self.socket_path, bukan MPV_SOCKET global
                 for _ in range(50):
                     await asyncio.sleep(0.1)
                     if os.path.exists(self.socket_path):
                         break
             else:
-                await asyncio.sleep(1.0)  # Windows pipe tidak bisa di-poll dengan cara sama
+                await asyncio.sleep(1.0)
         except OSError as e:
             logger.error(f"Failed to spawn mpv process: {e}")
 
@@ -100,7 +95,7 @@ class MpvController:
                     self._reader, self._writer = await asyncio.open_connection('127.0.0.1', int(self.tcp_port))
                 else:
                     self._reader, self._writer = await asyncio.open_unix_connection(self.socket_path)
-                
+
                 self.is_connected = True
                 self._observer_task = safe_create_task(self._observe_events(), name="mpv_observer")
                 if os.name != 'nt':
@@ -108,7 +103,7 @@ class MpvController:
                         import stat
                         os.chmod(self.socket_path, stat.S_IRUSR | stat.S_IWUSR)
                     except OSError:
-                        pass  # Bukan fatal jika chmod gagal
+                        pass
                 logger.info(f"Connected to mpv (attempt {attempt + 1})")
                 return
             except MpvConnectionError:
@@ -135,14 +130,12 @@ class MpvController:
     async def toggle_pause(self):
         if not self.is_connected:
             return
-        paused = await self._get_property("pause")
-        if paused is not None:
-            await self._set_property("pause", not paused)
+        await self._command(["cycle", "pause"])
 
-    async def set_volume(self, vol: int):
+    async def set_volume(self, volume: int):
         if not self.is_connected:
             return
-        await self._set_property("volume", max(0, min(150, vol)))
+        await self._set_property("volume", max(0, min(MAX_VOLUME, volume)))
 
     async def get_position(self) -> float:
         if not self.is_connected:
@@ -173,7 +166,7 @@ class MpvController:
                 await self._writer.wait_closed()
             except OSError:
                 pass
-        
+
         if self._mpv_process:
             try:
                 self._mpv_process.terminate()
@@ -211,10 +204,9 @@ class MpvController:
             logger.warning("mpv observer loop ended — connection lost.")
 
             if not getattr(self, "_shutting_down", False):
-                # Coba reconnect ke mpv yang mungkin masih hidup (misal socket terputus sesaat)
                 reconnected = False
                 for attempt in range(3):
-                    backoff = 2 ** attempt  # 1s, 2s, 4s
+                    backoff = 2 ** attempt
                     logger.info(f"Mencoba reconnect ke mpv (attempt {attempt + 1}/3) dalam {backoff}s...")
                     await asyncio.sleep(backoff)
                     if getattr(self, "_shutting_down", False):
@@ -248,17 +240,17 @@ class MpvController:
                     except RuntimeError:
                         pass
 
-    async def _handle_event(self, msg: dict):
-        if "request_id" in msg:
-            fut = self._pending.pop(msg["request_id"], None)
-            if fut and not fut.done():
-                fut.set_result(msg.get("data"))
+    async def _handle_event(self, message: dict):
+        if "request_id" in message:
+            future = self._pending.pop(message["request_id"], None)
+            if future and not future.done():
+                future.set_result(message.get("data"))
             return
 
-        event = msg.get("event")
+        event = message.get("event")
         if event == "property-change":
-            name = msg.get("name")
-            data = msg.get("data")
+            name = message.get("name")
+            data = message.get("data")
             if name == "time-pos" and isinstance(data, (int, float)):
                 await self._bus.publish(TrackProgressEvent(position=float(data)))
             elif name == "pause":
@@ -267,42 +259,33 @@ class MpvController:
                 from core.events import TrackDurationEvent
                 await self._bus.publish(TrackDurationEvent(duration=float(data)))
         elif event == "end-file":
-            reason = msg.get("reason", "")
+            reason = message.get("reason", "")
             if reason in ("eof", "stop", "error"):
                 await self._bus.publish(TrackEndedEvent(reason=reason))
 
-    async def _command(self, cmd: list) -> int:
+    async def _send_request(self, command_payload: list):
         if not self.is_connected or not self._writer:
-            return 0
+            return None
+        loop = asyncio.get_running_loop()
         async with self._req_lock:
             self._request_id += 1
-            req_id = self._request_id
-            payload = json.dumps({"command": cmd, "request_id": req_id}) + "\n"
-            try:
-                self._writer.write(payload.encode())
-                await self._writer.drain()
-            except OSError:
-                self.is_connected = False
-        return req_id
-
-    async def _get_property(self, prop: str):
-        if not self.is_connected:
-            return None
-        loop = asyncio.get_running_loop()  # HIGH-03 fix
-        async with self._req_lock:  # RC-02: atomic increment + pending register
-            self._request_id += 1
-            req_id = self._request_id
-            fut = loop.create_future()
-            self._pending[req_id] = fut
-        payload = json.dumps({"command": ["get_property", prop], "request_id": req_id}) + "\n"
+            request_id = self._request_id
+            future = loop.create_future()
+            self._pending[request_id] = future
+        payload = json.dumps({"command": command_payload, "request_id": request_id}) + "\n"
         try:
             self._writer.write(payload.encode())
             await self._writer.drain()
-            return await asyncio.wait_for(fut, timeout=2.0)
+            return await asyncio.wait_for(future, timeout=2.0)
         except (OSError, asyncio.TimeoutError):
-            self._pending.pop(req_id, None)
+            self._pending.pop(request_id, None)
             return None
 
-    # CRITICAL-06 fix: This method was missing entirely
+    async def _command(self, command: list):
+        return await self._send_request(command)
+
+    async def _get_property(self, prop: str):
+        return await self._send_request(["get_property", prop])
+
     async def _set_property(self, prop: str, value):
         await self._command(["set_property", prop, value])

@@ -65,6 +65,8 @@ function initSettingsEvents() {
         dom.sbToggle.addEventListener("click", () => {
             if (store.userRole !== "admin") return;
             const newVal = dom.sbToggle.dataset.on !== "true";
+            dom.sbToggle.dataset.on = newVal ? "true" : "false";
+            store.sponsorblock_active = newVal;
             wsSend("set_sponsorblock", { enabled: newVal });
         });
     }

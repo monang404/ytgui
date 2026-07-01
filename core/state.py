@@ -21,8 +21,8 @@ class AudioOutput(str, Enum):
     BROWSER = "browser"
 
 class PlaybackMode(Enum):
-    QUEUE = auto()   # user-directed
-    RADIO = auto()   # autonomous, self-sustaining
+    QUEUE = auto()
+    RADIO = auto()
 
 @dataclass
 class TrackInfo:
@@ -41,7 +41,6 @@ class TrackInfo:
 
 @dataclass
 class AppState:
-    # Playback
     status:          PlayerStatus  = PlayerStatus.IDLE
     playback_mode:   PlaybackMode  = PlaybackMode.QUEUE
     audio_output:    AudioOutput   = AudioOutput.BROWSER
@@ -51,23 +50,18 @@ class AppState:
     volume:          int   = 80
     sponsorblock_active: bool = True
 
-    # Queue (hanya aktif di QUEUE mode)
     queue:           deque = field(default_factory=deque)
-    # Radio (hanya aktif di RADIO mode) — TIDAK PERNAH dicampur dengan `queue`.
-    # Radio harus independen dari Queue Mode (lihat Constitution).
     radio_queue:     deque = field(default_factory=deque)
     history:         deque = field(default_factory=lambda: deque(maxlen=50))
 
-    # Lyrics
     lyrics_lines:    list[str] = field(default_factory=list)
     lyrics_timestamps: list[float] = field(default_factory=list)
     lyrics_index:    int = 0
     lyrics_offset:   float = 0.0
+    lyrics_loading:  bool = False
 
-    # UI state
-    active_tab:      str  = "home"    # "home"|"search"|"radio"|"queue"
+    active_tab:      str  = "home"
     error_msg:       Optional[str] = None
     is_online:       bool = True
 
-    # Download
-    download_progress: Optional[float] = None  # 0.0–1.0, None = idle
+    download_progress: Optional[float] = None

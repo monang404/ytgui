@@ -28,32 +28,35 @@ class Database:
         self._conn = await aiosqlite.connect(self.db_path)
         self._conn.row_factory = aiosqlite.Row
         await self._conn.execute("PRAGMA journal_mode=WAL")
-        
+
         with open(self._schema_path, "r", encoding="utf-8") as f:
             schema_sql = f.read()
         await self._conn.executescript(schema_sql)
-        
-        # Migrasi: Tambahkan kolom is_favorite jika belum ada
+
         try:
             await self._conn.execute("ALTER TABLE tracks ADD COLUMN is_favorite INTEGER DEFAULT 0")
             await self._conn.commit()
         except Exception:
             pass
-            
-        # Migrasi: Tambahkan kolom click_count untuk artists
+
         try:
             await self._conn.execute("ALTER TABLE artists ADD COLUMN click_count INTEGER DEFAULT 0")
             await self._conn.commit()
         except Exception:
             pass
 
-        # Migrasi: Tambahkan kolom click_count untuk genres
         try:
             await self._conn.execute("ALTER TABLE genres ADD COLUMN click_count INTEGER DEFAULT 0")
             await self._conn.commit()
         except Exception:
             pass
-        
+
+        try:
+            await self._conn.execute("CREATE INDEX IF NOT EXISTS idx_songs_artist_id ON songs(artist_id)")
+            await self._conn.commit()
+        except Exception:
+            pass
+
         logger.info(f"Database initialized at {self.db_path}")
 
     async def evict_stale_tracks(self) -> int:
@@ -228,7 +231,7 @@ class Database:
     async def delete_session(self, token: str):
         await self._conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
         await self._conn.commit()
-        
+
     async def cleanup_sessions(self):
         now = int(time.time())
         await self._conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
@@ -261,7 +264,7 @@ class Database:
         """Ambil lagu acak langsung dari database untuk Radio Mode, dengan limit per artis."""
         if exclude_ids is None:
             exclude_ids = set()
-            
+
         placeholders = ','.join('?' for _ in exclude_ids)
         query = f"""
             WITH RankedSongs AS (
@@ -275,7 +278,7 @@ class Database:
         if exclude_ids:
             query += f" AND s.youtube_id NOT IN ({placeholders})"
             params.extend(exclude_ids)
-            
+
         query += """
             )
             SELECT youtube_id, judul, duration, nama
@@ -283,7 +286,7 @@ class Database:
             WHERE rn <= ?
         """
         params.append(max_per_artist)
-        
+
         if artist:
             query += " ORDER BY CASE WHEN nama = ? THEN 0 ELSE 1 END, RANDOM() LIMIT ?"
             params.extend([artist, limit])
@@ -364,23 +367,20 @@ class Database:
 
     async def toggle_favorite(self, video_id: str) -> int:
         """Toggles the favorite status of a track dan kembalikan state baru (0 atau 1).
-        Atomic: satu UPDATE statement — tidak ada SELECT+UPDATE race condition.
+        Hanya operasi UPDATE yang atomic — tidak untuk keseluruhan blok SELECT+UPDATE ini.
         """
-        # Cek dulu apakah track ada
         async with self._conn.execute(
             "SELECT 1 FROM tracks WHERE video_id = ?", (video_id,)
         ) as cursor:
             if not await cursor.fetchone():
                 return 0
 
-        # Atomic toggle dalam satu statement: 1-0=1, 1-1=0
         await self._conn.execute(
             "UPDATE tracks SET is_favorite = 1 - COALESCE(is_favorite, 0) WHERE video_id = ?",
             (video_id,)
         )
         await self._conn.commit()
 
-        # Baca nilai baru setelah update
         async with self._conn.execute(
             "SELECT is_favorite FROM tracks WHERE video_id = ?", (video_id,)
         ) as cursor:

@@ -52,5 +52,4 @@ async def test_error_boundary_domain_events():
     event = LogMessageEvent(message="test message")
     await bus.publish(event)
 
-    # good_handler should still be executed
     assert len(received_events) == 1

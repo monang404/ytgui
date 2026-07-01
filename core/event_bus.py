@@ -28,16 +28,11 @@ class EventBus:
     def __init__(self):
         self._subscribers = defaultdict(list)
 
-    # CATATAN PENTING (L-3):
-    # Metode class/instance akan disimpan sebagai weak reference.
-    # Namun, fungsi biasa, lambda, atau closure akan disimpan sebagai
-    # strong reference, yang bisa menyebabkan memory leak jika tidak di-unsubscribe!
     def subscribe(self, event_type: Type[E], handler: Callable[[E], Any]):
-        # Gunakan weakref untuk method agar tidak memory leak
         if inspect.ismethod(handler):
             ref = weakref.WeakMethod(handler)
         else:
-            ref = handler # Fallback strong reference untuk fungsi biasa/lambda
+            ref = handler
         self._subscribers[event_type].append(ref)
 
     def _resolve(self, ref):
@@ -56,7 +51,6 @@ class EventBus:
                 r for r in self._subscribers[event_type]
                 if self._resolve(r) is not None
             ]
-            # Hapus key jika list sudah kosong agar dict tidak tumbuh
             if not self._subscribers[event_type]:
                 del self._subscribers[event_type]
 
@@ -65,28 +59,25 @@ class EventBus:
         if event_type in self._subscribers:
             self._subscribers[event_type] = [
                 r for r in self._subscribers[event_type]
-                # Buang: (1) dead weakref, (2) ref yang menunjuk ke handler target
                 if self._resolve(r) is not None and self._resolve(r) != handler
             ]
             if not self._subscribers[event_type]:
                 del self._subscribers[event_type]
-        # Bersihkan dead ref di semua event_type lain sekalian
         self.purge_dead_refs()
 
     async def publish(self, event: DomainEvent):
         """Publish event to all subscribers. Exceptions in one handler
         do NOT prevent subsequent handlers from executing (CRITICAL-01 fix)."""
         event_type = type(event)
-        
-        # Record Metric
+
         EVENT_COUNT.labels(event_type=event_type.__name__).inc()
-        
+
         active_handlers = []
         for ref in list(self._subscribers.get(event_type, [])):
             if isinstance(ref, weakref.ref):
                 handler = ref()
                 if handler is None:
-                    self._subscribers[event_type].remove(ref) # Cleanup dead reference
+                    self._subscribers[event_type].remove(ref)
                     continue
             else:
                 handler = ref
@@ -107,9 +98,8 @@ class EventBus:
                     handler(event)
                 except Exception as e:
                     logger.error(f"Handler {getattr(handler, '__name__', handler)} error on '{event_type.__name__}': {e}", exc_info=True)
-        
+
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-# Singleton
 bus = EventBus()

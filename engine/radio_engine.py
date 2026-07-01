@@ -16,8 +16,6 @@ from typing import TYPE_CHECKING, Optional
 
 from core.events import QueueUpdatedEvent, LogMessageEvent
 
-# Bug #5 fix: naikkan semaphore dari 2 → 4 agar search lebih paralel
-_RADIO_SEARCH_SEM = asyncio.Semaphore(4)
 
 if TYPE_CHECKING:
     from engine.playback import PlaybackController
@@ -27,11 +25,11 @@ from core.task_utils import safe_create_task
 
 _log = logging.getLogger(__name__)
 
-MAX_TRACK_DURATION = 600        # 10 menit — hindari kompilasi / livestream
-TRACKS_PER_ARTIST_TARGET = 3   # target track unik per artis dalam satu batch
-ARTISTS_PER_BATCH = 4          # artis per batch normal (4×3 = 12 lagu)
-ARTISTS_QUICK = 2              # artis untuk fetch cepat pertama (2×3 = 6 lagu)
-SEED_LIMIT = 2                 # max judul populer dari DB per artis
+MAX_TRACK_DURATION = 600
+TRACKS_PER_ARTIST_TARGET = 3
+ARTISTS_PER_BATCH = 4
+ARTISTS_QUICK = 2
+SEED_LIMIT = 2
 
 _TITLE_NOISE_WORDS = frozenset({
     "official", "music", "video", "audio", "lyric", "lyrics", "mv",
@@ -41,14 +39,7 @@ _TITLE_NOISE_WORDS = frozenset({
 })
 
 
-def _normalize_title(title: str) -> str:
-    if not title:
-        return ""
-    t = title.lower()
-    t = re.sub(r"[\(\[\{].*?[\)\]\}]", " ", t)
-    t = re.sub(r"[^a-z0-9\s]", " ", t)
-    words = [w for w in t.split() if w not in _TITLE_NOISE_WORDS]
-    return " ".join(words).strip()
+
 
 
 def _track_task(task_set: set, coro, name: str):
@@ -80,12 +71,10 @@ class RadioMode:
         self._bg_tasks: set = set()
         self._seed_artists: list[str] = []
         self._artist_rotation: list[str] = []
-        # Playlist cadangan — diisi di background, dipakai saat user klik
         self._standby: list = []
         self._standby_lock = asyncio.Lock()
         self._prefetch_started = False
 
-    # ── bootstrap ─────────────────────────────────────────────
 
     async def _ensure_artists_loaded(self) -> None:
         if self._seed_artists:
@@ -97,16 +86,13 @@ class RadioMode:
             _log.warning(f"Gagal load artis dari DB: {e}")
 
         if not self._seed_artists:
-            # Bug #3 fix: pesan error sebut path DB yang benar
             raise RuntimeError(
                 "Tabel artists kosong. Jalankan: python data/import_artists.py "
                 "--db data/ytgui.db --json data/artists.json"
             )
 
-    # ── lifecycle ─────────────────────────────────────────────
 
     async def on_activated(self, controller: "PlaybackController") -> None:
-        # Bug #2 fix: tangkap RuntimeError agar error tampil di frontend
         try:
             await self._ensure_artists_loaded()
         except RuntimeError as e:
@@ -123,33 +109,20 @@ class RadioMode:
         for task in list(self._bg_tasks):
             task.cancel()
         self._bg_tasks.clear()
-        # Jangan buang _standby — bisa dipakai kalau radio dinyalakan lagi
 
-    # ── next (dipanggil saat track habis) ─────────────────────
 
     async def next(self, controller: "PlaybackController") -> None:
         if self.state.radio_queue:
             track = self.state.radio_queue.popleft()
-            # Kalau queue mulai tipis, pastikan standby sedang disiapkan
             if len(self.state.radio_queue) <= 5:
                 _track_task(self._bg_tasks, self._ensure_standby(controller), name="radio_ensure_standby")
             await controller.play_track(track)
         else:
             # PATCH-RADIO-EMPTY-QUEUE-01: Queue habis — _start() jalan di background (bisa
-            # sampai ~20 detik kalau standby belum siap & harus fetch+resolve
-            # ulang dari yt-dlp). Sebelumnya state (current_track/status)
-            # dibiarkan apa adanya selama window itu -> frontend tidak
-            # diberi tahu apa-apa, jadi UI nyangkut pada info lagu lama yang
-            # sudah selesai (kelihatan idle/stuck), baru update mendadak
-            # begitu _start() selesai. Sekarang: set status LOADING dan
-            # broadcast QueueUpdatedEvent SEKARANG juga, supaya UI tahu
-            # "lagi nyari lagu radio berikutnya" selama window itu, alih-alih
-            # diam/stale.
             self.state.status = PlayerStatus.LOADING
             await controller.bus.publish(QueueUpdatedEvent())
             _track_task(self._bg_tasks, self._start(controller), name="radio_refill")
 
-    # ── inti: start dengan standby atau fetch cepat ───────────
 
     async def _start(self, controller: "PlaybackController") -> None:
         """
@@ -166,23 +139,19 @@ class RadioMode:
                 tracks = None
 
         if tracks:
-            # Langsung pakai standby
             self.state.radio_queue.clear()
             self.state.radio_queue.extend(tracks[1:])
             await controller.bus.publish(QueueUpdatedEvent())
             await controller.play_track(tracks[0])
-            # Siapkan standby berikutnya di background
             _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
             return
 
-        # Fetch cepat: ARTISTS_QUICK artis dulu, langsung putar
         try:
             quick_tracks = await asyncio.wait_for(
                 self._gather_batch(max_artists=ARTISTS_QUICK),
                 timeout=20.0
             )
         except RuntimeError as e:
-            # DB artists kosong — kirim pesan jelas ke frontend
             await controller.bus.publish(QueueUpdatedEvent())
             await controller.bus.publish(LogMessageEvent(
                 message=f"Radio: {e}"
@@ -196,10 +165,8 @@ class RadioMode:
             self.state.radio_queue.extend(quick_tracks[1:])
             await controller.bus.publish(QueueUpdatedEvent())
             await controller.play_track(quick_tracks[0])
-            # Background: fetch sisa artis dan masukkan ke queue + siapkan standby
             _track_task(self._bg_tasks, self._backfill_and_standby(controller), name="radio_backfill")
         else:
-            # Broadcast state ulang agar frontend tidak stuck di "loading" tanpa info
             await controller.bus.publish(QueueUpdatedEvent())
             await controller.bus.publish(LogMessageEvent(
                 message="Radio: Tidak ada hasil ditemukan."
@@ -224,7 +191,6 @@ class RadioMode:
             except Exception as e:
                 _log.warning(f"Radio backfill gagal: {e}")
 
-        # Setelah backfill selesai, langsung siapkan standby berikutnya
         _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
 
     async def _build_standby(self, controller: "PlaybackController") -> None:
@@ -232,7 +198,7 @@ class RadioMode:
         Tidak akan jalan kalau standby sudah ada atau sedang dibangun."""
         async with self._standby_lock:
             if self._standby:
-                return  # sudah ada, tidak perlu rebuild
+                return
 
         if self._fetch_lock.locked():
             return
@@ -255,7 +221,6 @@ class RadioMode:
                 return
         _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby2")
 
-    # ── dipanggil dari playback_controller saat tombol Acak ───
 
     async def _fetch_and_play_initial(
         self, controller: "PlaybackController", seed_artist: Optional[str] = None
@@ -267,7 +232,7 @@ class RadioMode:
         """
         self._artist_rotation = []
         async with self._standby_lock:
-            self._standby = []  # buang standby lama, minta yang fresh
+            self._standby = []
 
         await controller.bus.publish(LogMessageEvent(
             message="Mengacak playlist radio..."
@@ -306,20 +271,18 @@ class RadioMode:
         await controller.bus.publish(QueueUpdatedEvent())
         await controller.play_track(tracks[0])
 
-        # Siapkan standby berikutnya di background untuk auto-refill
         _track_task(self._bg_tasks, self._build_standby(controller), name="radio_build_standby")
 
-    # ── batch & search ────────────────────────────────────────
 
     async def _gather_batch(
         self, prioritized_artist: Optional[str] = None, max_artists: int = ARTISTS_PER_BATCH
     ) -> list:
         limit = max_artists * TRACKS_PER_ARTIST_TARGET
         existing = self._build_exclusion_set()
-        
+
         if not prioritized_artist and self._seed_artists:
             prioritized_artist = random.choice(self._seed_artists)
-            
+
         if self.db and self.db.conn:
             try:
                 tracks = await self.db.get_random_songs(limit=limit, exclude_ids=existing, artist=prioritized_artist)
@@ -347,7 +310,6 @@ class RadioMode:
     async def _prefetch_next(self, controller: "PlaybackController") -> None:
         """Resolve stream_url untuk lagu pertama di radio_queue secara background."""
         try:
-            # We want a timeout just in case it hangs
             await asyncio.wait_for(self._do_prefetch(controller), timeout=25.0)
         except Exception as e:
             _log.warning(f"Prefetch next track gagal: {e}")
@@ -357,7 +319,7 @@ class RadioMode:
             return
         next_track = self.state.radio_queue[0]
         if next_track.stream_url:
-            return  # Sudah resolve
+            return
         try:
             await controller.track_loader.resolver.resolve(next_track)
             _log.info(f"Berhasil prefetch stream_url untuk: {next_track.title}")

@@ -6,7 +6,7 @@ function initEvents() {
                 if (typeof switchTab === "function") switchTab("search");
                 if (dom.searchInput) {
                     dom.searchInput.value = mood + " mix";
-                    if (typeof doSearch === "function") doSearch(mood + " mix");
+                    dom.searchInput.dispatchEvent(new Event("input"));
                 }
             }
         });
@@ -18,7 +18,7 @@ function initEvents() {
             if (window.safeStorage) {
                 window.safeStorage.set("ytgui_user_role", "client");
             } else {
-                window.safeStorage.set("ytgui_user_role", "client");
+                localStorage.setItem("ytgui_user_role", "client");
             }
             if (typeof applyRoleUI === "function") applyRoleUI();
             if (typeof unlockBrowserAudio === "function") unlockBrowserAudio();
@@ -65,9 +65,9 @@ function initEvents() {
         });
     });
 
-    // Initialize sub-modules
     if (typeof initPlayerEvents === "function") initPlayerEvents();
     if (typeof initQueueEvents === "function") initQueueEvents();
+    if (typeof initQueueDragDrop === "function") initQueueDragDrop();
     if (typeof initLyricsEvents === "function") initLyricsEvents();
     if (typeof initSettingsEvents === "function") initSettingsEvents();
 }

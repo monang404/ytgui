@@ -3,13 +3,13 @@ import time
 import secrets
 from config import ADMIN_USERNAME, ADMIN_PASSWORD
 from core.security import verify_password
-
+from core.constants import MAX_LOGIN_ATTEMPTS
 def _prune_stale_ips(manager, now: float) -> None:
     """Hapus entry IP yang sudah melewati window dari kedua dict rate-limit.
     Dipanggil tiap handle_auth agar dict tidak tumbuh tanpa batas (memory leak).
     """
-    WINDOW_AUTH = 300   # 5 menit — sama dengan window login_attempts
-    WINDOW_CMD  = 60    # 1 menit — sama dengan window command_history
+    WINDOW_AUTH = 300
+    WINDOW_CMD  = 60
 
     stale_auth = [ip for ip, ts_list in manager.login_attempts.items()
                   if not any(now - t < WINDOW_AUTH for t in ts_list)]
@@ -24,7 +24,6 @@ def _prune_stale_ips(manager, now: float) -> None:
 
 async def handle_auth(ws, data, manager, client_ip, db, now):
     async with manager.rl_lock:
-        # Prune dict rate-limit agar tidak tumbuh selamanya
         _prune_stale_ips(manager, now)
 
         token = data.get("token")
@@ -43,7 +42,7 @@ async def handle_auth(ws, data, manager, client_ip, db, now):
             manager.login_attempts.pop(client_ip, None)
         else:
             manager.login_attempts[client_ip] = attempts
-        if len(attempts) >= 5:
+        if len(attempts) >= MAX_LOGIN_ATTEMPTS:
             await ws.send_str(json.dumps({
                 "type": "auth_status",
                 "data": {"success": False, "message": "Terlalu banyak percobaan login. Coba lagi dalam 5 menit."}
@@ -52,7 +51,7 @@ async def handle_auth(ws, data, manager, client_ip, db, now):
 
         username = data.get("username", "")
         password = data.get("password", "")
-        if username == ADMIN_USERNAME and verify_password(password, ADMIN_PASSWORD):
+        if secrets.compare_digest(username, ADMIN_USERNAME) and verify_password(password, ADMIN_PASSWORD):
             new_token = secrets.token_hex(16)
             if db:
                 await db.create_session(new_token, int(now) + 86400)

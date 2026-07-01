@@ -1,8 +1,7 @@
 import time
 from core.observability import ACTIVE_WEBSOCKETS
+from core.constants import MAX_RATE_LIMIT
 
-def check_rate_limit_sync():
-    pass
 
 async def check_rate_limit(manager, client_ip: str, now: float) -> bool:
     async with manager.rl_lock:
@@ -12,7 +11,7 @@ async def check_rate_limit(manager, client_ip: str, now: float) -> bool:
             manager.command_history.pop(client_ip, None)
         else:
             manager.command_history[client_ip] = cmd_history
-        if len(cmd_history) >= 30:
+        if len(cmd_history) >= MAX_RATE_LIMIT:
             return False
         cmd_history.append(now)
         manager.command_history[client_ip] = cmd_history

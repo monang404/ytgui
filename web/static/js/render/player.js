@@ -1,7 +1,5 @@
 function renderPlayerBar() {
     // PATCH-ANDROID-AUDIO-01: dulu baris ini menimpa data-player-state dengan logic
-    // berbeda dari now-playing.js (cuma cek store.status, gak cek track),
-    // bikin idle-view bisa nyangkut salah. Sekarang pakai fungsi bersama.
     if (typeof syncPlayerStateAttr === "function") syncPlayerStateAttr();
     const t = store.current_track;
 
@@ -9,7 +7,7 @@ function renderPlayerBar() {
         dom.pbTrackInfo.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:5px; vertical-align:-2px;"></span> Memuat... ' + escapeHtml(t ? t.title : "");
     } else if (t) {
         const title = typeof cleanTrackTitle === "function" ? cleanTrackTitle(t.title) : t.title;
-        const thumbUrl = t.thumbnail || '';
+        const thumbUrl = (t.thumbnail || '').replace('hqdefault.jpg', 'mqdefault.jpg').replace('sddefault.jpg', 'mqdefault.jpg');
         const fallbackIcon = `<i class="ti ti-music" style="color:var(--text-3); font-size:20px;"></i>`;
         const thumbHtml = thumbUrl ? `<img src="${escapeHtml(thumbUrl)}" style="width:44px; height:44px; border-radius:6px; object-fit:cover; flex-shrink:0;">` : `<div style="width:44px; height:44px; border-radius:6px; background:rgba(255,255,255,0.1); flex-shrink:0; display:flex; align-items:center; justify-content:center;">${fallbackIcon}</div>`;
         dom.pbTrackInfo.innerHTML = `
@@ -65,9 +63,9 @@ function renderPlayerBar() {
 
 function renderPlayBtn() {
     if (store.status === "PLAYING") {
-        dom.btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"></path></svg>';
+        dom.btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"></path></svg>';
     } else {
-        dom.btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"></path></svg>';
+        dom.btnPlay.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"></path></svg>';
     }
 }
 
@@ -90,14 +88,12 @@ function _renderProgressCore() {
 
     dom.pbProgressFill.style.width = pct + "%";
     
-    // update thumb
     const thumb = dom.pbProgressTrack.querySelector('.pb-thumb');
     if(thumb) thumb.style.left = pct + "%";
 
     dom.pbTimePos.textContent = formatTime(pos);
     dom.pbTimeDur.textContent = formatTime(dur);
 
-    // S8-08 Mini Player Progress
     const playerBar = document.getElementById("player-bar");
     if(playerBar) playerBar.style.setProperty("--mini-progress", pct + "%");
 }

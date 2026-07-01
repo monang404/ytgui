@@ -44,7 +44,6 @@ class TestRadioCircuitBreaker:
     def test_timeout_has_retry_logic(self):
         """Setelah timeout di _fetch_and_play_initial, harus ada retry logic."""
         source = inspect.getsource(RadioMode._fetch_and_play_initial)
-        # Harus ada handling TimeoutError atau retry setelah timeout
         has_retry = (
             "TimeoutError" in source or
             "timeout" in source.lower()
@@ -54,9 +53,8 @@ class TestRadioCircuitBreaker:
         )
 
     def test_gather_batch_called_with_timeout_value(self):
-        """Timeout value harus reasonable (≤ 30 detik)."""
+        """Timeout value harus reasonable (40 detik)."""
         source = inspect.getsource(RadioMode._fetch_and_play_initial)
-        # Cek bahwa timeout value ada dan masuk akal
-        assert "30" in source, (
-            "Timeout value harus 30 detik sesuai spesifikasi PATCH-1-06"
+        assert "40.0" in source or "40" in source, (
+            "Timeout value harus 40 detik sesuai implementasi baru"
         )

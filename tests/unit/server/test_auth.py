@@ -70,7 +70,6 @@ class TestPasswordHashing:
         # Plaintext compare harus ditolak (TASK-1.1 security fix)
         assert verify_password("admin", "admin") is False
         assert verify_password("admin", "wrong") is False
-        # Hanya pbkdf2 format yang diterima
         assert verify_password("admin", "pbkdf2:sha256:invalid") is False
 
     def test_hash_contains_salt(self):

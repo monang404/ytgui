@@ -28,8 +28,6 @@ def create_app(playback_controller: PlaybackController, ytdlp: MediaExtractorPor
     app["ytdlp"] = ytdlp
     app["db"] = db
     app["manager"] = manager
-    # Bug #9 fix: ClientSession sudah dibuat di main.py dan di-pass ke plugins.
-    # Tidak perlu buat session baru di sini agar tidak ada resource leak.
 
     from server.services.stream_prefetch import StreamPrefetchService
     from server.services.broadcast_service import BroadcastService

@@ -20,17 +20,14 @@ class TrackLoader:
 
     async def load_track(self, track: TrackInfo) -> str:
         """
-        Resolves the track URI and triggers background tasks 
+        Resolves the track URI and triggers background tasks
         for lyrics and sponsorblock. Also increments play count.
         Returns the playable URI.
         """
-        # Resolve URI
         uri = await self.resolver.resolve(track)
 
-        # C-02: Increment play count for favorites
         await self.resolver.db.increment_play_count(track.video_id)
 
-        # Fetch sponsorblock and lyrics
         safe_create_task(self.sponsorblock.fetch_segments(track.video_id), name=f"fetch_sponsorblock_{track.video_id}")
         safe_create_task(self.lyrics_fetcher.fetch(track), name=f"fetch_lyrics_{track.video_id}")
 

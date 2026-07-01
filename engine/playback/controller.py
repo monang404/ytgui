@@ -8,7 +8,7 @@ import asyncio
 import structlog
 from core.event_bus import EventBus
 from core.events import (
-    TrackEndedEvent, TrackProgressEvent, TrackStartedEvent, 
+    TrackEndedEvent, TrackProgressEvent, TrackStartedEvent,
     LogMessageEvent, QueueUpdatedEvent, TrackPauseChangedEvent,
     TrackDurationEvent
 )
@@ -46,7 +46,6 @@ class PlaybackController:
         self._play_lock = asyncio.Lock()  # A-05: proteksi race condition di play_track
         self._retry_count = 0
 
-        # Subscribe events
         self.bus.subscribe(TrackEndedEvent, self._on_track_ended)
         self.bus.subscribe(TrackProgressEvent, self._on_track_progress)
         self.bus.subscribe(TrackPauseChangedEvent, self._on_pause_changed)
@@ -57,13 +56,11 @@ class PlaybackController:
             self.state.duration = event.duration
             if self.state.current_track:
                 self.state.current_track.duration = int(event.duration)
-                # Simpan metadata durasi ke database agar cache berikutnya sudah tahu durasinya
                 safe_create_task(self.resolver.db.upsert_track(self.state.current_track), name="upsert_track_duration")
             await self.bus.publish(QueueUpdatedEvent())
 
     async def play_track(self, track: TrackInfo):
         async with self._play_lock:  # A-05: cegah concurrent play_track race
-            # Push current to history if it exists
             if self.state.current_track:
                 self.state.history.append(self.state.current_track)
 
@@ -75,14 +72,11 @@ class PlaybackController:
             self.state.lyrics_index = 0
 
             try:
-                # Load track (resolve URI, fetch lyrics/sponsorblock, increment play count)
                 uri = await self.track_loader.load_track(track)
 
-                # Play
                 await self.mpv.play(uri)
 
                 if getattr(self.state, "audio_output", AudioOutput.DEVICE) == AudioOutput.BROWSER:
-                    # BACKEND-FIX-01: Pastikan mpv silent di browser mode.
                     await self.mpv.set_volume(0)
                     await self.bus.publish(LogMessageEvent(message="Audio output is browser, mpv silent (volume=0)."))
                 else:
@@ -91,10 +85,9 @@ class PlaybackController:
                 await self.mpv.resume()
 
                 self.state.status = PlayerStatus.PLAYING
-                self._retry_count = 0  # Reset retry count on success
+                self._retry_count = 0
                 await self.bus.publish(TrackStartedEvent(track=track))
 
-                # Fetch duration actively if not available
                 if self.state.duration == 0:
                     safe_create_task(self._poll_duration(track), name="poll_duration")
 
@@ -111,12 +104,10 @@ class PlaybackController:
                 else:
                     backoff = 2 ** self._retry_count
                     await asyncio.sleep(backoff)
-                    # Ensure we don't call _on_next if we are no longer trying to play this track
                     if self.state.current_track == track:
                         await self._advance_to_next()
 
     async def _poll_duration(self, track: TrackInfo):
-        # Tunggu stream loading
         await asyncio.sleep(2)
         if self.state.current_track != track:
             return
@@ -127,7 +118,6 @@ class PlaybackController:
             safe_create_task(self.resolver.db.upsert_track(track), name="upsert_track_duration_poll")
             await self.bus.publish(QueueUpdatedEvent())
         else:
-            # Coba sekali lagi setelah 5 detik
             await asyncio.sleep(5)
             if self.state.current_track == track:
                 dur = await self.mpv.get_duration()
@@ -148,8 +138,7 @@ class PlaybackController:
     async def _on_track_ended(self, event: TrackEndedEvent):
         reason = event.reason
         logger.info(f"[AUTOPLAY] Track ended with reason: {reason}")
-        
-        # Build payload for next to prevent double-skip if track changes concurrently
+
         next_data = {}
         if self.state.current_track:
             next_data["video_id"] = self.state.current_track.video_id
@@ -158,14 +147,12 @@ class PlaybackController:
             await asyncio.sleep(0.35)
             await self._on_next(next_data)
         elif reason == "stop":
-            # Intentional stop — sync server state ke IDLE
             if self.state.status not in (PlayerStatus.IDLE,):
                 self.state.status = PlayerStatus.IDLE
         elif reason == "error":
             self.state.status = PlayerStatus.ERROR
             await self.bus.publish(LogMessageEvent(message="Terjadi kesalahan pemutaran"))
             await asyncio.sleep(2)
-            # Batalkan autoplay jika user sudah stop atau ganti lagu selama sleep
             if self.state.status == PlayerStatus.IDLE:
                 return
             current_vid = getattr(self.state.current_track, "video_id", None)
@@ -200,7 +187,7 @@ class PlaybackController:
         async with self._lock:
             if self.state.history:
                 track = self.state.history.pop()
-                self.state.current_track = None 
+                self.state.current_track = None
                 await self.play_track(track)
             else:
                 await self.bus.publish(LogMessageEvent(message="Tidak ada lagu sebelumnya"))
@@ -224,8 +211,6 @@ class PlaybackController:
             self.state.position = position
 
     async def _on_set_mode(self, mode: PlaybackMode):
-        # Bug #6 fix: state mutation di dalam lock (cepat),
-        # on_activated() di luar lock agar ytdlp/DB tidak memblok command lain.
         should_activate_radio = False
         async with self._lock:
             if self.state.playback_mode != mode:
@@ -237,17 +222,14 @@ class PlaybackController:
                     await self.mpv.pause()
                     self.state.current_track = None
                     self.state.status = PlayerStatus.IDLE
-                    # B-02: tidak auto-advance saat keluar RADIO — biarkan user mulai manual
 
                 if mode == PlaybackMode.RADIO:
-                    self.state.status = PlayerStatus.LOADING  # signal ke frontend bahwa radio sedang fetch
+                    self.state.status = PlayerStatus.LOADING
                     should_activate_radio = True
 
                 await self.bus.publish(LogMessageEvent(message=f"Mode diubah ke {mode.name}"))
                 await self.bus.publish(QueueUpdatedEvent())
 
-        # on_activated di luar lock: fetch DB + ytdlp bisa lama,
-        # command pause/stop/skip tetap bisa masuk selama proses ini.
         if should_activate_radio:
             await self.radio_mode.on_activated(self)
 
@@ -292,7 +274,6 @@ class PlaybackController:
                     await self.bus.publish(QueueUpdatedEvent())
 
     async def _on_radio_randomize(self, data=None):
-        # Reset state di dalam lock (cepat), fetch di luar lock (background)
         seed = None
         should_fetch = False
         async with self._lock:

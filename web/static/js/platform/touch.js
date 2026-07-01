@@ -13,9 +13,8 @@
     }, { passive: true });
 
     document.addEventListener('touchend', e => {
-        // FIX BUG-2: jangan intercept tap pada elemen yang punya handler sendiri.
         if (e.target.closest(
-            "#radio-toggle-btn, button, a, input, select, textarea, [role=\"button\"]"
+            "#radio-toggle-btn, button, a, input, select, textarea, [role=\"button\"], .mood-row, .disc-row2, [style*=\"overflow-x\"]"
         )) return;
         
         if (e.changedTouches.length === 1) {
@@ -25,10 +24,14 @@
             const diffY = Math.abs(touchEndY - touchStartY);
             
             if (diffX > 80 && diffX > diffY) {
+                if (store.userRole !== "admin") {
+                    if (typeof showLogToast === "function") showLogToast("Hanya admin yang bisa memutar musik");
+                    return;
+                }
                 if (touchEndX < touchStartX) {
-                    if (typeof cmd === 'function') cmd('next');
+                    if (typeof wsSend === 'function') wsSend('next');
                 } else {
-                    if (typeof cmd === 'function') cmd('prev');
+                    if (typeof wsSend === 'function') wsSend('prev');
                 }
             }
         }

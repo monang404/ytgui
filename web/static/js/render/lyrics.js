@@ -6,6 +6,18 @@ function renderLyrics() {
 function renderSheetLyrics() {
     if (!dom.lyricsSheet || !dom.lyricsSheet.classList.contains("open")) return;
 
+    if (!dom.lyricsContent._scrollBound) {
+        dom.lyricsContent._scrollBound = true;
+        let scrollTimeout;
+        const setScrolling = () => {
+            window.isScrollingLyrics = true;
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => window.isScrollingLyrics = false, 3000);
+        };
+        dom.lyricsContent.addEventListener("wheel", setScrolling, {passive: true});
+        dom.lyricsContent.addEventListener("touchmove", setScrolling, {passive: true});
+    }
+
     const lines = store.lyrics_lines;
     const idx = store.lyrics_index;
 
@@ -31,7 +43,7 @@ function renderSheetLyrics() {
     dom.lyricsContent.innerHTML = html;
 
     const activeLine = dom.lyricsContent.querySelector(".lyric-line.active");
-    if (activeLine) {
+    if (activeLine && !window.isScrollingLyrics) {
         activeLine.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 }
@@ -50,8 +62,8 @@ function renderHomeLyrics() {
 
     dom.lyricsCurrent.className = "lyrics-line current lyric-pop";
     
-    // Remove class after animation finishes to allow re-trigger
-    setTimeout(() => {
+    if (dom.lyricsCurrent._popTimeout) clearTimeout(dom.lyricsCurrent._popTimeout);
+    dom.lyricsCurrent._popTimeout = setTimeout(() => {
         if (dom.lyricsCurrent) {
             dom.lyricsCurrent.className = "lyrics-line current";
         }
@@ -60,9 +72,9 @@ function renderHomeLyrics() {
     const idx = store.lyrics_index || 0;
     const lines = store.lyrics_lines;
 
-    dom.lyricsPrev.innerHTML = idx > 0 ? lines[idx - 1] : "&nbsp;";
-    dom.lyricsCurrent.innerHTML = lines[idx] || "&nbsp;";
-    dom.lyricsNext.innerHTML = idx < lines.length - 1 ? lines[idx + 1] : "&nbsp;";
+    dom.lyricsPrev.innerHTML = idx > 0 ? escapeHtml(lines[idx - 1]) : "&nbsp;";
+    dom.lyricsCurrent.innerHTML = escapeHtml(lines[idx] || "&nbsp;");
+    dom.lyricsNext.innerHTML = idx < lines.length - 1 ? escapeHtml(lines[idx + 1]) : "&nbsp;";
 }
 
 function updateOffsetDisplay() {

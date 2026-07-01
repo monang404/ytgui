@@ -84,7 +84,6 @@ class TestSSRFValidation:
         import server.handlers.auth as server_auth
         import server.middleware as server_middleware
         source = inspect.getsource(server_http)
-        # Harus ada regex untuk validasi video_id
         assert "a-zA-Z0-9_-" in source and "11" in source, (
             "video_id harus divalidasi dengan regex [a-zA-Z0-9_-]{11}"
         )

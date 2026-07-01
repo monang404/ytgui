@@ -61,17 +61,15 @@ function renderNowPlaying() {
     }
 
     // PATCH-ANDROID-AUDIO-01: satu-satunya tempat yang nentuin data-player-state,
-    // dipanggil juga dari player.js & ws.js (progress tick) supaya nggak
-    // ada dua sumber kebenaran yang bisa desync.
     syncPlayerStateAttr();
 
     if (store.status === "LOADING") {
         dom.npTitle.innerHTML = '<span class="spinner" style="display:inline-block; margin-right:8px; vertical-align:-3px; width:20px; height:20px;"></span> ⏳ Memuat...';
-        dom.npArtist.textContent = t ? t.title : "";
-    } else if (t) {
+        dom.npArtist.textContent = (t && t.title) ? t.title : "";
+    } else if (t && t.title) {
         const cleanedTitle = typeof cleanTrackTitle === "function" ? cleanTrackTitle(t.title) : t.title;
         dom.npTitle.textContent = cleanedTitle.toLowerCase().replace(/(?:^|\s|-)\S/g, function(a) { return a.toUpperCase(); });
-        dom.npArtist.textContent = t.artist;
+        dom.npArtist.textContent = t.artist || "";
     } else {
         dom.npTitle.textContent = "Belum ada lagu yang diputar";
         dom.npArtist.textContent = "Cari lagu untuk memulai";

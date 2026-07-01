@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JS Helpers Test</title>
+    <style>
+        body { font-family: monospace; }
+        .pass { color: green; }
+        .fail { color: red; }
+    </style>
+</head>
+<body>
+    <h1>JS Helpers Test Results</h1>
+    <div id="results"></div>
+
+    <!-- Mock DOM elements needed by utils.js, if any -->
+    <div style="display:none">
+        <div id="connectionToast"></div>
+        <div id="logToast"></div>
+    </div>
+
+    <script>
+        // Mock the window.dom object used by utils.js
+        window.dom = {
+            connectionToast: document.getElementById('connectionToast'),
+            logToast: document.getElementById('logToast')
+        };
+    </script>
+    <script src="../web/static/js/utils.js"></script>
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function assert(condition, message) {
+            const el = document.createElement('div');
+            if (condition) {
+                el.className = 'pass';
+                el.textContent = 'PASS: ' + message;
+            } else {
+                el.className = 'fail';
+                el.textContent = 'FAIL: ' + message;
+                console.error('FAIL: ' + message);
+            }
+            resultsDiv.appendChild(el);
+        }
+
+        function runTests() {
+            // Test formatTime
+            assert(formatTime(0) === "00:00", "formatTime(0) should be 00:00");
+            assert(formatTime(65) === "01:05", "formatTime(65) should be 01:05");
+            assert(formatTime(3600) === "60:00", "formatTime(3600) should be 60:00");
+            assert(formatTime(-10) === "00:00", "formatTime(-10) should handle negative time");
+
+            // Test escapeHtml
+            assert(escapeHtml("") === "", "escapeHtml empty string");
+            assert(escapeHtml("hello") === "hello", "escapeHtml normal string");
+            assert(escapeHtml("<div>") === "&lt;div&gt;", "escapeHtml handles < and >");
+            assert(escapeHtml("&") === "&amp;", "escapeHtml handles &");
+
+            // Test cleanTrackTitle
+            assert(window.cleanTrackTitle("") === "", "cleanTrackTitle empty string");
+            assert(window.cleanTrackTitle("Song (Official Video)") === "Song", "cleanTrackTitle removes Official Video");
+            assert(window.cleanTrackTitle("Song [Lyric Video]") === "Song", "cleanTrackTitle removes Lyric Video");
+            assert(window.cleanTrackTitle("Song #hashtag") === "Song", "cleanTrackTitle removes hashtag");
+            assert(window.cleanTrackTitle("Song  - ") === "Song", "cleanTrackTitle removes trailing dashes and double spaces");
+            assert(window.cleanTrackTitle("Song (Live at Wembley)") === "Song", "cleanTrackTitle removes Live");
+        }
+
+        window.onload = runTests;
+    </script>
+</body>
+</html>

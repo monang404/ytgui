@@ -42,6 +42,7 @@ def mock_ytdlp():
 def mock_playback_controller(mock_db, mock_ytdlp):
     controller = MagicMock(spec=PlaybackController)
     controller.state = AppState()
+    controller.bus = AsyncMock()
     return controller
 
 
@@ -50,7 +51,7 @@ async def test_e2e_health_endpoint(aiohttp_client, mock_playback_controller, moc
     """PATCH-3-05: Verifikasi endpoint /health."""
     app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
-    
+
     resp = await client.get("/health")
     assert resp.status == 200
     data = await resp.json()
@@ -63,11 +64,10 @@ async def test_e2e_metrics_endpoint(aiohttp_client, mock_playback_controller, mo
     """PATCH-3-04: Verifikasi endpoint /metrics tersedia (Prometheus format)."""
     app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
-    
+
     resp = await client.get("/metrics")
     assert resp.status == 200
     text = await resp.text()
-    # Prometheus text format should contain our custom metrics
     assert "ytplayer_commands_total" in text or "ytplayer_events_total" in text or "# HELP" in text
 
 
@@ -76,16 +76,15 @@ async def test_e2e_websocket_connect_initial_state(aiohttp_client, mock_playback
     """PATCH-3-05: Verifikasi WS konek dan menerima initial state."""
     app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
-    
+
     ws = await client.ws_connect("/ws")
-    
-    # First message: initial state broadcast
+
     msg = await ws.receive()
-    assert msg.type.value == 1  # TEXT = 1
+    assert msg.type.value == 1
     data = json.loads(msg.data)
     assert data["type"] == "state"
     assert "status" in data["data"]
-    
+
     await ws.close()
 
 
@@ -94,24 +93,22 @@ async def test_e2e_websocket_auth_with_token(aiohttp_client, mock_playback_contr
     """PATCH-3-05: Verifikasi WS autentikasi token berhasil."""
     app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
-    
+
     ws = await client.ws_connect("/ws")
-    
-    # Consume initial state
+
     await ws.receive()
-    
-    # Send auth with token
+
     await ws.send_json({
         "type": "cmd",
         "action": "auth",
-        "data": {"token": "test-token"}  # mock_db.verify_session returns True
+        "data": {"token": "test-token"}
     })
-    
+
     msg = await ws.receive()
     data = json.loads(msg.data)
     assert data["type"] == "auth_status"
     assert data["data"]["success"] is True
-    
+
     await ws.close()
 
 
@@ -120,29 +117,26 @@ async def test_e2e_websocket_search(aiohttp_client, mock_playback_controller, mo
     """PATCH-3-05: Verifikasi WS search command mengembalikan hasil."""
     app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
-    
+
     ws = await client.ws_connect("/ws")
-    
-    # Consume initial state
+
     await ws.receive()
-    
-    # Authenticate first
+
     await ws.send_json({"type": "cmd", "action": "auth", "data": {"token": "test-token"}})
-    await ws.receive()  # consume auth_status
-    
-    # Send search command
+    await ws.receive()
+
     await ws.send_json({
         "type": "cmd",
         "action": "search",
         "data": {"query": "Test Song"}
     })
-    
+
     msg = await ws.receive()
     data = json.loads(msg.data)
     assert data["type"] == "search_results"
     assert len(data["data"]) > 0
     assert data["data"][0]["video_id"] == "test1"
-    
+
     await ws.close()
 
 
@@ -151,22 +145,20 @@ async def test_e2e_websocket_unauthenticated_command_rejected(aiohttp_client, mo
     """PATCH-3-05: Verifikasi command ditolak bila belum autentikasi."""
     app = create_app(mock_playback_controller, mock_ytdlp, mock_db)
     client = await aiohttp_client(app)
-    
+
     ws = await client.ws_connect("/ws")
-    
-    # Consume initial state
+
     await ws.receive()
-    
-    # Send command WITHOUT auth
+
     await ws.send_json({
         "type": "cmd",
         "action": "stop",
         "data": {}
     })
-    
+
     msg = await ws.receive()
     data = json.loads(msg.data)
     assert data["type"] == "error"
     assert "ditolak" in data["data"] or "login" in data["data"].lower()
-    
+
     await ws.close()

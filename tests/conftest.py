@@ -9,7 +9,6 @@ import os
 import json
 from pathlib import Path
 
-# Ensure project root is on PYTHONPATH
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"

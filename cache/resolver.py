@@ -23,8 +23,7 @@ class CacheResolver:
     async def resolve(self, track: TrackInfo) -> str:
         """Returns the playback URI (local path atau YouTube URL untuk MPV)."""
         row = await self.db.get_track(track.video_id)
-        
-        # Rule 1: Local file — ini yang benar-benar berguna
+
         if row and row.local_path:
             path = row.local_path
             import asyncio
@@ -32,16 +31,13 @@ class CacheResolver:
                 track.local_path = path
                 return path
 
-        # Rule 2: Gunakan stream_url dari cache jika belum kadaluwarsa
         if row and row.stream_url and row.stream_url_ts:
             ts = row.stream_url_ts
             if time.time() - ts < STREAM_URL_TTL_SEC:
                 track.stream_url = row.stream_url
                 return track.stream_url
 
-        # Rule 3: Ambil direct URL dari yt-dlp
         url = await self.ytdlp.get_stream_url(track.video_id)
         track.stream_url = url
-        # Simpan metadata track ke DB
         await self.db.upsert_track(track, stream_url=url)
         return url

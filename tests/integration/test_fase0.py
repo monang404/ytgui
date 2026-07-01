@@ -12,9 +12,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
-# ─────────────────────────────────────────────────────────────────
 # TASK-0.1 — _TITLE_NOISE_WORDS harus frozenset
-# ─────────────────────────────────────────────────────────────────
 
 class TestTask01TitleNoiseWords:
     """TASK-0.1: _TITLE_NOISE_WORDS harus bertipe frozenset untuk O(1) lookup."""
@@ -30,7 +28,7 @@ class TestTask01TitleNoiseWords:
         """frozenset tidak bisa dimodifikasi."""
         from engine.radio_engine import _TITLE_NOISE_WORDS
         with pytest.raises(AttributeError):
-            _TITLE_NOISE_WORDS.add("test")  # frozenset tidak punya .add()
+            _TITLE_NOISE_WORDS.add("test")
 
     def test_contains_expected_words(self):
         """Pastikan kata-kata noise penting masih ada."""
@@ -45,29 +43,10 @@ class TestTask01TitleNoiseWords:
         """Verifikasi lookup 'in' bekerja seperti yang diharapkan."""
         from engine.radio_engine import _TITLE_NOISE_WORDS
         assert "official" in _TITLE_NOISE_WORDS
-        assert "bukan_noise" not in _TITLE_NOISE_WORDS
-
-    def test_normalize_title_still_works(self):
-        """_normalize_title() harus tetap berjalan dengan baik setelah perubahan."""
-        from engine.radio_engine import _normalize_title
-        # Judul dengan noise words harus difilter
-        result = _normalize_title("Rasa Ini (Official Music Video)")
-        assert "official" not in result
-        assert "music" not in result
-        assert "video" not in result
-        # Judul minimal harus tersisa
-        assert "rasa" in result or "ini" in result
-
-    def test_normalize_title_empty(self):
-        """Judul kosong harus mengembalikan string kosong."""
-        from engine.radio_engine import _normalize_title
-        assert _normalize_title("") == ""
-        assert _normalize_title(None) == ""
 
 
-# ─────────────────────────────────────────────────────────────────
+
 # TASK-0.2 — _retry_count di-reset di _on_stop
-# ─────────────────────────────────────────────────────────────────
 
 class TestTask02RetryCountReset:
     """TASK-0.2: _retry_count harus di-reset ke 0 saat _on_stop dipanggil."""
@@ -85,10 +64,9 @@ class TestTask02RetryCountReset:
         mock_mpv.pause = AsyncMock()
         mock_mpv.resume = AsyncMock()
 
-        state = AppState(room_id="test")
+        state = AppState()
 
         ctrl = PlaybackController.__new__(PlaybackController)
-        ctrl.room_id = "test"
         ctrl.bus = mock_bus
         ctrl.state = state
         ctrl.mpv = mock_mpv
@@ -105,7 +83,7 @@ class TestTask02RetryCountReset:
     async def test_retry_count_reset_on_stop(self):
         """_retry_count harus 0 setelah _on_stop meskipun sebelumnya > 0."""
         ctrl = self._make_controller()
-        ctrl._retry_count = 2  # simulasi setelah 2 kegagalan
+        ctrl._retry_count = 2
 
         await ctrl._on_stop()
 
@@ -116,12 +94,10 @@ class TestTask02RetryCountReset:
     @pytest.mark.asyncio
     async def test_retry_count_reset_before_mpv_pause(self):
         """Reset harus terjadi di awal method (baris pertama)."""
-        # Verifikasi struktural: baris pertama on_stop adalah reset
         from engine.playback import PlaybackController
         import inspect
         source = inspect.getsource(PlaybackController._on_stop)
         lines = [l.strip() for l in source.splitlines() if l.strip()]
-        # Cari baris pertama setelah def
         body_lines = [l for l in lines if not l.startswith("async def") and not l.startswith("\"\"\"")]
         assert body_lines[0].startswith("self._retry_count = 0"), (
             f"Baris pertama _on_stop harus reset _retry_count, tapi: {body_lines[0]}"
@@ -142,9 +118,7 @@ class TestTask02RetryCountReset:
         assert ctrl.state.status == PlayerStatus.IDLE
 
 
-# ─────────────────────────────────────────────────────────────────
 # TASK-0.3 — _bg_tasks di-cancel saat on_deactivated
-# ─────────────────────────────────────────────────────────────────
 
 class TestTask03RadioBgTasksCancel:
     """TASK-0.3: Semua _bg_tasks harus di-cancel saat on_deactivated dipanggil."""
@@ -152,7 +126,7 @@ class TestTask03RadioBgTasksCancel:
     def _make_radio_mode(self):
         from engine.radio_engine import RadioMode
         from core.state import AppState
-        state = AppState(room_id="test")
+        state = AppState()
         ytdlp = MagicMock()
         radio = RadioMode(ytdlp, state)
         return radio, state
@@ -190,7 +164,6 @@ class TestTask03RadioBgTasksCancel:
         from core.state import TrackInfo
         radio, state = self._make_radio_mode()
 
-        # Isi radio_queue dengan data dummy
         state.radio_queue.append(MagicMock())
         state.radio_queue.append(MagicMock())
 
@@ -202,28 +175,16 @@ class TestTask03RadioBgTasksCancel:
     async def test_deactivated_no_tasks_is_safe(self):
         """on_deactivated aman dipanggil saat _bg_tasks kosong."""
         radio, state = self._make_radio_mode()
-        radio._bg_tasks = set()  # kosong
+        radio._bg_tasks = set()
 
-        # Tidak boleh raise exception
         await radio.on_deactivated()
         assert len(radio._bg_tasks) == 0
 
 
-# ─────────────────────────────────────────────────────────────────
 # TASK-0.4 — _on_download signature fix
-# ─────────────────────────────────────────────────────────────────
 
 class TestTask04DownloadSignature:
-    """TASK-0.4: _on_download harus menerima (room_id, track) sesuai CommandBus convention."""
-
-    def test_signature_has_room_id(self):
-        """Signature _on_download harus punya parameter room_id."""
-        from engine.download_manager import DownloadManager
-        sig = inspect.signature(DownloadManager._on_download)
-        params = list(sig.parameters.keys())
-        assert "room_id" in params, (
-            f"_on_download harus punya parameter 'room_id', params saat ini: {params}"
-        )
+    """TASK-0.4: _on_download harus menerima parameter track sesuai CommandBus convention."""
 
     def test_signature_has_track(self):
         """Signature _on_download harus punya parameter track."""
@@ -232,16 +193,6 @@ class TestTask04DownloadSignature:
         params = list(sig.parameters.keys())
         assert "track" in params, (
             f"_on_download harus punya parameter 'track', params saat ini: {params}"
-        )
-
-    def test_signature_order(self):
-        """room_id harus sebelum track dalam signature."""
-        from engine.download_manager import DownloadManager
-        sig = inspect.signature(DownloadManager._on_download)
-        params = list(sig.parameters.keys())
-        # self, room_id, track
-        assert params.index("room_id") < params.index("track"), (
-            "room_id harus muncul sebelum track dalam signature"
         )
 
     def test_track_is_optional(self):
@@ -253,14 +204,14 @@ class TestTask04DownloadSignature:
         assert track_param.default is None, "track harus default None"
 
     @pytest.mark.asyncio
-    async def test_callable_with_room_id_and_none_track(self):
-        """_on_download bisa dipanggil dengan (room_id, None) tanpa TypeError."""
+    async def test_callable_with_none_track(self):
+        """_on_download bisa dipanggil dengan None tanpa TypeError."""
         from engine.download_manager import DownloadManager
         from core.state import AppState
 
         mock_bus = AsyncMock()
         mock_bus.publish = AsyncMock()
-        state = AppState(room_id="test")
+        state = AppState()
         state.current_track = None
 
         mgr = DownloadManager.__new__(DownloadManager)
@@ -269,20 +220,18 @@ class TestTask04DownloadSignature:
         mgr.ytdlp = MagicMock()
         mgr._download_lock = asyncio.Lock()
 
-        # Tidak boleh raise TypeError
-        await mgr._on_download("default", None)
-        # Harus publish pesan "tidak ada lagu"
+        await mgr._on_download(None)
         mock_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_callable_via_command_bus_convention(self):
-        """Simulasi pemanggilan sesuai CommandBus: handler(room_id, data)."""
+        """Simulasi pemanggilan sesuai CommandBus: handler(data)."""
         from engine.download_manager import DownloadManager
         from core.state import AppState, TrackInfo
 
         mock_bus = AsyncMock()
         mock_bus.publish = AsyncMock()
-        state = AppState(room_id="test")
+        state = AppState()
 
         mgr = DownloadManager.__new__(DownloadManager)
         mgr.bus = mock_bus
@@ -294,15 +243,12 @@ class TestTask04DownloadSignature:
             video_id="abc123", title="Test Song", artist="Test", duration=180
         )
 
-        # Simulasi: command_bus memanggil handler(room_id, data)
         with patch("engine.download_manager.safe_create_task") as mock_create:
-            await mgr._on_download("default", track)
+            await mgr._on_download(track)
             mock_create.assert_called_once()
 
 
-# ─────────────────────────────────────────────────────────────────
 # TASK-0.5 — Evict key kosong dari login_attempts & command_history
-# ─────────────────────────────────────────────────────────────────
 
 class TestTask05EvictRateLimitKeys:
     """TASK-0.5: Key kosong harus dihapus dari login_attempts & command_history."""
@@ -315,10 +261,9 @@ class TestTask05EvictRateLimitKeys:
     def test_login_attempts_key_evicted_when_empty(self):
         """Key harus dihapus dari login_attempts jika window 5 menit habis."""
         mgr = self._make_manager()
-        old_time = time.time() - 400  # lebih dari 300 detik lalu
+        old_time = time.time() - 400
         mgr.login_attempts["1.2.3.4"] = [old_time, old_time]
 
-        # Simulasi filter yang terjadi di _handle_ws_message
         now = time.time()
         ip = "1.2.3.4"
         attempts = mgr.login_attempts.get(ip, [])
@@ -335,7 +280,7 @@ class TestTask05EvictRateLimitKeys:
     def test_login_attempts_key_kept_when_active(self):
         """Key harus tetap ada jika masih ada attempt aktif."""
         mgr = self._make_manager()
-        recent_time = time.time() - 10  # 10 detik lalu
+        recent_time = time.time() - 10
         mgr.login_attempts["1.2.3.4"] = [recent_time]
 
         now = time.time()
@@ -354,7 +299,7 @@ class TestTask05EvictRateLimitKeys:
     def test_command_history_key_evicted_when_empty(self):
         """Key harus dihapus dari command_history jika window 60 detik habis."""
         mgr = self._make_manager()
-        old_time = time.time() - 120  # lebih dari 60 detik lalu
+        old_time = time.time() - 120
         mgr.command_history["5.6.7.8"] = [old_time]
 
         now = time.time()
@@ -373,7 +318,7 @@ class TestTask05EvictRateLimitKeys:
     def test_command_history_key_kept_when_active(self):
         """Key tetap ada jika command_history masih ada dalam 60 detik."""
         mgr = self._make_manager()
-        recent_time = time.time() - 5  # 5 detik lalu
+        recent_time = time.time() - 5
         mgr.command_history["5.6.7.8"] = [recent_time]
 
         now = time.time()

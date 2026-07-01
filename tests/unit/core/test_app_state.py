@@ -17,7 +17,6 @@ class TestAppStateDurationField:
     def test_appstate_has_duration_field(self):
         """AppState().duration harus bisa diakses tanpa AttributeError."""
         state = AppState()
-        # Tidak boleh raise AttributeError
         assert hasattr(state, "duration"), "AppState harus memiliki field 'duration'"
         assert state.duration == 0.0
 

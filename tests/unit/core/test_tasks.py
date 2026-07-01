@@ -43,7 +43,6 @@ class TestSafeCreateTask:
         task = safe_create_task(dummy_coro(), name="test_task")
         assert isinstance(task, asyncio.Task)
         result = await task
-        # result is None because _wrap_coro doesn't return the value
         # but the task should complete without error
 
     async def test_safe_create_task_catches_errors(self, caplog):
@@ -53,10 +52,9 @@ class TestSafeCreateTask:
 
         with caplog.at_level(logging.ERROR):
             task = safe_create_task(failing_coro(), name="failing_test")
-            await task  # Should not raise
+            await task
 
-        assert any("test error" in record.message for record in caplog.records), \
-            "Error harus muncul di log"
+        assert any("test error" in record.message for record in caplog.records),            "Error harus muncul di log"
 
     async def test_safe_create_task_on_error_callback(self):
         """on_error callback harus dipanggil saat task crash."""
@@ -98,6 +96,7 @@ class TestSafeCreateTask:
 
         with caplog.at_level(logging.ERROR):
             task = safe_create_task(slow_coro(), name="cancel_test")
+            await asyncio.sleep(0) # Let the coroutine start before cancelling
             task.cancel()
             try:
                 await task
@@ -123,10 +122,9 @@ class TestNoBareCreateTask:
         """Tidak boleh ada asyncio.create_task() langsung di codebase
         kecuali di task_utils.py sendiri."""
         project_root = os.path.dirname(os.path.dirname(__file__))
-        
+
         python_files = []
         for dirpath, dirnames, filenames in os.walk(project_root):
-            # Skip __pycache__, .git, tests, docs
             dirnames[:] = [d for d in dirnames if d not in ("__pycache__", ".git", ".pytest_cache", "docs")]
             for f in filenames:
                 if f.endswith(".py"):
@@ -137,13 +135,11 @@ class TestNoBareCreateTask:
             # Skip task_utils.py itself
             if os.path.basename(filepath) == "task_utils.py":
                 continue
-            # Skip test files
             if "tests" in filepath.split(os.sep):
                 continue
-            # Skip conftest
             if "conftest" in filepath:
                 continue
-                
+
             with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 for line_no, line in enumerate(f, 1):
                     stripped = line.lstrip()

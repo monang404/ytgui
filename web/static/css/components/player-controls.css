@@ -17,7 +17,7 @@
   height: 6px;   /* C-06: dari 3px → 6px, touch target lebih besar */
   cursor: pointer;
   accent-color: var(--accent);
-  border-radius: 3px;
+  border-radius: var(--s1);
   outline: none;
   background: var(--fm-border);
 }
@@ -62,25 +62,16 @@
 }
 .btn-prev:hover, .btn-next:hover { color: var(--text-1); }
 
-.btn-shuffle, .btn-repeat {
-  background: none; border: none;
-  color: var(--text-3); font-size: 18px;
-  cursor: pointer; width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--r-sm);
-  transition: color var(--dur-fast) var(--ease);
-}
-.btn-shuffle:hover, .btn-repeat:hover { color: var(--text-2); }
-.btn-shuffle.active, .btn-repeat.active { color: var(--accent); }
+
 
 .btn-play {
   background: var(--accent); border: none;
-  color: #090A0D;
+  color: var(--text-1);
   width: 56px; height: 56px; border-radius: 50%;
   font-size: 20px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(230, 168, 34, 0.3);
+  box-shadow: var(--shadow-sm);
   transition: background var(--dur-fast) var(--ease),
               transform var(--dur-fast) var(--ease);
 }
@@ -89,7 +80,7 @@
 
 .pb-sec button, .main-ctrl button:not(.btn-play) {
   background: none; border: none;
-  color: #fff; font-size: 18px;
+  color: var(--text-1); font-size: 18px;
   cursor: pointer; width: 44px; height: 44px;
   flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;

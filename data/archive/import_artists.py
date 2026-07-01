@@ -17,7 +17,6 @@ Schema:
 import sqlite3, json, argparse, os, sys
 from pathlib import Path
 
-# ── CLI args ──────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser()
 parser.add_argument("--db",    default="ytgui.db",   help="Path ke SQLite DB")
 parser.add_argument("--json",  default="artists.json", help="Path ke artists.json")
@@ -28,13 +27,11 @@ json_path = Path(args.json)
 if not json_path.exists():
     sys.exit(f"[ERROR] File tidak ditemukan: {json_path}")
 
-# ── Connect ───────────────────────────────────────────────────────────────────
 con = sqlite3.connect(args.db)
 cur = con.cursor()
-cur.execute("PRAGMA journal_mode=WAL")   # lebih cepat untuk read-heavy workload
+cur.execute("PRAGMA journal_mode=WAL")
 cur.execute("PRAGMA foreign_keys=ON")
 
-# ── Schema ────────────────────────────────────────────────────────────────────
 if args.reset:
     cur.executescript("""
         DROP TABLE IF EXISTS artist_seeds;
@@ -71,7 +68,6 @@ cur.executescript("""
     CREATE INDEX IF NOT EXISTS idx_seeds_artist     ON artist_seeds(artist_id);
 """)
 
-# ── Import ────────────────────────────────────────────────────────────────────
 data = json.loads(json_path.read_text(encoding="utf-8"))
 artists = data["artists"]
 
@@ -79,7 +75,6 @@ inserted = 0
 skipped  = 0
 
 for a in artists:
-    # Upsert artist (skip kalau sudah ada)
     existing = cur.execute("SELECT id FROM artists WHERE id=?", (a["id"],)).fetchone()
     if existing and not args.reset:
         skipped += 1
@@ -90,13 +85,11 @@ for a in artists:
         VALUES (?, ?, ?, ?)
     """, (a["id"], a["nama"], a["kategori"], a["tahun_aktif"]))
 
-    # Genres
     cur.execute("DELETE FROM artist_genres WHERE artist_id=?", (a["id"],))
     for genre in a["genre"]:
         cur.execute("INSERT OR IGNORE INTO artist_genres (artist_id, genre) VALUES (?,?)",
                     (a["id"], genre))
 
-    # Seed songs
     cur.execute("DELETE FROM artist_seeds WHERE artist_id=?", (a["id"],))
     for urutan, judul in enumerate(a["lagu_populer"], 1):
         cur.execute("INSERT INTO artist_seeds (artist_id, judul, urutan) VALUES (?,?,?)",

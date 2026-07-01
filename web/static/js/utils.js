@@ -1,8 +1,8 @@
-function formatTime(secs) {
-    if (!secs || secs < 0) return "00:00";
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+function formatTime(seconds) {
+    if (!seconds || seconds < 0) return "00:00";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return String(minutes).padStart(2, "0") + ":" + String(remainingSeconds).padStart(2, "0");
 }
 
 window.safeStorage = {
@@ -62,21 +62,23 @@ window.getCoverArt = async function(track) {
         try {
             if (cachedStr.startsWith("{")) {
                 const cached = JSON.parse(cachedStr);
-                // 7 days TTL
                 if (Date.now() - cached.ts < 7 * 24 * 60 * 60 * 1000) {
                     return cached.url;
                 }
             } else {
-                // legacy format without TTL
                 return cachedStr;
             }
         } catch(e) {}
     }
     
-    const ytFallback = `https://i.ytimg.com/vi/${track.video_id}/hqdefault.jpg`;
+    const ytFallback = `https://i.ytimg.com/vi/${track.video_id}/mqdefault.jpg`;
     
     if (!track.title || !track.artist) {
-        return track.thumbnail || ytFallback;
+        let fallback = track.thumbnail || ytFallback;
+        if (typeof fallback === "string") {
+            fallback = fallback.replace("hqdefault.jpg", "mqdefault.jpg").replace("sddefault.jpg", "mqdefault.jpg");
+        }
+        return fallback;
     }
     
     const saveCache = (url) => {
@@ -87,10 +89,10 @@ window.getCoverArt = async function(track) {
     try {
         const cleanTitle = window.cleanTrackTitle(track.title);
         const query = encodeURIComponent(track.artist + " " + cleanTitle);
-        const res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
-        if (!res.ok) throw new Error("iTunes API failed");
+        const response = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
+        if (!response.ok) throw new Error("iTunes API failed");
         
-        const data = await res.json();
+        const data = await response.json();
         if (data.results && data.results.length > 0) {
             let artworkUrl = data.results[0].artworkUrl100;
             if (artworkUrl) {
@@ -105,39 +107,55 @@ window.getCoverArt = async function(track) {
     return saveCache(ytFallback);
 };
 
+let _lazyCoverObserver = null;
+
 window.loadLazyCovers = function() {
-    const images = document.querySelectorAll('img.lazy-cover:not(.loaded)');
-    images.forEach(async (img) => {
-        img.classList.add('loaded');
-        const vid = img.getAttribute('data-vid');
-        const title = img.getAttribute('data-title');
-        const artist = img.getAttribute('data-artist');
-        const defaultThumb = img.getAttribute('data-thumb');
-        
-        if (!vid) return;
-        
-        const track = { video_id: vid, title: title, artist: artist, thumbnail: defaultThumb };
-        const coverUrl = await window.getCoverArt(track);
-        if (coverUrl) {
-            img.src = coverUrl;
-        }
+    if (!_lazyCoverObserver) {
+        _lazyCoverObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    observer.unobserve(img);
+                    img.classList.add('loaded');
+                    const videoId = img.getAttribute('data-vid');
+                    const title = img.getAttribute('data-title');
+                    const artist = img.getAttribute('data-artist');
+                    const defaultThumb = img.getAttribute('data-thumb');
+                    
+                    if (!videoId) return;
+                    
+                    const track = { video_id: videoId, title: title, artist: artist, thumbnail: defaultThumb };
+                    window.getCoverArt(track).then(coverUrl => {
+                        if (coverUrl) {
+                            img.src = coverUrl;
+                        }
+                    });
+                }
+            });
+        }, { rootMargin: '200px' });
+    }
+
+    const images = document.querySelectorAll('img.lazy-cover:not(.observed)');
+    images.forEach((img) => {
+        img.classList.add('observed');
+        _lazyCoverObserver.observe(img);
     });
 };
 
-window.extractDominantColor = function(imgEl, callback) {
-    if (!imgEl.complete || imgEl.naturalWidth === 0) {
-        imgEl.addEventListener('load', () => window.extractDominantColor(imgEl, callback), { once: true });
+window.extractDominantColor = function(imageElement, callback) {
+    if (!imageElement.complete || imageElement.naturalWidth === 0) {
+        imageElement.addEventListener('load', () => window.extractDominantColor(imageElement, callback), { once: true });
         return;
     }
     
     try {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const canvasContext = canvas.getContext('2d', { willReadFrequently: true });
         canvas.width = 50;
         canvas.height = 50;
-        ctx.drawImage(imgEl, 0, 0, 50, 50);
+        canvasContext.drawImage(imageElement, 0, 0, 50, 50);
         
-        const data = ctx.getImageData(0, 0, 50, 50).data;
+        const data = canvasContext.getImageData(0, 0, 50, 50).data;
         let bestR = 0, bestG = 0, bestB = 0;
         let maxScore = -1;
         
@@ -146,7 +164,6 @@ window.extractDominantColor = function(imgEl, callback) {
             let max = Math.max(r, g, b), min = Math.min(r, g, b);
             let l = (max + min) / 2;
             
-            // Skip colors that are too dark or too bright
             if (l < 20 || l > 240) continue;
             
             let s = 0;
@@ -161,7 +178,6 @@ window.extractDominantColor = function(imgEl, callback) {
             }
         }
         
-        // Fallback to average if no saturated pixel found (e.g. grayscale or pure black/white image)
         if (maxScore === -1) {
             let r = 0, g = 0, b = 0, count = 0;
             for (let i = 0; i < data.length; i += 16) {

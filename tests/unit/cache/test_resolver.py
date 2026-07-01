@@ -29,8 +29,6 @@ class TestTTLConstantConsistency:
         assert "STREAM_URL_TTL_SEC" in source, (
             "resolver.py harus menggunakan STREAM_URL_TTL_SEC dari config, bukan magic number"
         )
-        # Pastikan tidak ada magic number 7200 atau 21600 langsung
-        # (kecuali dalam komentar)
         lines = source.split("\n")
         for line in lines:
             stripped = line.lstrip()
@@ -51,7 +49,6 @@ class TestTTLConstantConsistency:
         assert "STREAM_URL_TTL_SEC" in source, (
             "server.py harus menggunakan STREAM_URL_TTL_SEC dari config, bukan magic number"
         )
-        # Pastikan magic number 7200 tidak ada dalam kode (selain komentar)
         lines = source.split("\n")
         for line in lines:
             stripped = line.lstrip()

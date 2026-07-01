@@ -16,7 +16,7 @@ class DiscoverService:
         """Mengambil n lagu yang terakhir diputar dari DB."""
         if not getattr(self.db, '_conn', None):
             return []
-            
+
         tracks = []
         try:
             async with self.db._conn.execute(
@@ -43,7 +43,7 @@ class DiscoverService:
         """Mengambil n lagu dengan play_count tertinggi atau eksplisit difavoritkan dari DB."""
         if not getattr(self.db, '_conn', None):
             return []
-            
+
         tracks = []
         try:
             async with self.db._conn.execute(
@@ -70,7 +70,7 @@ class DiscoverService:
         """Mengambil n lagu yang sudah ter-cache (local_path is not null)."""
         if not getattr(self.db, '_conn', None):
             return []
-            
+
         tracks = []
         try:
             async with self.db._conn.execute(
@@ -97,7 +97,7 @@ class DiscoverService:
         """Mengambil n artis acak dari tabel artists beserta click_count."""
         if not getattr(self.db, '_conn', None):
             return []
-            
+
         artists = []
         try:
             async with self.db._conn.execute(
@@ -113,7 +113,7 @@ class DiscoverService:
         """Mengambil n genre acak dari tabel genres beserta click_count."""
         if not getattr(self.db, '_conn', None):
             return []
-            
+
         genres = []
         try:
             async with self.db._conn.execute(

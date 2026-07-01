@@ -32,7 +32,6 @@ class TestLyricsGenerationCounter:
         assert "_current_generation" in source, (
             "fetch() harus menggunakan _current_generation untuk generation counter"
         )
-        # Harus ada increment
         assert "+= 1" in source or "self._current_generation += 1" in source, (
             "fetch() harus meng-increment _current_generation"
         )
@@ -41,7 +40,6 @@ class TestLyricsGenerationCounter:
         """Hasil fetch harus dicek dengan generation counter sebelum disimpan."""
         import inspect
         source = inspect.getsource(LyricsFetcher.fetch)
-        # Harus ada pengecekan `self._current_generation == gen` atau sejenisnya
         assert "gen" in source and "_current_generation" in source, (
             "fetch() harus mengecek apakah generation masih current sebelum menyimpan hasil"
         )

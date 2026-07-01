@@ -1,5 +1,6 @@
 let _dragSrcIndex = null;
 let _dragEl = null;
+window.isDraggingQueue = false;
 
 function initQueueDragDrop() {
     const list = dom.queueList;
@@ -22,6 +23,7 @@ function _onDragStart(e) {
     e.preventDefault();
     _dragSrcIndex = parseInt(item.dataset.index);
     _dragEl = item;
+    window.isDraggingQueue = true;
     item.classList.add('dragging');
     item.setPointerCapture(e.pointerId);
 }
@@ -66,6 +68,7 @@ function _cleanupDrag() {
     document.querySelectorAll('.queue-item.drag-over').forEach(el => el.classList.remove('drag-over'));
     _dragSrcIndex = null;
     _dragEl = null;
+    window.isDraggingQueue = false;
 }
 
 function initQueueEvents() {

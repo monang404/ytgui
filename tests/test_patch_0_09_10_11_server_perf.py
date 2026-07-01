@@ -24,31 +24,26 @@ class TestScriptDeferAndCacheControl:
         if not index_path.exists():
             pytest.skip("index.html not found")
         content = index_path.read_text(encoding="utf-8")
-        # Cari <script ... defer ... src="..."> atau <script defer src="...">
         assert re.search(r'<script\b[^>]*\bdefer\b', content), (
             "index.html harus menggunakan 'defer' pada script tag untuk menghindari blocking render"
         )
 
     def test_stream_proxy_cache_control(self):
         """handle_stream harus mengembalikan Cache-Control: private, max-age=3600."""
-        from web import server
-        source = inspect.getsource(server)
-        # Cek bahwa "no-store" tidak ada di stream handling
-        assert "no-store" not in source.lower() or "no-store" in source.lower().split("# ")[0] == False, \
-            "Stream proxy TIDAK BOLEH menggunakan Cache-Control: no-store"
-        # Cek bahwa private, max-age=3600 ada
+        from server.handlers import http
+        source = inspect.getsource(http.serve_stream)
+        assert "no-store" not in source.lower() or "no-store" in source.lower().split("# ")[0] == False,            "Stream proxy TIDAK BOLEH menggunakan Cache-Control: no-store"
         assert "private, max-age=3600" in source, (
             "Stream endpoint harus mengembalikan 'Cache-Control: private, max-age=3600'"
         )
 
     def test_chunk_size_is_16kb(self):
         """Chunk size stream proxy harus 16384 (16KB), bukan 65536 (64KB)."""
-        from web import server
-        source = inspect.getsource(server)
+        from server.handlers import http
+        source = inspect.getsource(http.serve_stream)
         assert "16384" in source, (
             "Stream proxy harus menggunakan chunk size 16384 bytes (16KB)"
         )
-        # Pastikan 65536 tidak ada
         lines = source.split("\n")
         for line in lines:
             stripped = line.lstrip()

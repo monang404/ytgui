@@ -7,9 +7,9 @@
   max-width: 480px;
   margin: 0 auto;
   background: var(--bg-surface);
-  border-radius: 20px 20px 0 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
   border-top: 1px solid var(--bg-elevated);
-  padding: 16px 20px 24px;
+  padding: var(--s4) var(--s5) var(--s6);
   transform: translateY(100%);
   transition: transform var(--fm-transition-normal);
   z-index: 200;
@@ -39,8 +39,8 @@
   width: 36px;
   height: 3px;
   background: var(--bg-elevated);
-  border-radius: 2px;
-  margin: 0 auto 16px;
+  border-radius: var(--r-full);
+  margin: 0 auto var(--s4);
 }
 
 .ss-title {
@@ -91,9 +91,10 @@
 .ss-action-btn,
 .ss-view-btn {
   background: var(--bg-elevated);
+  background: var(--bg-elevated);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--fm-radius-sm);
-  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  padding: var(--s1) var(--s3);
   color: var(--fm-text-4);
   font-family: var(--fm-font);
   font-size: 11px;
@@ -128,13 +129,13 @@
 .ss-dl-bar {
   height: 4px;
   background: var(--bg-elevated);
-  border-radius: 2px;
+  border-radius: var(--r-full);
 }
 
 .ss-dl-fill {
   height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--fm-blue));
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
   transition: width 0.4s ease;
 }
 

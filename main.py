@@ -31,16 +31,14 @@ from plugins.lyrics import LyricsFetcher
 
 async def main():
     state = AppState()
-    
-    # 1. Initialize DB
+
     print("  [1/5] Membuka database perpustakaan...")
     db = Database()
     await db.init()
-    
-    # 2. Initialize Core Engine
+
     print("  [2/5] Menginisialisasi YT-DLP Engine...")
     ytdlp = YtDlpClient()
-    
+
     print("  [3/5] Menghubungkan ke audio player (MPV)...")
     mpv = MpvController()
     try:
@@ -54,11 +52,9 @@ async def main():
         )
         state.status = PlayerStatus.ERROR
         mpv.is_available = False
-    
-    # 3. Shared HTTP session
+
     http_session = aiohttp.ClientSession()
-    
-    # 4. Global Services Initialization
+
     from engine.queue_manager import QueueMode
     from engine.radio_engine import RadioMode
     from engine.volume_service import VolumeService
@@ -66,31 +62,29 @@ async def main():
     from cache.resolver import CacheResolver
 
     resolver = CacheResolver(db, ytdlp)
-    
+
     sponsorblock = SponsorBlockHandler(
         mpv, state=state, session=http_session, event_bus=bus
     )
     lyrics_fetcher = LyricsFetcher(
         state, session=http_session, event_bus=bus
     )
-    
+
     queue_mode = QueueMode()
     radio_mode = RadioMode(ytdlp, state, db=db)
-    
+
     volume_service = VolumeService(bus, mpv, state)
     playback_controller = PlaybackController(
         bus, state, mpv, resolver,
         sponsorblock, lyrics_fetcher, queue_mode, radio_mode
     )
-    
+
     download_manager = DownloadManager(bus, state, ytdlp)
     command_router = CommandRouter(playback_controller, volume_service)
-    
-    # Termux now-playing notification (no-op outside Termux)
+
     nowplaying = TermuxNowPlaying(bus, state)
     await nowplaying.start()
 
-    # Connectivity Check
     async def check_connectivity():
         while True:
             try:
@@ -104,13 +98,23 @@ async def main():
             except Exception as e:
                 structlog.get_logger(__name__).warning(f"Connectivity check unexpected error: {e}")
                 state.is_online = False
-                
+
             await asyncio.sleep(60)
 
     connectivity_task = safe_create_task(check_connectivity(), name="connectivity_checker")
     tasks = [connectivity_task]
-    
-    # 7.5 MPV auto-reconnect checker
+
+    async def db_cleanup():
+        while True:
+            await asyncio.sleep(86400)
+            try:
+                await db.evict_stale_tracks()
+                await db.cleanup_sessions()
+            except Exception as e:
+                structlog.get_logger(__name__).error(f"DB cleanup failed: {e}")
+
+    tasks.append(safe_create_task(db_cleanup(), name="db_cleanup"))
+
     async def mpv_reconnect_checker():
         while True:
             await asyncio.sleep(5)
@@ -136,16 +140,15 @@ async def main():
                     structlog.get_logger(__name__).error(f"MPV reconnect failed: {e}")
 
     tasks.append(safe_create_task(mpv_reconnect_checker(), name="mpv_reconnect_checker"))
-    
-    # 8. Start Web Server
+
     try:
         from server.app import create_app, run_server
-        
+
         app = create_app(playback_controller, ytdlp, db)
-        
+
         host = WEB_HOST
         port = WEB_PORT
-        
+
         import socket
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -154,23 +157,22 @@ async def main():
             s.close()
         except Exception:
             display_host = host if host != "0.0.0.0" else "127.0.0.1"
-            
+
         url_client = f"http://{display_host}:{port}"
         url_admin = f"http://{display_host}:{port}/admin"
         print(f"=====================================================")
         print(f"|   YTGUI Web Server                                |")
         print(f"|   Client : {url_client:<37} |")
         print(f"|   Admin  : {url_admin:<37} |")
-        
-        from config import ADMIN_USERNAME, ADMIN_PASSWORD, IS_PASSWORD_AUTO_GENERATED
+
+        from config import ADMIN_USERNAME, IS_PASSWORD_AUTO_GENERATED
         if IS_PASSWORD_AUTO_GENERATED:
             print(f"|                                                   |")
             print(f"|   Kredensial Mode Admin:                          |")
             print(f"|   User: {ADMIN_USERNAME:<40} |")
-            print(f"|   Pass: {ADMIN_PASSWORD:<40} |")
-            print(f"|   (Tersimpan: cache/admin_password.txt)           |")
+            print(f"|   Pass: (lihat cache/admin_password.txt)          |")
         print(f"=====================================================")
-        
+
         await run_server(app, host=host, port=port)
 
     except asyncio.CancelledError:
@@ -185,20 +187,18 @@ async def main():
                     print(f"\n[FATAL ERROR] App crashed due to task failure: {e}")
                     traceback.print_exception(type(e), e, e.__traceback__)
 
-        # Cancel remaining tasks
         for t in tasks:
             t.cancel()
-        
-        # Cleanup resources
+
         await nowplaying.cleanup()
         try: await mpv.close()
-        except: pass
+        except Exception: pass
         lyrics_fetcher.cleanup()
         sponsorblock.cleanup()
         ytdlp.cancel_download()
         await http_session.close()
         await db.close()
-        
+
         structlog.get_logger(__name__).info("Shutdown complete.")
 
 if __name__ == "__main__":

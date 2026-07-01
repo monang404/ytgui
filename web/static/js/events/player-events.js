@@ -10,9 +10,6 @@ function initPlayerEvents() {
     dom.btnPlay.addEventListener("click", () => {
         if (store.userRole === "admin") {
             // PATCH-AUDIO-UNLOCK-RACE-01: simpan intent SEBELUM store.status di-flip, supaya
-            // syncBrowserAudio() di bawah tahu persis apa yang user maksud
-            // (play/pause), bukan menebak ulang dari store.status yang baru
-            // saja diubah oleh baris ini sendiri.
             const wantsPlay = store.status !== "PLAYING";
             store.status = wantsPlay ? "PLAYING" : "PAUSED";
             window.lastToggleTime = Date.now();
@@ -63,7 +60,7 @@ function initPlayerEvents() {
             if (dom.pbVolLabel) dom.pbVolLabel.textContent = store.volume + "%";
             if (store.audio_output === "browser" && typeof getOrInitAudio === "function") {
                 const audio = getOrInitAudio();
-                if (audio) audio.volume = Math.max(0, Math.min(1, store.volume / 100));
+                if (audio) audio.volume = Math.max(0, Math.min(1, store.volume / 150));
             }
         });
         dom.volSlider.addEventListener("change", () => {
@@ -172,7 +169,6 @@ function initPlayerEvents() {
         });
     }
 
-    // SEARCH EVENTS
     const searchClearBtn = document.getElementById("search-clear-btn");
     if (searchClearBtn) {
         searchClearBtn.addEventListener("click", () => {
@@ -285,9 +281,7 @@ function initPlayerEvents() {
         });
     }
 
-    // EVENT DELEGATION UNTUK DISCOVER / SEED / SEARCH
     document.addEventListener("click", (e) => {
-        // 1. Clicks on 3-dots button (.sr-more-btn)
         const moreBtn = e.target.closest(".sr-more-btn");
         if (moreBtn) {
             const item = moreBtn.closest(".sr-item");
@@ -303,7 +297,6 @@ function initPlayerEvents() {
             return;
         }
 
-        // 2. Clicks on the sr-item row itself -> Play track
         const srItem = e.target.closest(".sr-item");
         if (srItem) {
             const trackStr = srItem.dataset.trackStr || srItem.dataset.searchTrackStr;
@@ -318,7 +311,6 @@ function initPlayerEvents() {
             return;
         }
 
-        // 3. Clicks on fav-card or disc-card
         const card = e.target.closest(".disc-card, .fav-card, .search-result-item");
         if (card && card.dataset.vid) {
             let track = null;
@@ -326,7 +318,6 @@ function initPlayerEvents() {
                 track = JSON.parse(card.dataset.searchTrackStr);
             } else {
                 const vid = card.dataset.vid;
-                // find in store lists
                 const lists = [
                     store.discover_recent || [],
                     store.discover_favorites || [],
@@ -343,45 +334,52 @@ function initPlayerEvents() {
         }
     });
 
-    // GLOBAL KEYDOWN SHORTCUTS
     document.addEventListener("keydown", (e) => {
-        if (store.userRole !== "admin") return;
-        if (document.activeElement === dom.searchInput) {
-            if (e.key === "Escape") dom.searchInput.blur();
+        const active = document.activeElement;
+        if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)) {
+            if (e.key === "Escape") active.blur();
             return;
         }
 
         switch (e.key) {
             case " ":
+                if (store.userRole !== "admin") return;
                 e.preventDefault();
                 wsSend("toggle_pause");
                 break;
             case "n":
             case "N":
+                if (store.userRole !== "admin") return;
                 wsSend("next");
                 break;
             case "b":
             case "B":
+                if (store.userRole !== "admin") return;
                 wsSend("prev");
                 break;
             case "s":
             case "S":
+                if (store.userRole !== "admin") return;
                 wsSend("stop");
                 break;
             case "ArrowUp":
+                if (store.userRole !== "admin") return;
                 e.preventDefault();
                 wsSend("volume_up");
                 break;
             case "ArrowDown":
+                if (store.userRole !== "admin") return;
                 e.preventDefault();
                 wsSend("volume_down");
                 break;
             case "m":
             case "M":
+                if (store.userRole !== "admin") return;
                 wsSend("download");
                 break;
             case "r":
             case "R":
+                if (store.userRole !== "admin") return;
                 if (store.status === "LOADING") break;
                 const newMode = store.playback_mode === "RADIO" ? "QUEUE" : "RADIO";
                 wsSend("set_mode", { mode: newMode });
@@ -418,6 +416,9 @@ function initPlayerEvents() {
             case "Escape":
                 if (typeof hideActionModal === "function") hideActionModal();
                 if (dom.helpSheet) dom.helpSheet.classList.remove("open");
+                if (dom.settingsSheet) dom.settingsSheet.classList.remove("open");
+                if (dom.lyricsSheet) dom.lyricsSheet.classList.remove("open");
+                if (typeof closeMainOverlay === "function") closeMainOverlay();
                 break;
         }
     });

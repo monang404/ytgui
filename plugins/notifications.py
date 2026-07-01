@@ -63,9 +63,6 @@ class TermuxNowPlaying:
                 self._fifo_path.unlink()
             os.mkfifo(str(self._fifo_path))
 
-            # Write one tiny standalone script per action — the notification
-            # action string must be a single bare path, no quotes/redirects,
-            # since the action runner is not guaranteed to use real shell parsing.
             for token in ("prev", "toggle", "next"):
                 script_path = _SOCK_DIR / f"np_{token}.sh"
                 script_path.write_text(
@@ -139,8 +136,7 @@ class TermuxNowPlaying:
 
     async def cleanup(self):
         self._stop.set()
-        
-        # Unblock the FIFO reader thread
+
         if self._available and hasattr(self, "_fifo_path"):
             try:
                 import os
@@ -149,7 +145,7 @@ class TermuxNowPlaying:
                 os.close(fd)
             except OSError:
                 pass
-                
+
         if self._available:
             try:
                 proc = await asyncio.create_subprocess_exec(

@@ -1,11 +1,10 @@
 function renderQueue() {
+    if (window.isDraggingQueue) return;
     document.body.dataset.queueEmpty = (store.queue.length === 0) ? "true" : "false";
     const isRadio = store.playback_mode === "RADIO";
     
-    // Render the manual queue in Queue Tab
     renderList(dom.queueList, store.queue, false, store.playback_mode === "QUEUE");
     
-    // Render the radio queue in Radio Tab
     if (dom.radioQueueList) {
         renderList(dom.radioQueueList, store.radio_queue, true, isRadio);
     }
@@ -106,7 +105,6 @@ function updateQueueItem(div, track, index, isCurrent, isRadio) {
         
         const img = div.querySelector(".lazy-cover");
         if (img) {
-            // Only update datasets and reset cover if track changed to avoid disappear/flicker bug
             if (img.dataset.vid !== (track.video_id || '')) {
                 img.dataset.vid = track.video_id || '';
                 img.dataset.title = track.title || '';

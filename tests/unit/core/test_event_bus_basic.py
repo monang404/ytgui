@@ -32,17 +32,14 @@ async def test_event_bus_weak_reference(bus):
 
     sub = Subscriber()
     bus.subscribe(TestEvent, sub.handle)
-    
-    # Harus dipanggil jika object masih hidup
+
     await bus.publish(TestEvent(data="data1"))
     assert sub.called
 
-    # Hapus object (simulasi garbage collection)
     del sub
     import gc
     gc.collect()
 
-    # Publish lagi, tidak boleh ada error meskipun object sudah mati
     await bus.publish(TestEvent(data="data2"))
 
 @pytest.mark.asyncio
@@ -50,7 +47,7 @@ async def test_event_bus_unsubscribe(bus):
     mock_handler = Mock()
     bus.subscribe(TestEvent, mock_handler)
     bus.unsubscribe(TestEvent, mock_handler)
-    
+
     await bus.publish(TestEvent(data="data"))
     mock_handler.assert_not_called()
 
@@ -64,7 +61,6 @@ async def test_event_bus_error_isolation(bus):
     bus.subscribe(TestEvent, failing_handler)
     bus.subscribe(TestEvent, success_handler)
 
-    # Meskipun failing_handler error, success_handler harus tetap dipanggil
     event = TestEvent(data="data")
     await bus.publish(event)
     success_handler.assert_called_once_with(event)

@@ -12,8 +12,8 @@ from server.services.broadcast_service import BroadcastService
 logger = structlog.get_logger(__name__)
 
 def setup_event_listeners(
-    playback_controller, 
-    prefetch_service: StreamPrefetchService, 
+    playback_controller,
+    prefetch_service: StreamPrefetchService,
     broadcast_service: BroadcastService
 ):
     last_progress = 0.0
@@ -27,7 +27,7 @@ def setup_event_listeners(
             _next = state.radio_queue[0]
         if _next and _next.video_id:
             safe_create_task(prefetch_service.prefetch_stream_url(_next.video_id), name=f"prefetch_next_{_next.video_id}")
-            
+
         await broadcast_service.broadcast_state(state)
 
     async def _on_track_progress(event: TrackProgressEvent):
@@ -49,7 +49,6 @@ def setup_event_listeners(
         await broadcast_service.broadcast_state(playback_controller.state)
         if event.track:
             safe_create_task(playback_controller.resolver.db.upsert_track(event.track, local_path=event.track.local_path), name="upsert_dl_track")
-            # Broadcast updated discover data to refresh cached list
             from services.discover_service import DiscoverService
             from server.serializers import track_to_dict
             ds = DiscoverService(playback_controller.resolver.db)

@@ -179,7 +179,7 @@
                     <div class="pb-ctrl">
                         <div class="vol-grp">
                             <i class="ti ti-volume" aria-hidden="true"></i>
-                            <input type="range" min="0" max="100" value="80" class="vol-slider" id="vol-slider">
+                            <input type="range" min="0" max="150" value="80" class="vol-slider" id="vol-slider">
                             <span class="vol-label" id="pb-vol-label">80%</span>
                         </div>
 
@@ -190,8 +190,7 @@
                         </div>
 
                         <div class="main-ctrl">
-                            <button class="btn-shuffle" aria-label="Shuffle" id="btn-shuffle"><i
-                                    class="ti ti-arrows-shuffle" aria-hidden="true"></i></button>
+                            
                             <button class="btn-prev" aria-label="Previous" id="btn-prev"><svg
                                     class="svg-filled-icon player-icon-svg" xmlns="http://www.w3.org/2000/svg"
                                     width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -212,8 +211,7 @@
                                         d="M20 4a1 1 0 0 1 .993 .883l.007 .117v14a1 1 0 0 1 -1.993 .117l-.007 -.117v-14a1 1 0 0 1 1 -1z" />
                                 </svg>
                             </button>
-                            <button class="btn-repeat" aria-label="Repeat" id="btn-repeat"><i class="ti ti-repeat"
-                                    aria-hidden="true"></i></button>
+                            
                         </div>
                     </div>
                 </div>
@@ -307,7 +305,7 @@
 
 
             <!-- Tab: Discover -->
-            <section id="tab-discover" class="tab-panel active">
+            <section id="tab-discover" class="tab-panel">
                 <!-- Header -->
                 <div class="discover-header">
                     <h1 class="discover-title">Discover</h1>
@@ -354,18 +352,18 @@
         </main>
 
         <!-- ═══ Navigation Bar ═══ -->
-        <nav class="navrow" id="nav-bar">
-            <button class="nav-btn" data-tab="home" id="nav-home">
+        <nav class="navrow" id="nav-bar" role="tablist">
+            <button class="nav-btn" data-tab="home" id="nav-home" role="tab" aria-selected="false">
                 <svg class="svg-filled-icon nav-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2l-10 9l1.5 1.5l1.5 -1.3v9.8h6v-6h4v6h6v-9.8l1.5 1.3l1.5 -1.5z" />
                 </svg>
                 <span>Home</span>
             </button>
-            <button class="nav-btn" data-tab="search" id="nav-search">
+            <button class="nav-btn" data-tab="search" id="nav-search" role="tab" aria-selected="false">
                 <i class="ti ti-search" aria-hidden="true"></i><span>Search</span>
             </button>
-            <button class="nav-btn" data-tab="radio" id="nav-radio">
+            <button class="nav-btn" data-tab="radio" id="nav-radio" role="tab" aria-selected="false">
                 <svg class="svg-filled-icon nav-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24" fill="currentColor">
                     <path
@@ -374,7 +372,7 @@
                 <span>Radio</span>
             </button>
 
-            <button class="nav-btn active" data-tab="discover" id="nav-discover">
+            <button class="nav-btn" data-tab="discover" id="nav-discover" role="tab" aria-selected="false">
                 <svg class="svg-filled-icon nav-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24" fill="currentColor">
                     <path
@@ -386,7 +384,7 @@
 
 
         <!-- ═══ Settings Sheet ═══ -->
-        <div class="settings-sheet" id="settings-sheet">
+        <div class="settings-sheet" id="settings-sheet" role="dialog" aria-modal="true" aria-label="Settings">
             <div class="ss-handle"></div>
             <div class="ss-title">Pengaturan & Menu</div>
 
@@ -504,7 +502,7 @@
         </div>
 
         <!-- ═══ Lyrics Sheet ═══ -->
-        <div class="settings-sheet" id="lyrics-sheet">
+        <div class="settings-sheet" id="lyrics-sheet" role="dialog" aria-modal="true" aria-label="Lyrics">
             <div class="ss-handle"></div>
             <div class="ss-title">
                 <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
@@ -528,7 +526,7 @@
         </div>
 
         <!-- ═══ Action Sheet ═══ -->
-        <div class="settings-sheet" id="action-sheet">
+        <div class="settings-sheet" id="action-sheet" role="dialog" aria-modal="true" aria-label="Track Actions">
             <div class="ss-handle"></div>
             <div class="ss-title" id="action-sheet-title">Title</div>
             <div class="ss-row" style="flex-direction: column; gap: 10px; border-bottom: none;">
@@ -547,7 +545,7 @@
         </div>
 
         <!-- ═══ Help Sheet ═══ -->
-        <div class="settings-sheet" id="help-sheet">
+        <div class="settings-sheet" id="help-sheet" role="dialog" aria-modal="true" aria-label="Help">
             <div class="ss-handle"></div>
             <div class="ss-title">Panduan Shortcut</div>
             <div style="max-height: 300px; overflow-y: auto; margin-bottom: 16px;">
@@ -619,39 +617,7 @@
     // sudah jalan benar tapi browser "tidak berubah". Jalankan SEKALI di
     // awal load, sebelum script lain: unregister semua SW yang nyangkut +
     // hapus semua Cache Storage punya origin ini, lalu kalau memang ada
-    // yang dihapus, force reload sekali biar fetch ulang semua asset
-    // langsung dari network (bukan dari SW yang baru mati).
-    (function () {
-        "use strict";
-        if (!('serviceWorker' in navigator)) return;
-        var didCleanup = false;
-
-        var unregisterAll = navigator.serviceWorker.getRegistrations()
-            .then(function (regs) {
-                if (!regs.length) return;
-                didCleanup = true;
-                return Promise.all(regs.map(function (r) { return r.unregister(); }));
-            })
-            .catch(function (e) { console.warn('[sw-kill] unregister failed:', e); });
-
-        var clearCaches = ('caches' in window)
-            ? caches.keys().then(function (keys) {
-                if (!keys.length) return;
-                didCleanup = true;
-                return Promise.all(keys.map(function (k) { return caches.delete(k); }));
-            }).catch(function (e) { console.warn('[sw-kill] cache clear failed:', e); })
-            : Promise.resolve();
-
-        Promise.all([unregisterAll, clearCaches]).then(function () {
-            if (didCleanup && !sessionStorage.getItem('sw_killswitch_reloaded')) {
-                console.log('[sw-kill] stale service worker / cache dibersihkan, reload sekali...');
-                sessionStorage.setItem('sw_killswitch_reloaded', '1');
-                location.reload();
-            } else if (didCleanup) {
-                console.log('[sw-kill] dibersihkan (reload sudah pernah dilakukan sesi ini).');
-            }
-        });
-    })();
+    // Script hapus SW dimatikan agar SW yang baru terdaftar tidak di-kill
     </script>
 
     <script src="/static/js/config.js" defer></script>
@@ -678,26 +644,7 @@
     <script src="/static/js/audio.js" defer></script>
     <script src="/static/js/ws.js" defer></script>
     <script src="/static/js/main.js" defer></script>
-<!-- AUTO-UNREGISTER-SW: matikan SW lama + bersihkan cache. Hapus blok ini setelah selesai development. -->
-<script>
-(function () {
-    if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.getRegistrations().then(function (regs) {
-        regs.forEach(function (r) {
-            r.unregister();
-            console.log('[dev] Service worker unregistered:', r.scope);
-        });
-    });
-    if (window.caches && caches.keys) {
-        caches.keys().then(function (keys) {
-            keys.forEach(function (k) {
-                caches.delete(k);
-                console.log('[dev] Cache dihapus:', k);
-            });
-        });
-    }
-})();
-</script>
+
 </body>
 
 </html>

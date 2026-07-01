@@ -52,8 +52,6 @@ class TestEventBusConcurrentDispatch:
         total = time.monotonic() - start
 
         assert len(call_times) == 2, "Kedua handler harus dipanggil"
-        # Jika concurrent, total < 0.35s (0.2s parallel + overhead)
-        # Jika sequential, total >= 0.4s
         assert total < 0.35, (
             f"Handlers berjalan sequential ({total:.2f}s). "
             f"Harus concurrent (target < 0.35s)"
@@ -72,15 +70,13 @@ class TestEventBusConcurrentDispatch:
         bus.subscribe(TestEvent, slow_handler)
         bus.subscribe(TestEvent, fast_handler)
 
-        # Start publish
         publish_task = asyncio.create_task(bus.publish(TestEvent(data="data")))
-        
-        # Fast handler should complete very quickly even though slow handler is still running
+
         try:
             await asyncio.wait_for(fast_done.wait(), timeout=0.5)
         except asyncio.TimeoutError:
             pytest.fail("Fast handler terblokir oleh slow handler — dispatch harus concurrent")
-        
+
         publish_task.cancel()
         try:
             await publish_task

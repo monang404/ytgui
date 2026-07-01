@@ -1,6 +1,4 @@
 (function() {
-    // ── Visual Viewport Handler (Mobile Keyboard) ──
-    // Mencegah layout terdorong saat keyboard virtual muncul di iOS/Android
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
             const app = document.getElementById('app');

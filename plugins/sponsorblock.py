@@ -22,7 +22,7 @@ class SponsorBlockHandler:
         self.state = state
         self.segments: list[tuple[float, float]] = []
         self._session = session
-        # TASK-3.5: Injected per-room bus (fallback ke global jika belum direfactor)
+        # Injected bus (fallback ke global bus)
         if event_bus is None:
             from core.event_bus import bus as _global_bus
             event_bus = _global_bus
@@ -35,12 +35,11 @@ class SponsorBlockHandler:
     async def fetch_segments(self, video_id: str):
         """Fetches skip segments and stores them in memory for the current track."""
         self.segments = []
-        # HIGH-02 fix: Use json.dumps instead of str().replace()
         params = {
             "videoID": video_id,
             "categories": json.dumps(SPONSORBLOCK_CATS),
         }
-        
+
         try:
             session = self._session or aiohttp.ClientSession()
             close_after = self._session is None
@@ -56,7 +55,7 @@ class SponsorBlockHandler:
                         ]
                         logger.info(f"SponsorBlock: {len(self.segments)} segments for {video_id}")
                     elif resp.status == 404:
-                        pass  # No segments for this video, that's normal
+                        pass
             finally:
                 if close_after:
                     await session.close()
