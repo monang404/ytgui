@@ -203,7 +203,7 @@ class PlaybackController:
         self._retry_count = 0  # TASK-0.2: reset retry state agar tidak bocor ke lagu berikutnya
         await self.mpv.pause()
         self.state.status = PlayerStatus.IDLE
-            _LOG_STATS.is_playing = False
+        _LOG_STATS.is_playing = False
         self.state.current_track = None
         self.state.queue.clear()
         self.state.radio_queue.clear()
@@ -230,7 +230,7 @@ class PlaybackController:
                     await self.mpv.pause()
                     self.state.current_track = None
                     self.state.status = PlayerStatus.IDLE
-            _LOG_STATS.is_playing = False
+                    _LOG_STATS.is_playing = False
 
                 if mode == PlaybackMode.RADIO:
                     self.state.status = PlayerStatus.LOADING
