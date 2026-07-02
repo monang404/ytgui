@@ -1,4 +1,3 @@
-# PATCHLOG_APPLIED
 """
 Purpose: Mengelola pemutaran lagu secara otomatis dan berkelanjutan (Radio Mode).
 Radio Mode adalah fitur independen: ia memiliki list lagu sendiri
@@ -13,7 +12,6 @@ import asyncio
 import random
 import re
 import logging
-import structlog
 from typing import TYPE_CHECKING, Optional
 
 from core.events import QueueUpdatedEvent, LogMessageEvent
@@ -25,7 +23,7 @@ from core.state import AppState, PlaybackMode, PlayerStatus
 from core.ports import MediaExtractorPort
 from core.task_utils import safe_create_task
 
-_log = structlog.get_logger(__name__)
+_log = logging.getLogger(__name__)
 
 MAX_TRACK_DURATION = 600
 TRACKS_PER_ARTIST_TARGET = 3

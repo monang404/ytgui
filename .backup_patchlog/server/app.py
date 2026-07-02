@@ -1,4 +1,3 @@
-# PATCHLOG_APPLIED
 import asyncio
 import time
 import structlog
@@ -49,13 +48,11 @@ def create_app(playback_controller: PlaybackController, ytdlp: MediaExtractorPor
     return app
 
 async def run_server(app: web.Application, host: str = "0.0.0.0", port: int = 8765):
-    import logging as _l
-    _l.getLogger('aiohttp.access').setLevel(_l.CRITICAL + 1)
-    runner = web.AppRunner(app, access_log=None)
+    runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, host, port)
     await site.start()
-    import sys as _sys; _sys.stderr.write(f"\033[32mserver  ✓ listening\033[0m  http://{host}:{port}\n")
+    logger.info(f"Web server running on http://{host}:{port}")
 
     try:
         while True:

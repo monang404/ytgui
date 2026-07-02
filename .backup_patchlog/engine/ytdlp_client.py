@@ -1,5 +1,3 @@
-import structlog
-# PATCHLOG_APPLIED
 import asyncio
 import yt_dlp
 import re
@@ -73,7 +71,8 @@ class YtDlpClient:
         """Get direct audio URL using yt-dlp to allow true caching.
         Raises RuntimeError jika ekstraksi gagal — caller wajib handle.
         """
-        _log = structlog.get_logger(__name__)
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
         options = {
             **self._YDL_OPTS_INFO,
             "extract_flat": False,

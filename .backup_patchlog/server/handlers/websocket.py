@@ -1,4 +1,3 @@
-# PATCHLOG_APPLIED
 import json
 import time
 import structlog
@@ -20,8 +19,6 @@ from server.handlers.auth import handle_auth, require_auth
 from services.discover_service import DiscoverService
 
 logger = structlog.get_logger(__name__)
-from core.log_config import STATS as _LOG_STATS
-
 
 class ConnectionManager:
     def __init__(self):
@@ -36,9 +33,7 @@ class ConnectionManager:
     async def connect(self, ws):
         self.active_connections.append(ws)
         ACTIVE_WEBSOCKETS.inc()
-        _LOG_STATS.clients = len(self.active_connections)
-        _LOG_STATS.is_playing = True if _LOG_STATS.current_track != "—" else _LOG_STATS.is_playing
-        logger.info(f"WebSocket connected. Total clients: {len(self.active_connections)}", clients=len(self.active_connections))
+        logger.info(f"WebSocket connected. Total clients: {len(self.active_connections)}")
 
     def disconnect(self, ws):
         if ws in self.active_connections:
@@ -46,8 +41,7 @@ class ConnectionManager:
             ACTIVE_WEBSOCKETS.dec()
         if ws in self.authenticated_connections:
             self.authenticated_connections.remove(ws)
-        _LOG_STATS.clients = len(self.active_connections)
-        logger.info(f"WebSocket disconnected. Total clients: {len(self.active_connections)}", clients=len(self.active_connections))
+        logger.info(f"WebSocket disconnected. Total clients: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
         if not self.active_connections:

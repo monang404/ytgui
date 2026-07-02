@@ -1,4 +1,3 @@
-# PATCHLOG_APPLIED
 import asyncio
 import logging
 import structlog
@@ -33,14 +32,14 @@ from plugins.lyrics import LyricsFetcher
 async def main():
     state = AppState()
 
-    sys.stderr.write("\033[90m  [1/5]\033[0m Membuka database perpustakaan...\n")
+    print("  [1/5] Membuka database perpustakaan...")
     db = Database()
     await db.init()
 
-    sys.stderr.write("\033[90m  [2/5]\033[0m Menginisialisasi YT-DLP Engine...\n")
+    print("  [2/5] Menginisialisasi YT-DLP Engine...")
     ytdlp = YtDlpClient()
 
-    sys.stderr.write("\033[90m  [3/5]\033[0m Menghubungkan ke audio player (MPV)...\n")
+    print("  [3/5] Menghubungkan ke audio player (MPV)...")
     mpv = MpvController()
     try:
         await mpv.connect()
@@ -161,20 +160,18 @@ async def main():
 
         url_client = f"http://{display_host}:{port}"
         url_admin = f"http://{display_host}:{port}/admin"
-        sys.stderr.write(
-            f"\n\033[1;32m{'─'*54}\033[0m\n"
-            f"  \033[1m▸ ytgui\033[0m  Web Server\n"
-            f"  Client : \033[36m{url_client}\033[0m\n"
-            f"  Admin  : \033[36m{url_admin}\033[0m\n"
-        )
+        print(f"=====================================================")
+        print(f"|   YTGUI Web Server                                |")
+        print(f"|   Client : {url_client:<37} |")
+        print(f"|   Admin  : {url_admin:<37} |")
 
         from config import ADMIN_USERNAME, IS_PASSWORD_AUTO_GENERATED
         if IS_PASSWORD_AUTO_GENERATED:
-            sys.stderr.write(
-                f"  User   : [33m{ADMIN_USERNAME}[0m\n"
-                f"  Pass   : [33m(lihat cache/admin_password.txt)[0m\n"
-            )
-        sys.stderr.write(f"[1;32m{'─'*54}[0m\n\n")
+            print(f"|                                                   |")
+            print(f"|   Kredensial Mode Admin:                          |")
+            print(f"|   User: {ADMIN_USERNAME:<40} |")
+            print(f"|   Pass: (lihat cache/admin_password.txt)          |")
+        print(f"=====================================================")
 
         await run_server(app, host=host, port=port)
 

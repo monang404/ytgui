@@ -1,12 +1,9 @@
-# PATCHLOG_APPLIED
 import time
 import structlog
 from config import STREAM_URL_TTL_SEC
 from core.ports import DatabasePort, MediaExtractorPort
 
 logger = structlog.get_logger(__name__)
-from core.log_config import STATS as _LOG_STATS
-
 
 class StreamPrefetchService:
     def __init__(self, db: DatabasePort, ytdlp: MediaExtractorPort):
@@ -22,5 +19,4 @@ class StreamPrefetchService:
             url = await self.ytdlp.get_stream_url(video_id)
             await self.db.update_stream_url_only(video_id, url)
         except Exception as e:
-            _LOG_STATS.inc("timeouts") if "timeout" in str(e).lower() or "Timeout" in str(e) else None
             logger.warning(f"Pre-fetch stream URL gagal untuk {video_id}: {e}")

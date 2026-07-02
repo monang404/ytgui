@@ -1,4 +1,3 @@
-# PATCHLOG_APPLIED
 """
 Purpose: Central controller for playback orchestration.
 Subscribes to: TRACK_ENDED, TRACK_PROGRESS, CMD_PLAY_TRACK, CMD_TOGGLE_PAUSE, CMD_NEXT, CMD_PREV, CMD_STOP, CMD_SEEK, CMD_SET_MODE, CMD_QUEUE_SELECT, CMD_QUEUE_REMOVE, "track.pause.changed"
@@ -22,8 +21,6 @@ from core.task_utils import safe_create_task
 from engine.playback.track_loader import TrackLoader
 
 logger = structlog.get_logger(__name__)
-from core.log_config import STATS as _LOG_STATS
-
 
 class PlaybackController:
     def __init__(
@@ -89,9 +86,6 @@ class PlaybackController:
 
                 self.state.status = PlayerStatus.PLAYING
                 self._retry_count = 0
-                _LOG_STATS.is_playing = True
-                _LOG_STATS.current_track = track.title[:50] if track and track.title else '—'
-                _LOG_STATS.inc('songs_played')
                 await self.bus.publish(TrackStartedEvent(track=track))
 
                 if self.state.duration == 0:
@@ -203,7 +197,6 @@ class PlaybackController:
         self._retry_count = 0  # TASK-0.2: reset retry state agar tidak bocor ke lagu berikutnya
         await self.mpv.pause()
         self.state.status = PlayerStatus.IDLE
-            _LOG_STATS.is_playing = False
         self.state.current_track = None
         self.state.queue.clear()
         self.state.radio_queue.clear()
@@ -230,7 +223,6 @@ class PlaybackController:
                     await self.mpv.pause()
                     self.state.current_track = None
                     self.state.status = PlayerStatus.IDLE
-            _LOG_STATS.is_playing = False
 
                 if mode == PlaybackMode.RADIO:
                     self.state.status = PlayerStatus.LOADING
